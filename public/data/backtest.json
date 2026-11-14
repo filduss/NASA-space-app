@@ -1,7 +1,7 @@
 {
  "meta": {
   "simulated": true,
-  "generatedAt": "2026-11-14T17:38:24Z",
+  "generatedAt": "2026-11-14T17:41:48Z",
   "generator": "scripts/backtest.py",
   "engine": "src/engine (the app's own rules, run through scripts/engine_cli.ts)",
   "crews": 200,
@@ -59,6 +59,7 @@
   "detectionDelay": "Days from an event's first day to its first alert (0 = same day).",
   "falseAlarms": "Alerts on days with no event behind them, allowing one day of grace after an event ends.",
   "missedEvents": "Events that never raised an alert.",
+  "alertLoad": "During ship events (plus one day of grace): person-days treated as an individual problem ('likely you') and summaries sent to the flight surgeon. 'perPerson' runs the same crews through a comparator that gives every drifting person their own case and never blames the ship, as apps with one alert per person do.",
   "deviationFromPlan": "Crews run over one whole real trace each (27-73 days) instead of 90 days: real data is never stitched or looped."
  },
  "scenarios": [
@@ -100,6 +101,19 @@
     "sharedPatternPerCrewDay": 0.0066,
     "privateCardPerPersonDay": 0.0475,
     "surgeonSummaryPerCrewDay": 0.0015
+   },
+   "alertLoad": {
+    "shipEvents": 60,
+    "shipshape": {
+     "caseDays": 94,
+     "personSummaries": 5,
+     "shipSummaries": 71
+    },
+    "perPerson": {
+     "caseDays": 342,
+     "personSummaries": 39,
+     "shipSummaries": 0
+    }
    }
   },
   {
@@ -140,6 +154,19 @@
     "sharedPatternPerCrewDay": 0.0073,
     "privateCardPerPersonDay": 0.0455,
     "surgeonSummaryPerCrewDay": 0.0008
+   },
+   "alertLoad": {
+    "shipEvents": 60,
+    "shipshape": {
+     "caseDays": 123,
+     "personSummaries": 9,
+     "shipSummaries": 35
+    },
+    "perPerson": {
+     "caseDays": 210,
+     "personSummaries": 20,
+     "shipSummaries": 0
+    }
    }
   },
   {
@@ -180,6 +207,19 @@
     "sharedPatternPerCrewDay": 0.0055,
     "privateCardPerPersonDay": 0.0508,
     "surgeonSummaryPerCrewDay": 0.0029
+   },
+   "alertLoad": {
+    "shipEvents": 60,
+    "shipshape": {
+     "caseDays": 39,
+     "personSummaries": 2,
+     "shipSummaries": 104
+    },
+    "perPerson": {
+     "caseDays": 788,
+     "personSummaries": 188,
+     "shipSummaries": 0
+    }
    }
   },
   {
@@ -220,6 +260,19 @@
     "sharedPatternPerCrewDay": 0.0053,
     "privateCardPerPersonDay": 0.0481,
     "surgeonSummaryPerCrewDay": 0.002
+   },
+   "alertLoad": {
+    "shipEvents": 60,
+    "shipshape": {
+     "caseDays": 75,
+     "personSummaries": 7,
+     "shipSummaries": 73
+    },
+    "perPerson": {
+     "caseDays": 303,
+     "personSummaries": 31,
+     "shipSummaries": 0
+    }
    }
   },
   {
@@ -260,6 +313,19 @@
     "sharedPatternPerCrewDay": 0.0652,
     "privateCardPerPersonDay": 0.1364,
     "surgeonSummaryPerCrewDay": 0.028
+   },
+   "alertLoad": {
+    "shipEvents": 60,
+    "shipshape": {
+     "caseDays": 101,
+     "personSummaries": 4,
+     "shipSummaries": 97
+    },
+    "perPerson": {
+     "caseDays": 533,
+     "personSummaries": 74,
+     "shipSummaries": 0
+    }
    }
   }
  ],

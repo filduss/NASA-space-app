@@ -40,6 +40,7 @@ function EvidenceRow({ sc }: { sc: BacktestScenario }) {
       <td>{pct(sc.individual.missedShare)}</td>
       <td>{perDays(sc.falseAlarms.shipPerCrewDay)}</td>
       <td>{perDays(sc.falseAlarms.surgeonSummaryPerCrewDay)}</td>
+      <td>{sc.alertLoad?.perPerson.caseDays ? pct(1 - sc.alertLoad.shipshape.caseDays / sc.alertLoad.perPerson.caseDays) : 'n/a'}</td>
     </tr>
   )
 }
@@ -83,6 +84,15 @@ export function LearnCards() {
               <strong>{pct(base.ship.missedShareRise2Plus)}</strong> of CO₂ rises of 2 mmHg or more ({pct(base.ship.missedShare)} of all rises
               from 1 mmHg).
             </p>
+            {base.alertLoad && (
+              <p>
+                Compared with a rule that gives each person their own alert, on the same crews: during the {base.alertLoad.shipEvents} CO₂
+                rises that rule called it a personal problem on {base.alertLoad.perPerson.caseDays} person-days and sent the flight surgeon{' '}
+                {base.alertLoad.perPerson.personSummaries} individual summaries. Shipshape did so on{' '}
+                <strong>{base.alertLoad.shipshape.caseDays}</strong> person-days and sent <strong>{base.alertLoad.shipshape.personSummaries}</strong>{' '}
+                individual summaries, plus one crew-level summary for every 3 days of a ship alert ({base.alertLoad.shipshape.shipSummaries}).
+              </p>
+            )}
             <div className="scroll">
               <table className="table">
                 <thead>
@@ -94,6 +104,7 @@ export function LearnCards() {
                     <th>Personal events missed</th>
                     <th>False ship alerts</th>
                     <th>Needless surgeon summaries</th>
+                    <th>Fewer personal cases than one alert per person</th>
                   </tr>
                 </thead>
                 <tbody>

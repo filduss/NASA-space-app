@@ -81,6 +81,10 @@ def score(traces: dict[str, list[dict]], seed_base: int, overrides: dict) -> dic
             {"id": rid, "crewIds": CREW_IDS, "checkIns": sim.check_ins, "trace": mission, "fromDay": daily[0]["day"], "toDay": daily[-1]["day"]}
         )
     results = run_engine(traces, runs)
+    # The same crews through a comparator that gives every drifting person their own case and never
+    # blames the ship, as apps with one alert per person do (EngineInput.perPersonOnly).
+    per_person = run_engine(traces, [{**run, "perPersonOnly": True} for run in runs])
+    load = {k: dict(caseDays=0, personSummaries=0, shipSummaries=0) for k in ("shipshape", "perPerson")}
 
     c = dict(crew_days=0, person_days=0, correct=0, wrong=0, mixed=0, ship_fa=0, personal_fa=0, tier3_fa=0, shared_fa=0)
     ship_delays, me_delays = [], []
@@ -141,6 +145,13 @@ def score(traces: dict[str, list[dict]], seed_base: int, overrides: dict) -> dic
                 big_missed += big
             else:
                 ship_delays.append(hit - e["startDay"])
+            # alert load during the event: individual cases and summaries to the flight surgeon
+            pp_by_day = {d["day"]: d for d in per_person[rid]}
+            for day in range(e["startDay"], min(e["endDay"] + GRACE_DAYS, last) + 1):
+                for name, d in (("shipshape", by_day[day]), ("perPerson", pp_by_day[day])):
+                    load[name]["caseDays"] += sum(1 for p in d["people"].values() if p["in"] and p["a"] == "me")
+                    load[name]["personSummaries"] += d["summaries"].count("person")
+                    load[name]["shipSummaries"] += d["summaries"].count("ship")
         for e in sim.events:
             if e.startDay < first or e.startDay > last:
                 continue
@@ -186,6 +197,7 @@ def score(traces: dict[str, list[dict]], seed_base: int, overrides: dict) -> dic
             "privateCardPerPersonDay": r(c["personal_fa"] / c["person_days"], 4),
             "surgeonSummaryPerCrewDay": r(c["tier3_fa"] / c["crew_days"], 4),
         },
+        "alertLoad": {"shipEvents": ship_total, **load},
     }
 
 
@@ -208,6 +220,8 @@ def main() -> int:
             f"FA ship/crew-day={m['falseAlarms']['shipPerCrewDay']} shared={m['falseAlarms']['sharedPatternPerCrewDay']} "
             f"card/person-day={m['falseAlarms']['privateCardPerPersonDay']} surgeon/crew-day={m['falseAlarms']['surgeonSummaryPerCrewDay']}"
         )
+        ld = m["alertLoad"]
+        print(f"{'':30s} load over {ld['shipEvents']} ship events: shipshape {ld['shipshape']} | one case per person {ld['perPerson']}")
     if args.no_write:
         return 0
 
@@ -231,6 +245,7 @@ def main() -> int:
             "detectionDelay": "Days from an event's first day to its first alert (0 = same day).",
             "falseAlarms": "Alerts on days with no event behind them, allowing one day of grace after an event ends.",
             "missedEvents": "Events that never raised an alert.",
+            "alertLoad": "During ship events (plus one day of grace): person-days treated as an individual problem ('likely you') and summaries sent to the flight surgeon. 'perPerson' runs the same crews through a comparator that gives every drifting person their own case and never blames the ship, as apps with one alert per person do.",
             "deviationFromPlan": "Crews run over one whole real trace each (27-73 days) instead of 90 days: real data is never stitched or looped.",
         },
         "scenarios": scenarios,

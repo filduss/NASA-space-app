@@ -200,6 +200,22 @@ describe('escalation tiers', () => {
     expect(day(23).people.anna.tier).toBe(0)
   })
 
+  it('the per-person comparator never blames the ship and sends one summary per person', () => {
+    const air = cabin(1, 30, 2.4, { 21: 4.5, 22: 4.6, 23: 4.5 })
+    let all = crewHistory(1, 30)
+    for (const id of ['anna', 'ben', 'dana']) for (const d of [21, 22, 23]) all = replace(all, checkIn(id, d, { symptoms: ['headache'] }))
+    const input = { crewIds: CREW, checkIns: all, cabin: air, fromDay: 1, toDay: 23 }
+    const shipshape = runEngine(input)[22]
+    const perPerson = runEngine({ ...input, perPersonOnly: true })[22]
+    expect(shipshape.summaries.map((s) => s.kind)).toEqual(['ship'])
+    expect(perPerson.decision.outcome).not.toBe('ship')
+    expect(perPerson.summaries.map((s) => [s.kind, s.crewId])).toEqual([
+      ['person', 'anna'],
+      ['person', 'ben'],
+      ['person', 'dana'],
+    ])
+  })
+
   it('the golden path: ship alert, held while CO2 is high, then one person is still off', () => {
     const air = cabin(1, 30, 2.4, { 21: 4.3, 22: 5.2, 23: 5.5, 24: 4.2 })
     let all = crewHistory(1, 30)

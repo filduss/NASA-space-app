@@ -172,4 +172,9 @@ export interface EngineInput {
   toDay: number
   /** Crew who chose to share their private Watch with the crew medical officer. */
   shareWatch?: Record<string, boolean>
+  /**
+   * Backtest only: every drifting person is their own case and the ship is never blamed, as in apps
+   * that raise one alert per person. Measures the alert load the ship-or-me rule saves. The app never sets it.
+   */
+  perPersonOnly?: boolean
 }

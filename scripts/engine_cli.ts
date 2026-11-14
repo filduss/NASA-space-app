@@ -13,6 +13,8 @@ interface Run {
   trace: string
   fromDay: number
   toDay: number
+  /** The comparator with one case per person (see EngineInput.perPersonOnly). */
+  perPersonOnly?: boolean
 }
 interface Input {
   traces: Record<string, CabinDay[]>
@@ -33,6 +35,7 @@ const runs = input.runs.map((run) => {
     cabin: input.traces[run.trace],
     fromDay: run.fromDay,
     toDay: run.toDay,
+    perPersonOnly: run.perPersonOnly,
   })
   return {
     id: run.id,
@@ -42,6 +45,7 @@ const runs = input.runs.map((run) => {
       cabinElevated: d.cabin.elevated,
       cabinKnown: d.decision.cabinKnown,
       shipEpisodeDay: d.shipEpisodeDay,
+      summaries: d.summaries.map((s) => s.kind),
       people: Object.fromEntries(
         Object.values(d.people).map((p) => [
           p.crewId,

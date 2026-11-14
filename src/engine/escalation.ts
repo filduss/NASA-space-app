@@ -64,7 +64,9 @@ export function runEngine(input: EngineInput): DayResult[] {
     const assessments = input.crewIds.map((id) =>
       assessPerson(id, day, byCrew.get(id) as CheckIn[], memory.get(id) as PersonMemory),
     )
-    const decision = decideShipOrMe(assessments, cabin, input.crewIds.length, shipRun > 0)
+    const ruled = decideShipOrMe(assessments, cabin, input.crewIds.length, shipRun > 0)
+    // The backtest's comparator: one case per person, never the ship (EngineInput.perPersonOnly).
+    const decision = input.perPersonOnly ? { ...ruled, outcome: 'none' as const, held: false } : ruled
 
     if (decision.outcome === 'ship') {
       shipRun += 1

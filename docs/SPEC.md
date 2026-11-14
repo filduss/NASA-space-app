@@ -179,6 +179,18 @@ The real rise lasts from day 213 to day 220; the quest cannot shorten a recordin
 - The 10 traces contain 3 distinct CO₂ rises of 1 mmHg or more. That is a small sample, replayed for many crews.
 - Unit tests in `tests/` cover every rule, including "XP never depends on a reading" and "mood never decides ship or me".
 
+### Alert load against one alert per person
+
+Most health apps give each person their own alert. The backtest runs the same crews through a comparator that does that (`perPersonOnly` in `EngineInput`: every drifting person is their own case and the ship is never blamed) and counts what happens during the 60 ship events of the base case:
+
+| During CO₂ rises | Shipshape | One alert per person |
+| --- | --- | --- |
+| Person-days treated as a personal problem | 94 | 342 |
+| Individual summaries to the flight surgeon (they carry private readings) | 5 | 39 |
+| Crew-level ship summaries | 71 | 0 |
+
+Shipshape has 73% fewer personal cases and 87% fewer individual summaries in the base case; the reduction in personal cases is 41% to 95% across the five scenarios. It does send more messages in total, because the ship summary repeats every 3 days while an alert lasts; each is one crew-level note about the cabin, not a medical case.
+
 ### Which reading of the 3 mmHg limit
 
 Three versions of the rule, base case, on the tuning seeds (5000-5199) and the reported seeds (1000-1199):

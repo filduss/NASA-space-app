@@ -74,6 +74,15 @@ export interface BacktestScenario {
     privateCardPerPersonDay: number
     surgeonSummaryPerCrewDay: number
   }
+  /** During ship events: Shipshape against the same crews with one case per person. Older files lack it. */
+  alertLoad?: { shipEvents: number; shipshape: AlertLoad; perPerson: AlertLoad }
+}
+
+export interface AlertLoad {
+  /** Person-days treated as a personal problem ("likely you"). */
+  caseDays: number
+  personSummaries: number
+  shipSummaries: number
 }
 
 export interface BacktestFile {
