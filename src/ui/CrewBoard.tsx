@@ -1,5 +1,5 @@
 import { RULES } from '../engine/config.ts'
-import { boardPerson, privateCount } from '../engine/privacy.ts'
+import { boardPerson, privateCount, shipFollowUp, type ShipFollowUp } from '../engine/privacy.ts'
 import type { DayResult } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
@@ -8,7 +8,7 @@ import { QuestCard } from './QuestCard.tsx'
 import { boardWords, mmHg } from './text.ts'
 import { XpStrip } from './XpStrip.tsx'
 
-export function ShipBanner({ r, onOpen }: { r: DayResult; onOpen?: () => void }) {
+export function ShipBanner({ r, onOpen, followUp }: { r: DayResult; onOpen?: () => void; followUp?: ShipFollowUp | null }) {
   const { cabin, decision } = r
   let tone: 'ok' | 'watch' | 'idle' = 'ok'
   let head = 'Cabin air is at its usual level'
@@ -38,6 +38,10 @@ export function ShipBanner({ r, onOpen }: { r: DayResult; onOpen?: () => void })
     body = `24 h mean ${mmHg(cabin.co2Mean)} (usual ${mmHg(cabin.baseline)}), but a 1-hour average reached ${mmHg(cabin.co2Max1h)}, above the 3 mmHg limit.`
     tone = 'watch'
   }
+  if (followUp && decision.outcome !== 'ship') {
+    const off = followUp.stillOff
+    body += ` After the ship alert of days ${followUp.alertStart}–${followUp.alertEnd}: ${followUp.recovered} of ${followUp.affected} crew who felt it are back to their usual${off ? `, and ${off === 1 ? '1 person still off has' : `${off} people still off have`} been told privately` : ''}.`
+  }
   return (
     <section className={`banner banner-${tone}`}>
       <div>
@@ -65,7 +69,7 @@ export function CrewBoard() {
 
   return (
     <div className="stack">
-      <ShipBanner r={r} onOpen={() => s.setScreen('ship')} />
+      <ShipBanner r={r} onOpen={() => s.setScreen('ship')} followUp={shipFollowUp(s.results)} />
 
       <Card title={`Crew, mission day ${s.today}`} aside={<Origin kind="simulated">shared indicators only</Origin>}>
         <div className="crew">

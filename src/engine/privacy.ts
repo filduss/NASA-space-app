@@ -1,3 +1,4 @@
+import { RULES } from './config.ts'
 import { INDICATORS, SPEC } from './deviation.ts'
 import type { DayResult, IndicatorKey, PersonStatus } from './types.ts'
 
@@ -42,6 +43,50 @@ export function privateCount(day: DayResult): { off: number; of: number } {
   const people = Object.values(day.people).filter((p) => p.assessment.checkedIn)
   const off = people.filter((p) => p.assessment.off.some((k) => SPEC[k].privacy === 'private')).length
   return { off, of: people.length }
+}
+
+/**
+ * The re-check after a ship alert, for shared screens: is the air back to its usual level, and are the
+ * crew it touched back to theirs? Counts only, judged on shared indicators as the crew board does.
+ */
+export interface ShipFollowUp {
+  alertStart: number
+  alertEnd: number
+  /** Days since the alert's last day: 1 is the first day after it. */
+  daysSince: number
+  /** Null when there is no cabin data today, so the air could not be re-checked. */
+  airBack: boolean | null
+  /** Crew whose change was put down to the ship on any day of the alert. */
+  affected: number
+  recovered: number
+  stillOff: number
+  notCheckedIn: number
+}
+
+/** `results` runs up to today. Null while an alert is on, or once the follow-up window has passed. */
+export function shipFollowUp(results: DayResult[], windowDays: number = RULES.followUpDays): ShipFollowUp | null {
+  const today = results[results.length - 1]
+  if (!today || today.decision.outcome === 'ship') return null
+  let end = results.length - 2
+  while (end >= 0 && results[end].decision.outcome !== 'ship') end--
+  if (end < 0 || today.day - results[end].day > windowDays) return null
+  let start = end
+  while (start > 0 && results[start - 1].decision.outcome === 'ship') start--
+  const affected = new Set<string>()
+  for (const r of results.slice(start, end + 1)) {
+    for (const p of Object.values(r.people)) if (boardPerson(p).shipAffected) affected.add(p.crewId)
+  }
+  const now = [...affected].map((id) => boardPerson(today.people[id]))
+  return {
+    alertStart: results[start].day,
+    alertEnd: results[end].day,
+    daysSince: today.day - results[end].day,
+    airBack: today.cabin.hasData ? !(today.cabin.elevated || today.cabin.overLimit) : null,
+    affected: affected.size,
+    recovered: now.filter((p) => p.ok).length,
+    stillOff: now.filter((p) => p.checkedIn && !p.ok).length,
+    notCheckedIn: now.filter((p) => !p.checkedIn).length,
+  }
 }
 
 /** May this viewer see this person's private indicators (mood, stress) and private cards? */

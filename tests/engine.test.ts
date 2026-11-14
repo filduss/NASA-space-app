@@ -11,6 +11,7 @@ import {
   robustBaseline,
   runEngine,
   RULES,
+  shipFollowUp,
   tierFor,
   trailingBaseline,
   type CheckIn,
@@ -238,6 +239,23 @@ describe('escalation tiers', () => {
     expect(day(25).people.chen.episodeDay).toBe(1) // a new likely cause starts a new count
     expect(day(27).people.chen.tier).toBe(3)
     expect(day(27).summaries.map((s) => [s.kind, s.crewId])).toEqual([['person', 'chen']])
+  })
+
+  it('after a ship alert, the follow-up says whether the air and the crew recovered, in counts only', () => {
+    const air = cabin(1, 40, 2.4, { 21: 4.3, 22: 5.2, 23: 5.5, 24: 4.2 })
+    let all = crewHistory(1, 40)
+    all = replace(all, checkIn('anna', 21, { symptoms: ['headache'] }))
+    all = replace(all, checkIn('ben', 21, { sleepQuality: 2 }))
+    all = replace(all, checkIn('dana', 21, { symptoms: ['headache'], fatigue: 8 }))
+    for (const d of [24, 25, 26, 27]) all = replace(all, checkIn('chen', d, { sleepHours: 4.5, sleepQuality: 2 }))
+    const res = runEngine({ crewIds: CREW, checkIns: all, cabin: air, fromDay: 1, toDay: 40 })
+    const upTo = (d: number) => res.slice(0, d)
+    expect(shipFollowUp(upTo(24))).toBeNull() // the alert is still on
+    const f = shipFollowUp(upTo(25))
+    expect(f).toEqual({ alertStart: 21, alertEnd: 24, daysSince: 1, airBack: true, affected: 4, recovered: 3, stillOff: 1, notCheckedIn: 0 })
+    expect(JSON.stringify(f)).not.toContain('chen')
+    expect(shipFollowUp(upTo(24 + RULES.followUpDays))).not.toBeNull()
+    expect(shipFollowUp(upTo(25 + RULES.followUpDays))).toBeNull()
   })
 
   it('a safety answer is tier 4 at once, with an immediate summary', () => {

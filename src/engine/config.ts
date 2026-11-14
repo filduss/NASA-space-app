@@ -22,6 +22,8 @@ export const RULES = {
   persistDays: 3,
   /** A missed check-in or two does not restart the count. Demo parameter. */
   episodeGapDays: 2,
+  /** After a ship alert ends, the app shows for this many days whether the air and the crew recovered. Demo parameter. */
+  followUpDays: 7,
 
   /** Cabin's own baseline: median of the most recent N normal days. Demo parameter. */
   cabinBaselineDays: 14,

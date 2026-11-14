@@ -1,9 +1,11 @@
 import { useMemo } from 'react'
 import { RULES } from '../engine/config.ts'
+import { shipFollowUp } from '../engine/privacy.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin, Stat } from './bits.tsx'
 import { LineChart } from './charts.tsx'
 import { ShipBanner } from './CrewBoard.tsx'
+import { FollowUpCard } from './FollowUp.tsx'
 import { QuestCard } from './QuestCard.tsx'
 import { RadiationCard } from './Radiation.tsx'
 import { list, mmHg } from './text.ts'
@@ -33,10 +35,12 @@ export function ShipAlert() {
   const needed = Math.ceil(decision.crewSize * RULES.crewShare)
   const affected = decision.driftingCo2.map(s.nameOf)
   const recent = s.data.cabin.daily.filter((d) => d.day <= s.today && d.day > s.today - CHART_DAYS)
+  const followUp = shipFollowUp(s.results)
 
   return (
     <div className="stack">
       <ShipBanner r={r} />
+      {followUp && <FollowUpCard f={followUp} />}
 
       <Card title="Cabin CO₂" aside={<Origin kind="real">{meta.mission}, NASA OSDR</Origin>}>
         <div className="stats">

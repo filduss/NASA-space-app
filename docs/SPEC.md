@@ -140,6 +140,7 @@ These are the places where the plan could be read two ways, or where the build g
 - **Headache is the only symptom that counts toward a ship alert.** It is the one with a published dose-response. Other ticks open a private Watch.
 - **The live reaction test is shown, not compared.** The presenter has no baseline, and the result is never stored, so it does not feed the rules.
 - **Quest steps are illustrative,** not a flight procedure, and say so.
+- **Did the fix work?** For 7 days after a ship alert ends, the board and the Ship screen say whether the air is back to its usual level and how many of the crew it touched are back to theirs. Counts only, judged on shared indicators as the board does (`shipFollowUp` in `src/engine/privacy.ts`). Anyone still off is already "likely you" with a new 3-day count. This is the re-check the quest's last step asks for; it does not claim the fix caused the recovery.
 - **The limit check uses the 24 h mean.** NASA writes the limit as a 1-hour average, but a single 1-hour peak would make the air a suspect on many quiet days. In the backtest the 24 h mean raised fewer false ship alarms (table under "Evidence"). The highest 1-hour average is still shown on the Ship screen and in summaries.
 - **Radiation is shown, not judged.** It has no tier, no card per person and no part in ship or me: the whole crew gets about the same dose and nobody can feel it at everyday levels. A solar-storm warning would be a second "ship" cause; that is not built.
 
@@ -164,7 +165,7 @@ The "Golden path" control jumps between the four days of the demo. The crew is s
 | --- | --- | --- |
 | 212 | 2018-08-20 | Everyone OK. CO₂ has started to climb; a 1-hour average is above 3 mmHg |
 | 213 | 2018-08-21 | CO₂ 4.3 mmHg against a usual 2.4. Anna, Ben and Dana drift. "Likely the ship, not you". Quest opens |
-| 221 | 2018-08-29 | CO₂ back to 2.3 mmHg. Chen is still short on sleep: a private card, "likely you" |
+| 221 | 2018-08-29 | CO₂ back to 2.3 mmHg. Chen is still short on sleep: a private card, "likely you". The board and the Ship screen show the re-check: the air is back to usual, 3 of the 4 crew who felt it are back to theirs |
 | 223 | 2018-08-31 | Chen's day 3: a summary goes to the flight surgeon and Chen is told |
 
 The real rise lasts from day 213 to day 220; the quest cannot shorten a recording. Chen's sleep loss (days 219-226) and Ben's stress dip (days 188-192) are scripted events, listed in `crew.json`.
