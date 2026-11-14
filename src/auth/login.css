@@ -1,0 +1,282 @@
+/* Login. Dark like the personal dashboard it leads to. */
+
+body.login-body {
+  background: #000;
+}
+
+.login {
+  --l-surface: rgba(28, 28, 30, 0.72);
+  --l-surface-2: rgba(44, 44, 46, 0.6);
+  --l-stroke: rgba(255, 255, 255, 0.08);
+  --l-stroke-2: rgba(255, 255, 255, 0.16);
+  --l-ink: #f5f5f7;
+  --l-ink-2: rgba(235, 235, 245, 0.62);
+  --l-ink-3: rgba(235, 235, 245, 0.38);
+  --l-blue: #0a84ff;
+  --l-green: #30d158;
+  --l-red: #ff6961;
+
+  color-scheme: dark;
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  padding: 56px 16px 24px;
+  background: #000;
+  color: var(--l-ink);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+.login-aurora {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 45% at 50% 0%, rgba(10, 132, 255, 0.18), transparent 70%),
+    radial-gradient(40% 40% at 85% 95%, rgba(94, 92, 230, 0.1), transparent 70%);
+}
+
+.login > :not(.login-aurora) {
+  position: relative;
+}
+
+.login-brand {
+  text-align: center;
+}
+.login-brand h1 {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.login-brand p {
+  color: var(--l-ink-2);
+}
+
+.login-main {
+  width: 100%;
+  max-width: 440px;
+}
+
+.login-card {
+  background: var(--l-surface);
+  border: 1px solid var(--l-stroke);
+  border-radius: 22px;
+  padding: 24px;
+  backdrop-filter: saturate(180%) blur(28px);
+  -webkit-backdrop-filter: saturate(180%) blur(28px);
+}
+.login-card h2 {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.login-sub {
+  color: var(--l-ink-2);
+  margin-top: 2px;
+}
+
+.login-crew {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
+}
+.login-person {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 8px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--l-stroke);
+  background: var(--l-surface-2);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.login-person:hover {
+  border-color: var(--l-stroke-2);
+  background: rgba(58, 58, 60, 0.7);
+}
+.login-person-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.login-avatar {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0a84ff, #5e5ce6);
+  font-weight: 600;
+  font-size: 20px;
+  color: #fff;
+}
+.login-avatar-lg {
+  width: 64px;
+  height: 64px;
+  font-size: 26px;
+}
+
+/* Role is shown by word; the cross on the medical badge adds a shape, colour only supports it. */
+.login-role {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--l-stroke-2);
+  color: var(--l-ink-2);
+}
+.login-role-medical {
+  color: var(--l-green);
+  border-color: rgba(48, 209, 88, 0.4);
+}
+.login-role-medical::before {
+  content: '+ ';
+  font-weight: 700;
+}
+
+.login-back {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--l-blue);
+  font: inherit;
+  cursor: pointer;
+}
+
+.login-picked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  margin-top: 12px;
+}
+.login-picked .login-avatar {
+  margin-bottom: 6px;
+}
+
+.login-form {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.login-dots {
+  display: flex;
+  gap: 18px;
+  pointer-events: none;
+}
+.login-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--l-ink-2);
+  transition: background 0.1s;
+}
+.login-dot-on {
+  background: var(--l-ink);
+  border-color: var(--l-ink);
+}
+
+/* The real input sits over the dots so a tap on them opens the numeric keyboard. */
+.login-pin {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 160px;
+  height: 40px;
+  opacity: 0;
+  font-size: 16px;
+}
+.login-form:has(.login-pin:focus-visible) .login-dots {
+  outline: 2px solid var(--l-blue);
+  outline-offset: 8px;
+  border-radius: 8px;
+}
+
+.login-msg {
+  min-height: 1.4em;
+  text-align: center;
+  color: var(--l-red);
+  font-size: 14px;
+}
+
+.login-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.login-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--l-stroke-2);
+  background: var(--l-surface-2);
+  color: var(--l-ink);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.login-btn-primary {
+  background: var(--l-blue);
+  border-color: var(--l-blue);
+  color: #fff;
+}
+.login-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.login-btn:focus-visible,
+.login-person:focus-visible,
+.login-back:focus-visible {
+  outline: 2px solid var(--l-blue);
+  outline-offset: 2px;
+}
+
+.login-foot {
+  margin-top: auto;
+  max-width: 440px;
+  text-align: center;
+  color: var(--l-ink-3);
+  font-size: 12px;
+  display: grid;
+  gap: 4px;
+}
+.login-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(255, 159, 10, 0.16);
+  color: #ff9f0a;
+  font-weight: 600;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

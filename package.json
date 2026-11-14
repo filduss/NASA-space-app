@@ -12,16 +12,19 @@
     "data:snapshot": "python3 scripts/snapshot_eda.py",
     "data:crew": "python3 scripts/simulate_crew.py",
     "data:backtest": "python3 scripts/backtest.py",
+    "data:accounts": "python3 scripts/make_accounts.py",
     "data": "npm run data:snapshot && npm run data:crew && npm run data:backtest"
   },
   "dependencies": {
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "three": "^0.187.0"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.187.0",
     "@vitejs/plugin-react": "^6.1.2",
     "tsx": "^4.23.15",
     "typescript": "~7.0.2",

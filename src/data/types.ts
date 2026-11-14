@@ -82,3 +82,23 @@ export interface BacktestFile {
   scenarios: BacktestScenario[]
   limits: string[]
 }
+
+export type AccountRole = 'astronaut' | 'medical'
+
+export interface Account {
+  crewId: string
+  role: AccountRole
+  /** Base64 random salt. */
+  salt: string
+  /** Base64 PBKDF2 output. The PIN itself is never stored. */
+  hash: string
+}
+
+export interface AccountsFile {
+  meta: {
+    generator: string
+    label: string
+    kdf: { name: 'PBKDF2'; hash: 'SHA-256'; iterations: number; keyBytes: number }
+  }
+  accounts: Account[]
+}

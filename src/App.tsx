@@ -1,3 +1,4 @@
+import { hrefOf } from './auth/paths.ts'
 import { useStore, type Screen } from './state.tsx'
 import { Origin } from './ui/bits.tsx'
 import { CheckInScreen } from './ui/CheckInScreen.tsx'
@@ -41,6 +42,13 @@ export function App() {
             <Origin kind="real">ISS CO₂, {s.data.cabin.meta.mission}</Origin>
           </span>
         </div>
+        <nav className="account" aria-label="Account">
+          <span>Logged in as {s.user ? s.nameOf(s.user.crewId) : ''} · medical officer</span>
+          <a href={hrefOf('dashboard', import.meta.env.BASE_URL)}>My dashboard</a>
+          <button type="button" className="link" onClick={s.logOut}>
+            Log out
+          </button>
+        </nav>
         <details className="controls" open>
           <summary>Demo controls</summary>
           <RoleSwitcher />

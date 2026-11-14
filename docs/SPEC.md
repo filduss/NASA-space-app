@@ -59,6 +59,19 @@ Sliders run 0-10. `symptoms` is any of `headache`, `dizziness`, `nausea`, `conge
 
 Scenarios with the four metrics, their definitions and the stated limits. See "Evidence".
 
+### `accounts.json` (demo logins)
+
+Written by `scripts/make_accounts.py` from the demo PINs listed in the README. Only salted hashes are stored.
+
+```jsonc
+{
+  "meta": { "kdf": { "name": "PBKDF2", "hash": "SHA-256", "iterations": 600000, "keyBytes": 32 } },
+  "accounts": [{ "crewId": "anna", "role": "astronaut", "salt": "<base64, 16 random bytes>", "hash": "<base64>" }]
+}
+```
+
+`role` is `astronaut` or `medical`. Every crew member in `crew.json` has one account; Dana is the medical officer.
+
 ### Engine output
 
 `runEngine(input)` in `src/engine/escalation.ts` returns one `DayResult` per day: the cabin status, the ship-or-me decision, each person's status (indicators against their own normal, likely cause, day count, tier) and any flight-surgeon summaries. Types are in `src/engine/types.ts`.
@@ -115,6 +128,23 @@ The cabin's baseline is the median of its last 14 normal days. The cabin is "abo
 | Ship alerts and quests | Yes | Yes | Yes | In summaries |
 | Safety answer | Yes | Never | Immediately | Immediately |
 
+### Login
+
+`/` is the login, `/dashboard` the personal dashboard and `/app` the crew app. Both need a logged-in person; without one they send you to the login and back afterwards (only to those two pages).
+
+| | Astronaut | Medical officer |
+| --- | --- | --- |
+| Own dashboard (`/dashboard`) | Yes | Yes |
+| Anyone else's dashboard | No | No |
+| Crew app (`/app`), with its **Viewing as** control | No: sent to their own dashboard | Yes |
+
+The crew app is the only thing the medical role adds. Inside it, the screens and the privacy table work as before.
+
+- The PIN is checked in the browser with Web Crypto: PBKDF2-SHA256 against the salted hash in `accounts.json`, compared over every byte. The PIN is never stored, logged or kept in state after the check.
+- The session is in `sessionStorage` (`shipshape.session.v1`): the crew id and an expiry 8 hours on, nothing else. The role is read from `accounts.json` on every load, never from the session. Closing the tab logs out; each tab logs in on its own.
+- Five wrong PINs in a row lock that person out for 30 s, doubling with each further wrong PIN up to 15 min. The count is in `localStorage` (`shipshape.lockout.v1`) so closing the tab does not reset it, and a correct PIN clears it.
+- **Limit:** with no server this is a privacy gate, not security. Anyone can download `accounts.json` and try all 10 000 four-digit PINs offline, or edit browser storage.
+
 ## Readings of the plan
 
 These are the places where the plan could be read two ways, or where the build goes beyond it.
@@ -126,6 +156,7 @@ These are the places where the plan could be read two ways, or where the build g
 - **Headache is the only symptom that counts toward a ship alert.** It is the one with a published dose-response. Other ticks open a private Watch.
 - **The live reaction test is shown, not compared.** The presenter has no baseline, and the result is never stored, so it does not feed the rules.
 - **Quest steps are illustrative,** not a flight procedure, and say so.
+- **The medical officer is one of the crew.** The plan's crew medical officer is a role, not a person; the build gives it to Dana. Her login opens her own dashboard like anyone's, plus the crew app. The crew app keeps its demo **Viewing as** control, so as the medical officer she can still show every screen of the demo.
 
 ## Game
 

@@ -1,0 +1,38 @@
+{
+ "meta": {
+  "generator": "scripts/make_accounts.py",
+  "label": "Demo accounts. PINs are listed in the README; only salted hashes are stored here.",
+  "kdf": {
+   "name": "PBKDF2",
+   "hash": "SHA-256",
+   "iterations": 600000,
+   "keyBytes": 32
+  }
+ },
+ "accounts": [
+  {
+   "crewId": "anna",
+   "role": "astronaut",
+   "salt": "jJR6FeDLnAUCH85fiRpOrg==",
+   "hash": "S+/8FFlPfaIpnPslqW1XwoQcqJS2TJivdrHFheOkP0k="
+  },
+  {
+   "crewId": "ben",
+   "role": "astronaut",
+   "salt": "bq4OY9RShBgYBFNYg2z5Ig==",
+   "hash": "iUN2pGR84DqqjgvhD/RsfMfEfpQDwgzImtW6b0PHsHY="
+  },
+  {
+   "crewId": "chen",
+   "role": "astronaut",
+   "salt": "5u4UmxM10pcoBZASgx08bA==",
+   "hash": "Yu4/Zm8UkwVS9JdbYaBPqmbLU9KwUoZHF0RyPtMQFQE="
+  },
+  {
+   "crewId": "dana",
+   "role": "medical",
+   "salt": "AuajVR+KIjag3Zn8LNSWPw==",
+   "hash": "V0Gzv7055Bz1lR68NrRV7RhRpo+yEMY8QyZeq6FuV3A="
+  }
+ ]
+}
