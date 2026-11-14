@@ -1,6 +1,6 @@
 # Citations
 
-Sources behind the rules and the "why" text. The links come from plan v0.1 (found by web search on 14 Nov 2026). The "Checked" column says whether anyone on the team has opened the page and confirmed the claim; do that before quoting it on the project page.
+Sources behind the rules and the "why" text. The links come from [plan v0.1](plan-v0.1.md) (found by web search on 14 Nov 2026). The "Checked" column says whether anyone on the team has opened the page and confirmed the claim; do that before quoting it on the project page.
 
 | Used for | Claim in the app | Source | Checked |
 | --- | --- | --- | --- |

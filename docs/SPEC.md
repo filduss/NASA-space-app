@@ -4,7 +4,7 @@ Shipshape is a crew check-in game for long missions. It compares each person wit
 
 This file describes what the code on this branch does. Where the plan left room, the section "Readings of the plan" says which reading was built, so the team can steer.
 
-## Decisions taken (plan v0.1, recommended options)
+## Decisions taken ([plan v0.1](plan-v0.1.md), recommended options)
 
 | # | Decision | Built |
 | --- | --- | --- |
@@ -296,7 +296,7 @@ One crew member never ticks a symptom and reports every slider one point better 
 ## Limits
 
 - The crew is simulated. Only the cabin data and the thresholds are real.
-- The CO₂ series is the ISS-side telemetry published for a rodent-research payload. It may differ from a cabin-wide average, and its rise on 2018-08-20 starts as a step at 00:00 UTC. It is replayed as published.
+- The CO₂ series is the ISS-side telemetry published for a rodent-research payload. It may differ from a cabin-wide average. Its rise starts as a step at 00:00 UTC on 2018-08-20 (2.6 to 4.9 mmHg), it steps down at 00:00 UTC the next day (4.9 to 4.3 mmHg), and it holds at 4.94-4.95 mmHg for several hours at a time. These may be artifacts of how the data was recorded or published; the 1-hour peak that flags day 212 comes from them. The Ship screen says so, and the series is replayed as published.
 - Headache risk follows the published odds per check-in day; the paper used 7-day averages.
 - Effect sizes for sleep, fatigue and irritability are demo parameters.
 - The rule is not validated on real crews. Browser reaction times are estimates.

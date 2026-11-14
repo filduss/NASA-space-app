@@ -1,6 +1,8 @@
 # Shipshape — overall plan v0.1 (for team input)
 
-Nov 14, 2026 · @Frantisek Kares
+> **Superseded.** This is the team's planning draft from Saturday 14 Nov 2026, kept as the design record. What the build does is in [SPEC.md](SPEC.md); where the build chose differently, SPEC's "Readings of the plan" says so.
+
+Nov 14, 2026 · Frantisek Kares
 
 ## Summary
 
@@ -13,7 +15,6 @@ This is draft v0.1 from 12:45 Saturday and nothing is locked yet. Comment anywhe
 - **NASA data:** real ISS cabin CO₂ from NASA's Open Science Data Repository (OSDR) drives the ship-or-me decision. Thresholds come from NASA-STD-3001 and NASA flight studies.
 - **Framing:** a behavioral-health piece of NASA's planned onboard decision support for Earth-independent medical operations. It combines environmental and behavioral data and supports the flight surgeon, never replaces one.
 - **Not:** an AI doctor, a diagnosis tool or a leaderboard.
-- **Projected score:** about 21 of 25 if the demo path ships as planned (see Scores and risks).
 
 ## Decisions we need from you
 
@@ -186,7 +187,7 @@ The golden path must be live by Sat 19:00, and we submit by Sun 20:00, about 4 h
 
 &#91;embedded content: hackathon plan · 7 blocks, 6 gates\]
 
-Each block ends at a gate. If a gate slips, we cut scope in the order under Scores and risks, not sleep. The times move once you confirm your local cutoff.
+Each block ends at a gate. If a gate slips, we cut scope in the order under Criteria and risks, not sleep. The times move once you confirm your local cutoff.
 
 | Person | Owns | First task at 13:30 | Branch |
 | --- | --- | --- | --- |
@@ -196,17 +197,15 @@ Each block ends at a gate. If a gate slips, we cut scope in the order under Scor
 
 We merge twice on Saturday: at 16:00 (engine and UI on fixture data) and at 19:00 (the golden path). Each of you runs your own Claude Code session on your own branch.
 
-## Scores and risks
+## Criteria and risks
 
-Projected about 21 of 25 if the golden path ships. Today it scores 15, because nothing is built yet and the rubric caps unproven ideas at 3.
-
-| Criterion | Today | If it ships | What lifts it |
-| --- | --- | --- | --- |
-| Impact | 3 | 4 | One Earth use with a sourced number |
-| Creativity | 3 | 4 | The demo opens on ship-or-me, not on points |
-| Validity | 3 | 4 | Backtest with sensitivity checks and stated limits |
-| Relevance | 3 | 4–5 | Dataset ID on screen; a table mapping the challenge's five questions to screens |
-| Presentation | 3 | 4–5 | 28-second video, burned-in subtitles, a one-page judge's summary |
+| Criterion | What lifts it |
+| --- | --- |
+| Impact | One Earth use with a sourced number |
+| Creativity | The demo opens on ship-or-me, not on points |
+| Validity | Backtest with sensitivity checks and stated limits |
+| Relevance | Dataset ID on screen; a table mapping the challenge's five questions to screens |
+| Presentation | 28-second video, burned-in subtitles, a one-page judge's summary |
 
 | Risk | Mitigation |
 | --- | --- |

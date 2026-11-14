@@ -2,7 +2,7 @@
 
 A crew check-in game for long missions. It rewards honest reporting and tells the crew whether a bad day is likely them or the ship.
 
-Built for the NASA International Space Apps Challenge. This is the MVP of [plan v0.1](<Shipshape — overall plan v0.1 (for team input).md>).
+Built for the NASA International Space Apps Challenge. It grew from the team's [plan v0.1](docs/plan-v0.1.md), now superseded by [docs/SPEC.md](docs/SPEC.md).
 
 - **Real:** ISS cabin CO₂, temperature and humidity from NASA's Open Science Data Repository (mission RR-7), and the thresholds.
 - **Simulated:** the four-person crew, seeded and labeled as simulated on every screen.

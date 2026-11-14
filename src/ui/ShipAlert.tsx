@@ -185,6 +185,13 @@ export function ShipAlert() {
           <dd>{meta.excluded}</dd>
           <dt>Caveat</dt>
           <dd>{meta.caveat}</dd>
+          <dt>Data notes</dt>
+          <dd>
+            The rise starts as a step at exactly 00:00 UTC on 2018-08-20 (2.6 to 4.9 mmHg), steps down at 00:00 UTC the next day (4.9 to 4.3
+            mmHg), and holds at 4.94 to 4.95 mmHg for several hours at a time. These may be artifacts of how the data was recorded or
+            published, not changes in the cabin; the 1-hour peak that flags day 212 comes from them. The app replays the series as published
+            and repairs nothing.
+          </dd>
         </dl>
       </Card>
     </div>
