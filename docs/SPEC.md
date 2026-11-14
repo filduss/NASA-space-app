@@ -70,7 +70,7 @@ Written by `scripts/make_accounts.py` from the demo PINs listed in the README. O
 }
 ```
 
-`role` is `astronaut` or `medical`. Every crew member in `crew.json` has one account; Dana is the medical officer.
+`role` is `astronaut`, `medical` or `surgeon`. Every crew member in `crew.json` has one account; Dana is the medical officer. People on Earth who log in but are not crew have an id outside `crew.json` and a `name` of their own: Mira is the flight surgeon at Mission Control (`{ "crewId": "mira", "role": "surgeon", "name": "Mira", … }`).
 
 ### Engine output
 
@@ -128,17 +128,32 @@ The cabin's baseline is the median of its last 14 normal days. The cabin is "abo
 | Ship alerts and quests | Yes | Yes | Yes | In summaries |
 | Safety answer | Yes | Never | Immediately | Immediately |
 
+### Crew timeline
+
+The crew board and the flight surgeon's screen share one chart: the last 14 days of cabin CO₂ (24 h mean, with the cabin's usual level and the 3 mmHg limit), how many crew drift on CO₂-linked indicators (with the rule's threshold), and one row per person. Each cell is a symbol and a word: ● within own usual, ▲ off own usual, ◆ day 3 or later, ○ no check-in, a shield for a shielded day, ■ safety answer, – nothing received. `crewTimeline` in `privacy.ts` fills it per viewer, inside the privacy table above:
+
+| Part | Crew member | Crew medical officer | Flight surgeon |
+| --- | --- | --- | --- |
+| Cabin CO₂ | Yes | Yes | Yes (ship telemetry, not a person's data) |
+| Crew drifting, no names | Every day | Every day | Only on days a ship summary was sent, with the count it gives |
+| Ship-alert band | Every day | Every day | The days a ship summary covers ("day N of the alert") |
+| Rows | Their own only | Everyone, shared indicators only, as on the board | Only people a summary names, and only the days and indicators that summary states |
+
+A row cell shows ◆ when a shared indicator has been off 3 days **and** it is day 3 of the same likely cause, which is the day a summary goes to Earth. Safety answers never show in board rows; the flight surgeon's row shows ■ the day the immediate summary was sent.
+
+Times: on board, ship time is UTC and the check-in is at 08:00. The flight surgeon's screen gives each time also in Houston local time, where Mission Control sits, after the comm delay. The real date behind a mission day (`cabin.json` replay) decides summer or winter time.
+
 ### Login
 
 `/` is the login, `/dashboard` the personal dashboard and `/app` the crew app. Both need a logged-in person; without one they send you to the login and back afterwards (only to those two pages).
 
-| | Astronaut | Medical officer |
-| --- | --- | --- |
-| Own dashboard (`/dashboard`) | Yes | Yes |
-| Anyone else's dashboard | No | No |
-| Crew app (`/app`), with its **Viewing as** control | No: sent to their own dashboard | Yes |
+| | Astronaut | Medical officer | Flight surgeon (Earth) |
+| --- | --- | --- | --- |
+| Own dashboard (`/dashboard`) | Yes | Yes | None: not crew, sent to the crew app |
+| Anyone else's dashboard | No | No | No |
+| Crew app (`/app`) | No: sent to their own dashboard | Yes, with its **Viewing as** control | Yes, always viewing as the flight surgeon |
 
-The crew app is the only thing the medical role adds. Inside it, the screens and the privacy table work as before.
+The crew app is the only thing the medical role adds. The flight surgeon's login opens the crew app fixed to the flight surgeon's view: summaries, the timeline of what reached Earth, and the Learn cards. **Viewing as** and "Reset my inputs" are not offered; the mission day and comm delay controls stay for the demo. Inside the app, the screens and the privacy table work as before.
 
 - The PIN is checked in the browser with Web Crypto: PBKDF2-SHA256 against the salted hash in `accounts.json`, compared over every byte. The PIN is never stored, logged or kept in state after the check.
 - The session is in `sessionStorage` (`shipshape.session.v1`): the crew id and an expiry 8 hours on, nothing else. The role is read from `accounts.json` on every load, never from the session. Closing the tab logs out; each tab logs in on its own.
@@ -156,6 +171,8 @@ These are the places where the plan could be read two ways, or where the build g
 - **Headache is the only symptom that counts toward a ship alert.** It is the one with a published dose-response. Other ticks open a private Watch.
 - **The live reaction test is shown, not compared.** The presenter has no baseline, and the result is never stored, so it does not feed the rules.
 - **Quest steps are illustrative,** not a flight procedure, and say so.
+- **The flight surgeon has a login.** The plan names the flight surgeon as a reader of summaries; the build gives the role a login (Mira, on Earth) so the Earth view can be shown on its own. It adds no access: the login sees what the "Flight surgeon" column of the privacy table allows.
+- **The flight surgeon's timeline is rebuilt from summaries.** Nothing reaches Earth between summaries, so a row's cells come only from what a summary states: a day-3 summary covers the days each listed indicator has been off; a ship summary names who had CO₂-linked changes that day and how long the alert has run.
 - **The medical officer is one of the crew.** The plan's crew medical officer is a role, not a person; the build gives it to Dana. Her login opens her own dashboard like anyone's, plus the crew app. The crew app keeps its demo **Viewing as** control, so as the medical officer she can still show every screen of the demo.
 
 ## Game

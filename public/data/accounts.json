@@ -13,26 +13,33 @@
   {
    "crewId": "anna",
    "role": "astronaut",
-   "salt": "jJR6FeDLnAUCH85fiRpOrg==",
-   "hash": "S+/8FFlPfaIpnPslqW1XwoQcqJS2TJivdrHFheOkP0k="
+   "salt": "5+wcGKVZaIiT5LkLyKgsgg==",
+   "hash": "22xNQroi7h3K+CQneOdk+qpvzbsqIfcLXvyIamWB1A8="
   },
   {
    "crewId": "ben",
    "role": "astronaut",
-   "salt": "bq4OY9RShBgYBFNYg2z5Ig==",
-   "hash": "iUN2pGR84DqqjgvhD/RsfMfEfpQDwgzImtW6b0PHsHY="
+   "salt": "7MerObyE0G3zRtvhKMQO0A==",
+   "hash": "Iije6D+jbmgbdRqrw1Pb2TDVsXEVJlGi12UE5p0O0gc="
   },
   {
    "crewId": "chen",
    "role": "astronaut",
-   "salt": "5u4UmxM10pcoBZASgx08bA==",
-   "hash": "Yu4/Zm8UkwVS9JdbYaBPqmbLU9KwUoZHF0RyPtMQFQE="
+   "salt": "zfX9l2mOG8k9c0B4LrBVlQ==",
+   "hash": "+T1vwWG8MRDwACX7X5o3ALbn/nlPIhWWl2TcWTrEVv4="
   },
   {
    "crewId": "dana",
    "role": "medical",
-   "salt": "AuajVR+KIjag3Zn8LNSWPw==",
-   "hash": "V0Gzv7055Bz1lR68NrRV7RhRpo+yEMY8QyZeq6FuV3A="
+   "salt": "ZIFZmYk4sL7PzkokUknmLQ==",
+   "hash": "mjjMZBqVijHh0d3+ltery/91UM4mA6WKIA0EkLabhX8="
+  },
+  {
+   "crewId": "mira",
+   "role": "surgeon",
+   "name": "Mira",
+   "salt": "fkgiRPJo6xe12/PUEQvwXw==",
+   "hash": "u+Vbn03LRTYv+LEVCumFXiKczG8UwbZ/cSj9IVJWcjY="
   }
  ]
 }

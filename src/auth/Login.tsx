@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import type { AccountRole } from '../data/types.ts'
 import { useStore } from '../state.tsx'
-import { safeNext } from './paths.ts'
+import { appPath, hrefOf, pageOf, safeNext } from './paths.ts'
 import { isPinShaped, PIN_LENGTH } from './pin.ts'
-import { attemptsFor } from './session.ts'
+import { attemptsFor, homePage, mayOpen, type User } from './session.ts'
 import './login.css'
 
-const ROLE_LABEL: Record<AccountRole, string> = { astronaut: 'Astronaut', medical: 'Medical officer' }
+const ROLE_LABEL: Record<AccountRole, string> = { astronaut: 'Astronaut', medical: 'Medical officer', surgeon: 'Flight surgeon' }
 
-function nextUrl(): string {
-  return safeNext(new URLSearchParams(window.location.search).get('next'), import.meta.env.BASE_URL, window.location.origin)
+/** The ?next= page if this person may open it, otherwise their home page. */
+function nextUrl(user: User): string {
+  const base = import.meta.env.BASE_URL
+  const next = safeNext(new URLSearchParams(window.location.search).get('next'), base, window.location.origin)
+  const page = pageOf(appPath(new URL(next, window.location.origin).pathname, base))
+  return page !== 'login' && mayOpen(user, page) ? next : hrefOf(homePage(user), base)
 }
 
 function useNow(active: boolean): number {
@@ -57,7 +61,9 @@ export function Login() {
   }, [lockedUntil, locked])
 
   const roleOf = (id: string) => s.data.accounts.accounts.find((a) => a.crewId === id)?.role ?? null
-  const crew = s.data.crew.crew.filter((c) => roleOf(c.id) !== null)
+  const crew = s.data.crew.crew.filter((c) => roleOf(c.id) !== null).map((c) => ({ id: c.id, name: c.name }))
+  const crewIds = new Set(crew.map((c) => c.id))
+  const earth = s.data.accounts.accounts.filter((a) => !crewIds.has(a.crewId)).map((a) => ({ id: a.crewId, name: s.nameOf(a.crewId) }))
 
   const pick = (id: string) => {
     setPicked(id)
@@ -73,10 +79,12 @@ export function Login() {
     setPin('') // the PIN does not stay in state once it has been checked
     const r = await s.logIn(picked, value)
     setBusy(false)
-    if (r.ok) {
-      window.location.assign(nextUrl())
+    const role = roleOf(picked)
+    if (r.ok && role) {
+      window.location.assign(nextUrl({ crewId: picked, role }))
       return
     }
+    if (r.ok) return
     if (r.reason === 'locked') {
       setLockedUntil(r.lockedUntil)
       setMessage('Too many wrong PINs.')
@@ -104,7 +112,7 @@ export function Login() {
           <h2>Signed in as {s.nameOf(s.user.crewId)}</h2>
           <p className="login-sub">{ROLE_LABEL[s.user.role]}</p>
           <div className="login-actions">
-            <a className="login-btn login-btn-primary" href={nextUrl()}>
+            <a className="login-btn login-btn-primary" href={nextUrl(s.user)}>
               Continue
             </a>
             <button type="button" className="login-btn" onClick={s.logOut}>
@@ -117,27 +125,37 @@ export function Login() {
   }
 
   const name = picked ? s.nameOf(picked) : ''
+  const people = (list: { id: string; name: string }[]) => (
+    <ul className="login-crew">
+      {list.map((c) => {
+        const role = roleOf(c.id) as AccountRole
+        return (
+          <li key={c.id}>
+            <button type="button" className="login-person" onClick={() => pick(c.id)}>
+              <span className={`login-avatar${role === 'surgeon' ? ' login-avatar-earth' : ''}`} aria-hidden="true">
+                {c.name.slice(0, 1)}
+              </span>
+              <span className="login-person-name">{c.name}</span>
+              <span className={`login-role login-role-${role}`}>{ROLE_LABEL[role]}</span>
+            </button>
+          </li>
+        )
+      })}
+    </ul>
+  )
   return (
     <Shell>
       {!picked ? (
         <section className="login-card" aria-labelledby="who">
-          <h2 id="who">Who is checking in?</h2>
-          <ul className="login-crew">
-            {crew.map((c) => {
-              const role = roleOf(c.id) as AccountRole
-              return (
-                <li key={c.id}>
-                  <button type="button" className="login-person" onClick={() => pick(c.id)}>
-                    <span className="login-avatar" aria-hidden="true">
-                      {c.name.slice(0, 1)}
-                    </span>
-                    <span className="login-person-name">{c.name}</span>
-                    <span className={`login-role login-role-${role}`}>{ROLE_LABEL[role]}</span>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
+          <h2 id="who">Who is logging in?</h2>
+          <p className="login-group">Crew</p>
+          {people(crew)}
+          {earth.length > 0 && (
+            <>
+              <p className="login-group">Mission Control, Earth</p>
+              {people(earth)}
+            </>
+          )}
         </section>
       ) : (
         <section className="login-card" aria-labelledby="pin-title">

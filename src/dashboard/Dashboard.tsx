@@ -4,7 +4,10 @@ import { mayOpen, type User } from '../auth/session.ts'
 import { RULES } from '../engine/config.ts'
 import { useStore } from '../state.tsx'
 import { symptomLabel } from '../ui/text.ts'
+import { ChartSheet, type ChartTarget } from './ChartSheet.tsx'
 import { Co2Chart, Sparkline } from './charts.tsx'
+import type { RangeKey } from './history.ts'
+import { LEVEL_WORD, LevelIcon } from './LevelIcon.tsx'
 import { cabinLevel, notices, vitals, worst, zoneStates, ZONES, type Level, type Notice, type Vital, type ZoneKey } from './model.ts'
 import { SkeletonView } from './SkeletonView.tsx'
 import './dashboard.css'
@@ -19,53 +22,49 @@ const SCENES: { day: number; label: string }[] = [
   { day: 223, label: 'Day 3' },
 ]
 
-const LEVEL_WORD: Record<Level, string> = { ok: 'Normal', watch: 'Watch', alert: 'Alert' }
-
-/** Shape carries the level as well as colour: circle, triangle, octagon. */
-export function LevelIcon({ level, size = 16 }: { level: Level; size?: number }) {
+/** The "open larger" control shared by the vital tiles and the cabin panel. */
+function ExpandButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <svg className={`lvl lvl-${level}`} width={size} height={size} viewBox="0 0 20 20" aria-hidden="true">
-      {level === 'ok' && (
-        <>
-          <circle cx="10" cy="10" r="9" className="lvl-fill" />
-          <path d="M6 10.4l2.6 2.6L14.2 7.4" className="lvl-mark" />
-        </>
-      )}
-      {level === 'watch' && (
-        <>
-          <path d="M10 1.8L18.6 17H1.4z" className="lvl-fill" strokeLinejoin="round" />
-          <path d="M10 7.2v4.6M10 14.3v.1" className="lvl-mark" />
-        </>
-      )}
-      {level === 'alert' && (
-        <>
-          <path d="M6.3 1h7.4L19 6.3v7.4L13.7 19H6.3L1 13.7V6.3z" className="lvl-fill" />
-          <path d="M10 5.6v5.6M10 14.2v.1" className="lvl-mark" />
-        </>
-      )}
-    </svg>
+    <button
+      type="button"
+      className="expand"
+      aria-label={label}
+      title={label}
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick()
+      }}
+    >
+      <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+        <path d="M7 1h4v4M11 1L7 5M5 11H1V7M1 11l4-4" />
+      </svg>
+    </button>
   )
 }
 
-function VitalTile({ v }: { v: Vital }) {
+function VitalTile({ v, onOpen }: { v: Vital; onOpen: () => void }) {
   const [hover, setHover] = useState<string | null>(null)
   const fmt = (x: number) => (v.key === 'reaction' ? `${Math.round(x)} ms` : v.key === 'sleepHours' ? `${x.toFixed(1)} h` : `${x}/10`)
   const usualNum = v.usual === null ? null : Number(v.usual)
+  // The whole tile opens the chart on click; the button is the keyboard and screen-reader route.
   return (
-    <article className={`tile tile-${v.level}`}>
+    <article className={`tile tile-${v.level} tile-open`} onClick={onOpen}>
       <header className="tile-head">
         <h3>{v.label}</h3>
+        <ExpandButton label={`Open ${v.label} chart`} onClick={onOpen} />
+      </header>
+      <div className="tile-row">
+        <p className="tile-value">
+          {v.value}
+          {v.value !== '–' && <span className="tile-unit">{v.unit === '/10' ? ' / 10' : ` ${v.unit}`}</span>}
+        </p>
         {v.level !== 'ok' && (
           <span className={`pill pill-${v.level}`}>
             <LevelIcon level={v.level} size={12} />
             {LEVEL_WORD[v.level]}
           </span>
         )}
-      </header>
-      <p className="tile-value">
-        {v.value}
-        {v.value !== '–' && <span className="tile-unit">{v.unit === '/10' ? ' / 10' : ` ${v.unit}`}</span>}
-      </p>
+      </div>
       <p className="tile-sub">{hover ?? (v.usual === null ? 'Learning your normal' : `Usual ${v.usual}${v.unit === '/10' ? '' : ` ${v.unit}`}`)}</p>
       <Sparkline series={v.series} usual={usualNum} level={v.level} format={fmt} onHover={setHover} />
     </article>
@@ -104,6 +103,10 @@ export function Dashboard() {
   const user = s.user as User
   const crewId = user.crewId
   const [focus, setFocus] = useState<ZoneKey | null>(null)
+  // The open chart sheet, and the last range picked for each kind of chart (kept between openings).
+  const [chart, setChart] = useState<ChartTarget | null>(null)
+  const [vitalRange, setVitalRange] = useState<RangeKey>('14d')
+  const [co2Range, setCo2Range] = useState<RangeKey>('1d')
   const name = s.nameOf(crewId)
   const today = s.today
   const me = s.todayResult.people[crewId]
@@ -294,7 +297,7 @@ export function Dashboard() {
             </h2>
             <div className="tiles">
               {tiles.map((v) => (
-                <VitalTile key={v.key} v={v} />
+                <VitalTile key={v.key} v={v} onOpen={() => setChart({ kind: 'vital', key: v.key })} />
               ))}
               <article className={`tile tile-${me.assessment.symptoms.length ? (zones.head.level === 'alert' ? 'alert' : 'watch') : 'ok'}`}>
                 <header className="tile-head">
@@ -315,6 +318,7 @@ export function Dashboard() {
                   {LEVEL_WORD[co2Level]}
                 </span>
               )}
+              <ExpandButton label="Open cabin CO₂ chart" onClick={() => setChart({ kind: 'co2' })} />
             </h2>
             <div className="cabin-stats">
               <div className="cabin-main">
@@ -337,10 +341,22 @@ export function Dashboard() {
                 <p className="cabin-small">{cabinDay?.rh != null ? `${Math.round(cabinDay.rh)}%` : '–'}</p>
               </div>
             </div>
-            <Co2Chart hours={hours} limit={RULES.co2LimitMmHg} usual={cabin.baseline} />
+            <div className="co2-open" onClick={() => setChart({ kind: 'co2' })}>
+              <Co2Chart hours={hours} limit={RULES.co2LimitMmHg} usual={cabin.baseline} />
+            </div>
           </div>
         </section>
       </main>
+
+      {chart && (
+        <ChartSheet
+          target={chart}
+          vital={chart.kind === 'vital' ? tiles.find((t) => t.key === chart.key) : undefined}
+          range={chart.kind === 'co2' ? co2Range : vitalRange}
+          onRange={chart.kind === 'co2' ? setCo2Range : setVitalRange}
+          onClose={() => setChart(null)}
+        />
+      )}
 
       <footer className="dash-foot">
         <p>

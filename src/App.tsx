@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { hrefOf } from './auth/paths.ts'
+import { mayOpen } from './auth/session.ts'
 import { cabinLevel } from './dashboard/model.ts'
 import { useStore, type Screen } from './state.tsx'
 import { Origin } from './ui/bits.tsx'
@@ -29,8 +30,9 @@ export function App() {
   const crewId = s.role.kind === 'crew' ? s.role.crewId : null
   // The Ship tab carries the same orange / red as the cabin air on the dashboard.
   const shipLevel = s.todayResult.decision.outcome === 'ship' ? (cabinLevel(s.todayResult.cabin) === 'alert' ? 'alert' : 'watch') : null
-  const who = s.role.kind === 'crew' ? s.nameOf(s.role.crewId) : s.role.kind === 'cmo' ? 'Crew medical officer' : 'Flight surgeon'
+  const who = s.role.kind === 'crew' ? s.nameOf(s.role.crewId) : s.role.kind === 'cmo' ? 'Crew medical officer' : 'Flight surgeon, Mission Control (Earth)'
   const me = s.user ? s.nameOf(s.user.crewId) : ''
+  const myRole = s.user?.role === 'surgeon' ? 'flight surgeon, Earth' : 'medical officer'
 
   useEffect(() => {
     document.title = `${LABELS[screen]} · Shipshape`
@@ -68,10 +70,10 @@ export function App() {
               {me.slice(0, 1)}
             </span>
             <span>
-              {me} <span className="account-role">· medical officer</span>
+              {me} <span className="account-role">· {myRole}</span>
             </span>
           </span>
-          <a href={hrefOf('dashboard', import.meta.env.BASE_URL)}>My dashboard</a>
+          {s.user && mayOpen(s.user, 'dashboard') && <a href={hrefOf('dashboard', import.meta.env.BASE_URL)}>My dashboard</a>}
           <button type="button" className="link" onClick={s.logOut}>
             Log out
           </button>

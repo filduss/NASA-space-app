@@ -6,6 +6,8 @@
 | 14 Nov 2026 | Claude Code (Claude Fable 5.2) | Building the MVP on branch `mvp`: rules engine, game rules, unit tests, data scripts, the seven screens, docs | Team review pending |
 | 14 Nov 2026 | Claude Code (Claude Opus 5.5) | PIN login on branch `personal-dashboard`: `src/auth/`, `scripts/make_accounts.py`, dashboard per logged-in person, crew app limited to the medical officer, tests, docs | Team review pending |
 | 14 Nov 2026 | Claude Code (Claude Opus 5.5) | Crew app (`/app`) restyled to match the personal dashboard: dark only with the dashboard's palette, orange / red sections taken from `dashboard/model.ts` levels | Team review pending |
+| 14 Nov 2026 | Claude Code (Claude Opus 5.5) | Crew timeline (`ui/CrewTimeline.tsx`, `crewTimeline` in `privacy.ts`) replacing the body sketches; flight-surgeon login (Mira) with the Earth view and Houston times; tests, docs | Team review pending |
+| 14 Nov 2026 | Claude Code (Claude Opus 5.5) | Expandable dashboard charts: a chart sheet with time ranges (vitals 7D / 14D / 30D / All, cabin CO₂ 1D / 7D / 30D / All), flagged days taken from the engine's own levels, `dashboard/history.ts` and its tests | Team review pending |
 
 ## What AI does not do in the product
 

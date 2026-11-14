@@ -12,7 +12,7 @@ Shipshape is a NASA Space Apps Challenge entry: a crew check-in game for long mi
 
 ```bash
 npm install
-npm run dev                      # http://localhost:5173 is the login; demo PINs in README (Anna 1111 … Dana 4444)
+npm run dev                      # http://localhost:5173 is the login; demo PINs in README (Anna 1111 … Dana 4444, Mira 5555 on Earth)
 npm test                         # vitest, all tests
 npx vitest run tests/engine.test.ts          # one file
 npx vitest run -t "held"                     # tests whose name matches
@@ -69,7 +69,7 @@ XP, weekly streak with shield days, quests. Game functions cannot read check-in 
 
 - `/` → `src/auth/Login.tsx`: pick a crew member, type a 4-digit PIN.
 - `/dashboard` → `src/dashboard/`: the logged-in person's own dashboard with a three.js skeleton point cloud (`public/models/skeleton.glb`), lazy-loaded. `dashboard/model.ts` maps engine output to body-zone levels and notices; it must not introduce rules of its own. The crew app reuses its `cabinLevel` / `indicatorLevel`, so orange (watch) and red (alert) mean the same on both pages.
-- `/app` → `App.tsx` + `src/ui/`: the crew app, medical officer only. Seven screens, with tabs depending on the demo "Viewing as" role (crew member, crew medical officer, flight surgeon).
+- `/app` → `App.tsx` + `src/ui/`: the crew app, for the medical officer and the flight surgeon on Earth. Seven screens, with tabs depending on the demo "Viewing as" role (crew member, crew medical officer, flight surgeon); the flight surgeon's login is fixed to the flight surgeon view (`role` in `state.tsx`). The crew board and the surgeon's screen share `ui/CrewTimeline.tsx`, filled per viewer by `crewTimeline` in `privacy.ts`; times on the Earth side use `ui/clock.ts` (ship time UTC, Houston).
 
 The golden path the demo depends on is mission days 212 → 213 → 221 → 223 (table in `docs/SPEC.md`). The crew is seed 402 with scripted events recorded in `crew.json`.
 
@@ -79,10 +79,11 @@ A privacy gate with no server behind it, not security. `docs/SPEC.md` "Login" ha
 
 - `pin.ts` checks a PIN with Web Crypto PBKDF2 against the salted hash in `public/data/accounts.json`. `session.ts` holds the session (sessionStorage: crew id and expiry only), the wrong-PIN lockout (localStorage) and `mayOpen(user, page)`.
 - The role always comes from `accounts.json`, re-read on every load; the session carries only who is logged in.
-- `RequireUser page=…` wraps `/dashboard` and `/app`. A new page needs a `Page` in `paths.ts` (type, `PAGE_PATHS`, `pageOf`; that list is also the `?next=` allowlist) and a rule in `mayOpen`.
+- `RequireUser page=…` wraps `/dashboard` and `/app`; a person who may not open a page goes to `homePage(user)`. A new page needs a `Page` in `paths.ts` (type, `PAGE_PATHS`, `pageOf`; that list is also the `?next=` allowlist) and a rule in `mayOpen`.
+- Roles: `astronaut` and `medical` are crew; `surgeon` is Earth staff with no dashboard. Earth accounts have an id outside `crew.json` and a `name` in `accounts.json`; `nameOf` covers both.
 - Log out through the store's `logOut`, which ends the session and loads a clean login. Clearing `user` in state instead lets `RequireUser` redirect first, with a `?next=` back to the page.
 - sessionStorage is per tab: every new tab or browser context logs in again, including in browser automation.
-- The demo PINs live in three places that change together: `DEMO_ACCOUNTS` in `scripts/make_accounts.py`, `DEMO_PINS` in `tests/auth.test.ts`, and the README table. `make_accounts.py` refuses to run unless its accounts match the crew ids in `crew.json`. Each run draws new salts, so `accounts.json` and its checksum change even when nothing else did.
+- The demo PINs live in three places that change together: `DEMO_ACCOUNTS` and `EARTH_ACCOUNTS` in `scripts/make_accounts.py`, `DEMO_PINS` in `tests/auth.test.ts`, and the README table. `make_accounts.py` refuses to run unless `DEMO_ACCOUNTS` matches the crew ids in `crew.json` and no Earth id reuses one. Each run draws new salts, so `accounts.json` and its checksum change even when nothing else did.
 
 ## Project constraints
 

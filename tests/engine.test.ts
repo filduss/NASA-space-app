@@ -4,6 +4,7 @@ import {
   boardPerson,
   cabinStatus,
   cmoInbox,
+  crewTimeline,
   decideShipOrMe,
   median,
   newMemory,
@@ -259,5 +260,74 @@ describe('privacy', () => {
     const { day, inbox } = run({ safetyFlag: true, symptoms: ['headache'] })
     expect(boardPerson(day.people.anna).off).toEqual([])
     expect(inbox[0]).toMatchObject({ kind: 'safety', crewId: 'anna' })
+  })
+})
+
+describe('crew timeline', () => {
+  const runDays = (all: CheckIn[], to = 20) => runEngine({ crewIds: CREW, checkIns: all, cabin: cabin(1, to), fromDay: 1, toDay: to })
+  const timeline = (viewer: Parameters<typeof crewTimeline>[0], results: ReturnType<typeof runDays>) =>
+    crewTimeline(viewer, {
+      window: results.slice(-14),
+      crewIds: CREW,
+      shielded: () => false,
+      summaries: results.flatMap((r) => r.summaries),
+    })
+  // Anna sleeps badly on days 18-20: day 20 is day 3, so a summary goes to the flight surgeon.
+  const sleepLoss = () => {
+    let all = crewHistory(1, 20)
+    for (const d of [18, 19, 20]) all = replace(all, checkIn('anna', d, { sleepQuality: 1 }))
+    return runDays(all)
+  }
+
+  it('the crew medical officer sees every row, built from shared indicators only', () => {
+    const results = runDays(replace(crewHistory(1, 20), checkIn('anna', 20, { mood: 1, stress: 9 })))
+    const t = timeline({ kind: 'cmo' }, results)
+    expect(t.rows.map((r) => r.crewId)).toEqual(CREW)
+    expect(t.rows[0].cells.at(-1)).toMatchObject({ day: 20, mark: 'ok', keys: [] })
+  })
+  it('a crew member sees the counts and only their own row', () => {
+    const t = timeline({ kind: 'crew', crewId: 'ben' }, sleepLoss())
+    expect(t.rows.map((r) => r.crewId)).toEqual(['ben'])
+    expect(t.days.every((d) => d.drifting !== null)).toBe(true)
+  })
+  it('turns from off to "day 3 or later" on the third day', () => {
+    const anna = timeline({ kind: 'cmo' }, sleepLoss()).rows[0].cells.slice(-3)
+    expect(anna.map((c) => c.mark)).toEqual(['off', 'off', 'persist'])
+  })
+  it('a run that straddles a change of likely cause does not count as day 3', () => {
+    // Fatigue off on days 16-18 while the cabin is high (ship), then on its own from day 18 (me).
+    let all = crewHistory(1, 18)
+    for (const id of ['anna', 'ben']) for (const d of [16, 17]) all = replace(all, checkIn(id, d, { fatigue: 9 }))
+    all = replace(all, checkIn('anna', 18, { fatigue: 9 }))
+    const results = runEngine({ crewIds: CREW, checkIns: all, cabin: cabin(1, 18, 2.4, { 16: 4.5, 17: 4.5 }), fromDay: 1, toDay: 18 })
+    const anna = results.at(-1)!.people.anna
+    expect(anna.assessment.indicators.fatigue.daysOff).toBe(3)
+    expect(anna.episodeDay).toBeLessThan(3)
+    const t = timeline({ kind: 'cmo' }, results)
+    expect(t.rows[0].cells.at(-1)?.mark).toBe('off')
+  })
+  it('a safety answer never shows in the board rows', () => {
+    const t = timeline({ kind: 'cmo' }, runDays(replace(crewHistory(1, 20), checkIn('anna', 20, { safetyFlag: true, symptoms: ['headache'] }))))
+    expect(t.rows[0].cells.at(-1)?.mark).toBe('ok')
+  })
+  it('the flight surgeon sees no rows and no counts before a summary is sent', () => {
+    const results = sleepLoss().slice(0, -1) // up to day 19: day 2 of the sleep loss
+    const t = timeline({ kind: 'surgeon' }, results)
+    expect(t.rows).toEqual([])
+    expect(t.days.every((d) => d.drifting === null && !d.ship)).toBe(true)
+    expect(t.days.at(-1)?.co2Mean).not.toBeNull()
+  })
+  it('the flight surgeon gets a row only from what the day-3 summary says', () => {
+    const results = sleepLoss()
+    expect(results.at(-1)?.summaries).toMatchObject([{ kind: 'person', crewId: 'anna', episodeDay: 3 }])
+    const t = timeline({ kind: 'surgeon' }, results)
+    expect(t.rows.map((r) => r.crewId)).toEqual(['anna'])
+    expect(t.rows[0].cells.slice(-4).map((c) => c.mark)).toEqual(['unknown', 'off', 'off', 'persist'])
+    expect(t.rows[0].cells.at(-1)?.keys).toEqual(['sleepQuality'])
+  })
+  it('a safety answer reaches the flight surgeon immediately', () => {
+    const t = timeline({ kind: 'surgeon' }, runDays(replace(crewHistory(1, 20), checkIn('anna', 20, { safetyFlag: true }))))
+    expect(t.rows).toMatchObject([{ crewId: 'anna' }])
+    expect(t.rows[0].cells.at(-1)?.mark).toBe('safety')
   })
 })

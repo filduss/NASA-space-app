@@ -5,6 +5,8 @@ import type { SurgeonSummary } from '../engine/types.ts'
 import { clearTheAirQuest, questProgress } from '../game/quests.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
+import { checkInAt, houstonTime, shipTime } from './clock.ts'
+import { CrewTimeline } from './CrewTimeline.tsx'
 import { fmt, indicatorLineThird, list, mmHg, symptomLabel } from './text.ts'
 
 function CmoLine({ item }: { item: CmoItem }) {
@@ -121,6 +123,8 @@ export function CmoInbox() {
 function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
   const s = useStore()
   const name = sum.crewId ? s.nameOf(sum.crewId) : ''
+  const sent = checkInAt(sum.day, s.data.cabin.meta.replay)
+  const received = checkInAt(sum.day, s.data.cabin.meta.replay, s.commDelayMin)
   const cabinLine = sum.cabin.hasData
     ? `Cabin CO₂ ${mmHg(sum.cabin.co2Mean)} over 24 h (usual ${mmHg(sum.cabin.baseline)}), highest 1-hour average ${mmHg(sum.cabin.co2Max1h)}${sum.cabin.aboveLimit ? ', above the 3 mmHg limit' : ''}.`
     : 'No usable cabin CO₂ data for this day.'
@@ -140,8 +144,8 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
       <header>
         <h3>{title}</h3>
         <p className="fine">
-          Sent mission day {sum.day} at check-in · {sum.immediate ? 'sent immediately' : 'day-3 summary'} · received on Earth {s.commDelayMin} min
-          later
+          {sum.immediate ? 'Sent immediately' : 'Day-3 summary'}, sent mission day {sum.day} at {shipTime(sent)} ship time · received{' '}
+          {s.commDelayMin} min later, <strong>{houstonTime(received)}</strong> ({shipTime(received)})
         </p>
       </header>
       {sum.kind === 'ship' && (
@@ -189,6 +193,9 @@ export function SurgeonView() {
   const s = useStore()
   return (
     <div className="stack">
+      <Card title="What Earth has received, last 14 days" aside={<Origin kind="simulated">crew</Origin>}>
+        <CrewTimeline viewer={{ kind: 'surgeon' }} />
+      </Card>
       <Card title="Flight-surgeon summaries" aside={<Origin kind="simulated">crew</Origin>}>
         <p className="muted">
           One page per event, written from fixed templates by the rules engine; no AI wording. It supports your judgement and does not

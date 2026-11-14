@@ -47,7 +47,7 @@ body.dash-body {
     radial-gradient(35% 35% at 10% 80%, rgba(48, 209, 88, 0.05), transparent 70%);
 }
 
-.dash > :not(.dash-aurora):not(.toast):not(.bar) {
+.dash > :not(.dash-aurora):not(.toast):not(.bar):not(.sheet) {
   position: relative;
 }
 
@@ -686,9 +686,25 @@ body.dash-body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.tile-head .pill {
+.tile-head .pill,
+.tile-row .pill {
+  flex: none;
   padding: 2px 7px 2px 5px;
   font-size: 11px;
+}
+.tile-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 6px;
+  min-width: 0;
+}
+.tile-row .tile-value {
+  white-space: nowrap;
+}
+.tile-row .pill {
+  margin-top: 4px;
 }
 .tile-value {
   margin-top: 4px;
@@ -872,6 +888,341 @@ body.dash-body {
   font-size: 13px;
 }
 
+/* ---------- expandable charts ---------- */
+
+.expand {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(118, 118, 128, 0.24);
+  color: var(--d-ink-2);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.expand svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.expand:hover {
+  background: rgba(118, 118, 128, 0.4);
+  color: var(--d-ink);
+}
+/* Tiles are narrow: the icon alone, no circle, so the title and the status pill keep their room. */
+.tile-head .expand {
+  width: 18px;
+  height: 22px;
+  margin-right: -4px;
+  background: none;
+  color: var(--d-ink-3);
+}
+.cabin .panel-title .pill + .expand {
+  margin-left: 0;
+}
+.tile-open {
+  cursor: pointer;
+}
+.tile-open:hover {
+  border-color: var(--d-stroke-2);
+}
+.tile-watch.tile-open:hover {
+  border-color: rgba(255, 159, 10, 0.55);
+}
+.tile-alert.tile-open:hover {
+  border-color: rgba(255, 69, 58, 0.65);
+}
+.tile-open:hover .expand {
+  color: var(--d-ink);
+  background: none;
+}
+.co2-open {
+  cursor: pointer;
+}
+.dash .expand:focus-visible,
+.dash .sheet-close:focus-visible,
+.dash .seg button:focus-visible,
+.bigchart-svg:focus-visible {
+  outline: 2px solid var(--d-blue);
+  outline-offset: 2px;
+}
+
+/* The sheet: a native modal dialog. Centered card on wide screens, bottom sheet on phones. */
+.sheet {
+  width: min(760px, calc(100vw - 48px));
+  max-width: none;
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--d-ink);
+  overflow: visible;
+}
+.sheet::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.sheet[open] {
+  animation: sheet-in 0.32s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+.sheet[open]::backdrop {
+  animation: sheet-fade 0.25s ease both;
+}
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+}
+@keyframes sheet-fade {
+  from {
+    opacity: 0;
+  }
+}
+.sheet-card {
+  display: grid;
+  gap: 14px;
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 22px 18px;
+  border-radius: var(--d-radius);
+  border: 1px solid var(--d-stroke-2);
+  background: rgba(28, 28, 30, 0.92);
+  backdrop-filter: var(--d-blur);
+  -webkit-backdrop-filter: var(--d-blur);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+.sheet-watch {
+  border-color: rgba(255, 159, 10, 0.35);
+}
+.sheet-alert {
+  border-color: rgba(255, 69, 58, 0.45);
+}
+.sheet-grab {
+  display: none;
+}
+.sheet-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sheet-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--d-ink-3);
+}
+.sheet-eyebrow .tag {
+  margin-left: 6px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 11px;
+}
+.sheet-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.sheet-now {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--d-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.sheet-close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(118, 118, 128, 0.3);
+  color: var(--d-ink-2);
+  cursor: pointer;
+}
+.sheet-close svg {
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.sheet-close:hover {
+  color: var(--d-ink);
+  background: rgba(118, 118, 128, 0.45);
+}
+.sheet-seg {
+  justify-self: start;
+}
+.sheet-seg button {
+  min-width: 56px;
+}
+.sheet-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.sheet-stats > div {
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--d-surface-2);
+}
+.sheet-stats dt {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--d-ink-3);
+  white-space: nowrap;
+}
+.sheet-stats dd {
+  margin: 2px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.sheet-note {
+  font-size: 12px;
+  color: var(--d-ink-3);
+}
+
+.bigchart {
+  min-width: 0;
+  color: var(--d-blue);
+}
+.bigchart-readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-height: 24px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: var(--d-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.bigchart-readout strong {
+  color: var(--d-ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+.bigchart-readout .pill {
+  padding: 2px 7px 2px 5px;
+  font-size: 11px;
+}
+.bigchart-empty {
+  padding: 48px 0;
+  text-align: center;
+  color: var(--d-ink-3);
+  font-size: 13px;
+}
+.bigchart-svg {
+  display: block;
+  max-width: 100%;
+  overflow: visible;
+  cursor: crosshair;
+  touch-action: pan-y;
+  border-radius: 6px;
+}
+.bigchart-grid {
+  stroke: var(--d-stroke);
+}
+.bigchart-axis {
+  fill: var(--d-ink-3);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+.bigchart-band-watch {
+  fill: rgba(255, 159, 10, 0.1);
+}
+.bigchart-band-alert {
+  fill: rgba(255, 69, 58, 0.13);
+}
+.bigchart-mark-watch {
+  fill: var(--d-orange);
+}
+.bigchart-mark-alert {
+  fill: var(--d-red);
+}
+.bigchart-area {
+  stroke: none;
+}
+.bigchart-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.bigchart-dot {
+  fill: currentColor;
+}
+.bigchart-usual {
+  stroke: var(--d-ink-2);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+.bigchart-limit {
+  stroke: var(--d-red);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  opacity: 0.85;
+}
+.bigchart-tag {
+  fill: var(--d-ink-2);
+  font-size: 10.5px;
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: rgba(28, 28, 30, 0.9);
+  stroke-width: 3px;
+}
+.bigchart-tag-limit {
+  fill: #ff6961;
+}
+.bigchart-cross {
+  stroke: var(--d-ink-3);
+}
+.bigchart-hover {
+  fill: currentColor;
+  stroke: #1c1c1e;
+  stroke-width: 2;
+}
+.bigchart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 6px;
+  list-style: none;
+  font-size: 12px;
+  color: var(--d-ink-2);
+}
+.bigchart-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
 /* ---------- toast ---------- */
 
 .toast {
@@ -1017,7 +1368,57 @@ body.dash-body {
   }
 }
 
+@media (max-width: 760px) {
+  .sheet {
+    width: 100%;
+    max-height: 94dvh;
+    margin: auto 0 0;
+  }
+  .sheet-card {
+    max-height: 94dvh;
+    padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+    border-radius: var(--d-radius) var(--d-radius) 0 0;
+    border-bottom: 0;
+  }
+  .sheet[open] {
+    animation-name: sheet-up;
+  }
+  .sheet-grab {
+    display: block;
+    justify-self: center;
+    width: 36px;
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(235, 235, 245, 0.3);
+  }
+  .sheet-title {
+    font-size: 21px;
+  }
+  .sheet-seg {
+    grid-column: auto;
+    grid-row: auto;
+    justify-self: stretch;
+    display: flex;
+  }
+  .sheet-seg button {
+    flex: 1;
+    min-width: 0;
+  }
+  .sheet-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .sheet[open],
+  .sheet[open]::backdrop {
+    animation: none;
+  }
   .note,
   .sk-label-dot::after {
     animation: none;

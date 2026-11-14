@@ -10,6 +10,7 @@ import {
   FREE_ATTEMPTS,
   LOCK_BASE_MS,
   LOCK_MAX_MS,
+  homePage,
   mayOpen,
   recordFailure,
   SESSION_KEY,
@@ -37,7 +38,7 @@ function memoryStorage(): Storage {
 const file = JSON.parse(readFileSync(new URL('../public/data/accounts.json', import.meta.url), 'utf-8')) as AccountsFile
 const accounts = file.accounts
 // The demo PINs printed in the README and set in scripts/make_accounts.py.
-const DEMO_PINS: Record<string, string> = { anna: '1111', ben: '2222', chen: '3333', dana: '4444' }
+const DEMO_PINS: Record<string, string> = { anna: '1111', ben: '2222', chen: '3333', dana: '4444', mira: '5555' }
 
 describe('PIN hashing', () => {
   it('matches Python hashlib.pbkdf2_hmac (same parameters as scripts/make_accounts.py)', async () => {
@@ -131,6 +132,20 @@ describe('roles', () => {
   it('the medical officer gets their own dashboard and the crew app', () => {
     expect(mayOpen(medical, 'dashboard')).toBe(true)
     expect(mayOpen(medical, 'app')).toBe(true)
+  })
+  it('the flight surgeon on Earth gets the crew app and no dashboard, and lands there', () => {
+    const surgeon: User = { crewId: 'mira', role: 'surgeon' }
+    expect(mayOpen(surgeon, 'app')).toBe(true)
+    expect(mayOpen(surgeon, 'dashboard')).toBe(false)
+    expect(homePage(surgeon)).toBe('app')
+    expect(homePage(astronaut)).toBe('dashboard')
+  })
+  it('accounts.json has a flight surgeon who is not in the crew, with a name of their own', () => {
+    const file = JSON.parse(readFileSync('public/data/accounts.json', 'utf8')) as AccountsFile
+    const crew = (JSON.parse(readFileSync('public/data/crew.json', 'utf8')) as { crew: { id: string }[] }).crew.map((c) => c.id)
+    const earth = file.accounts.filter((a) => !crew.includes(a.crewId))
+    expect(earth).toMatchObject([{ crewId: 'mira', role: 'surgeon', name: 'Mira' }])
+    expect(file.accounts.filter((a) => crew.includes(a.crewId)).every((a) => a.role !== 'surgeon' && a.name === undefined)).toBe(true)
   })
 })
 

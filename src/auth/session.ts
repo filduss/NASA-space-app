@@ -109,10 +109,17 @@ export function clearFailures(store: Storage, crewId: string): void {
 // ---- What a role may open -----------------------------------------------------------------
 
 /**
- * Everyone gets their own dashboard. The crew app (/app) is the medical officer's alone: it is
- * where the medical officer sees the rest of the crew. That is the only thing the role adds.
+ * Every crew member gets their own dashboard. The crew app (/app) is for the medical officer, who
+ * sees the rest of the crew there, and for the flight surgeon on Earth, who sees there only what
+ * the summaries sent to Earth contain. The flight surgeon is not crew, so has no dashboard.
  */
 export function mayOpen(user: User, page: Page): boolean {
-  if (page === 'app') return user.role === 'medical'
+  if (page === 'app') return user.role === 'medical' || user.role === 'surgeon'
+  if (page === 'dashboard') return user.role !== 'surgeon'
   return true
+}
+
+/** Where a person lands after login, or when they open a page their role may not open. */
+export function homePage(user: User): Exclude<Page, 'login'> {
+  return mayOpen(user, 'dashboard') ? 'dashboard' : 'app'
 }

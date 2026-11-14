@@ -11,6 +11,7 @@ import type { QuestLog } from './game/quests.ts'
 import { checkInEvent, totalXp, type GameEvent } from './game/xp.ts'
 
 export type Role = Viewer
+const SURGEON: Role = { kind: 'surgeon' }
 export type Screen = 'board' | 'checkin' | 'me' | 'ship' | 'learn' | 'inbox' | 'summary'
 
 /** What the browser keeps between visits. Reaction-test results are never in here. */
@@ -126,8 +127,10 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
   const [firstDay, lastDay] = data.crew.meta.days
   const dayRange: [number, number] = [firstDay + 21, lastDay]
   const [user, setUser] = useState<User | null>(() => currentUser(sessionStorage, data.accounts.accounts, Date.now()))
-  const [role, setRoleState] = useState<Role>({ kind: 'crew', crewId: data.crew.crew[0].id })
-  const [screen, setScreen] = useState<Screen>('board')
+  const [roleState, setRoleState] = useState<Role>({ kind: 'crew', crewId: data.crew.crew[0].id })
+  // The flight surgeon's login always views as the flight surgeon: that view is all the role may see.
+  const role: Role = user?.role === 'surgeon' ? SURGEON : roleState
+  const [screen, setScreen] = useState<Screen>(() => (user?.role === 'surgeon' ? 'summary' : 'board'))
   const [today, setToday] = useState(data.crew.meta.demoDay)
   const [commDelayMin, setCommDelayMin] = useState(12)
   const [local, setLocal] = useState<Local>(loadLocal)
@@ -144,7 +147,7 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
   // "Viewing as" is part of the crew app, so only someone who may open the crew app can change it.
   const setRole = useCallback(
     (r: Role) => {
-      if (!user || !mayOpen(user, 'app')) return
+      if (!user || !mayOpen(user, 'app') || user.role === 'surgeon') return
       setRoleState(r)
       setScreen(r.kind === 'surgeon' ? 'summary' : 'board')
     },
@@ -177,7 +180,11 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
     window.location.assign(hrefOf('login', import.meta.env.BASE_URL))
   }, [])
 
-  const names = useMemo(() => new Map(data.crew.crew.map((c) => [c.id, c.name])), [data])
+  const names = useMemo(() => {
+    const m = new Map(data.crew.crew.map((c) => [c.id, c.name]))
+    for (const a of data.accounts.accounts) if (a.name && !m.has(a.crewId)) m.set(a.crewId, a.name)
+    return m
+  }, [data])
   const nameOf = useCallback((id: string) => names.get(id) ?? id, [names])
   const crewIds = useMemo(() => data.crew.crew.map((c) => c.id), [data])
 

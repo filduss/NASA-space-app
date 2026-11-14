@@ -1,5 +1,6 @@
+import { RULES } from './config.ts'
 import { INDICATORS, SPEC } from './deviation.ts'
-import type { DayResult, IndicatorKey, PersonStatus } from './types.ts'
+import type { DayResult, IndicatorKey, PersonStatus, SurgeonSummary } from './types.ts'
 
 // Who may see what (docs/SPEC.md, "Privacy"). The UI only ever renders through these helpers.
 
@@ -97,4 +98,143 @@ export function cmoInbox(day: DayResult, shareWatch: Record<string, boolean>): C
 
 function unique<T>(xs: T[]): T[] {
   return [...new Set(xs)]
+}
+
+// ---- Crew timeline ---------------------------------------------------------------------------
+// One picture per viewer: cabin CO2, how many crew drift on CO2-linked indicators, and a row per
+// person. The same chart for everyone; what fills it follows the privacy table above.
+//   crew member            CO2, counts, their own row only
+//   crew medical officer   CO2, counts, every crew member's row (shared indicators, as on the board)
+//   flight surgeon         CO2, and only what the summaries sent to Earth contain: a person's row
+//                          exists only once a summary names them, counts only on ship-summary days
+
+/** One day of one person, as a viewer may see it. "unknown": nothing about that day reached the viewer. */
+export type TimelineMark = 'ok' | 'off' | 'persist' | 'absent' | 'shield' | 'safety' | 'unknown'
+
+export interface TimelineCell {
+  day: number
+  mark: TimelineMark
+  /** Indicators behind an off / persist mark that this viewer may see. */
+  keys: IndicatorKey[]
+  /** Symptom names, where the viewer may see them. */
+  symptoms: string[]
+  /** Named in a ship summary as having CO2-linked changes that day (flight surgeon only). */
+  co2Linked: boolean
+}
+
+export interface TimelineRow {
+  crewId: string
+  cells: TimelineCell[]
+}
+
+export interface TimelineDay {
+  day: number
+  co2Mean: number | null
+  baseline: number | null
+  /** Crew drifting on CO2-linked indicators; null where this viewer has no count for the day. */
+  drifting: number | null
+  /** A ship alert is on, as far as this viewer knows. */
+  ship: boolean
+}
+
+export interface Timeline {
+  days: TimelineDay[]
+  rows: TimelineRow[]
+  crewSize: number
+  /** Crew drifting that the ship-or-me rule needs. */
+  needed: number
+}
+
+export interface TimelineInput {
+  /** The days to show, oldest first. */
+  window: DayResult[]
+  crewIds: string[]
+  shielded: (crewId: string, day: number) => boolean
+  /** Every summary sent up to the last day of the window. */
+  summaries: SurgeonSummary[]
+}
+
+const SEVERITY: Record<TimelineMark, number> = { unknown: 0, ok: 1, absent: 1, shield: 1, off: 2, persist: 3, safety: 4 }
+
+function cell(day: number, mark: TimelineMark, more: Partial<TimelineCell> = {}): TimelineCell {
+  return { day, mark, keys: [], symptoms: [], co2Linked: false, ...more }
+}
+
+/** A board cell: shared indicators only, safety answers hidden, exactly as boardPerson. */
+function boardCell(status: PersonStatus, shielded: boolean): TimelineCell {
+  const p = boardPerson(status)
+  if (!p.checkedIn) return cell(status.day, shielded ? 'shield' : 'absent')
+  if (p.off.length === 0) return cell(status.day, 'ok')
+  // Day 3 of the same likely cause, the day a summary goes to Earth; a run that only straddles a
+  // change of cause (ship, then "me") starts counting again.
+  const persist = status.episodeDay >= RULES.persistDays && p.off.some((k) => status.assessment.indicators[k].daysOff >= RULES.persistDays)
+  return cell(status.day, persist ? 'persist' : 'off', { keys: p.off, symptoms: p.off.includes('symptoms') ? p.symptoms : [] })
+}
+
+/** What the summaries sent to Earth say, day by day. Nothing else reaches the flight surgeon. */
+function fromSummaries(summaries: SurgeonSummary[]) {
+  const cells = new Map<string, Map<number, TimelineCell>>()
+  const drifting = new Map<number, number>()
+  const ship = new Set<number>()
+  const put = (crewId: string, c: TimelineCell) => {
+    const row = cells.get(crewId) ?? new Map<number, TimelineCell>()
+    cells.set(crewId, row)
+    const was = row.get(c.day)
+    if (!was) return void row.set(c.day, c)
+    const top = SEVERITY[c.mark] > SEVERITY[was.mark] ? c : was
+    row.set(c.day, { ...top, keys: [...new Set([...was.keys, ...c.keys])], co2Linked: was.co2Linked || c.co2Linked })
+  }
+  for (const s of summaries) {
+    if (s.kind === 'ship') {
+      // "Ship alert, day N of the alert" also says when it started.
+      for (let d = s.day - s.episodeDay + 1; d <= s.day; d++) ship.add(d)
+      drifting.set(s.day, s.affected?.length ?? 0)
+      for (const id of s.affected ?? []) put(id, cell(s.day, 'off', { co2Linked: true }))
+    } else if (s.kind === 'safety' && s.crewId) {
+      put(s.crewId, cell(s.day, 'safety'))
+    } else if (s.kind === 'person' && s.crewId) {
+      // "Off own usual for N days": each indicator was off on its last daysOff days up to the summary.
+      const longest = Math.max(0, ...s.indicators.map((i) => i.daysOff))
+      for (let back = 0; back < longest; back++) {
+        const on = s.indicators.filter((i) => i.daysOff > back)
+        if (on.length === 0) continue
+        const persist = on.some((i) => i.daysOff - back >= RULES.persistDays)
+        put(s.crewId, cell(s.day - back, persist ? 'persist' : 'off', { keys: on.map((i) => i.key) }))
+      }
+    }
+  }
+  return { cells, drifting, ship }
+}
+
+export function crewTimeline(viewer: Viewer, input: TimelineInput): Timeline {
+  const { window, crewIds, shielded } = input
+  const crewSize = window.at(-1)?.decision.crewSize ?? crewIds.length
+  const needed = Math.ceil(crewSize * RULES.crewShare)
+
+  if (viewer.kind === 'surgeon') {
+    const last = window.at(-1)?.day ?? -Infinity
+    const sent = fromSummaries(input.summaries.filter((s) => s.day <= last))
+    const days = window.map((r) => ({
+      day: r.day,
+      co2Mean: r.cabin.co2Mean,
+      baseline: r.cabin.baseline,
+      drifting: sent.drifting.get(r.day) ?? null,
+      ship: sent.ship.has(r.day),
+    }))
+    const rows = crewIds
+      .map((id) => ({ crewId: id, cells: window.map((r) => sent.cells.get(id)?.get(r.day) ?? cell(r.day, 'unknown')) }))
+      .filter((row) => row.cells.some((c) => c.mark !== 'unknown'))
+    return { days, rows, crewSize, needed }
+  }
+
+  const days = window.map((r) => ({
+    day: r.day,
+    co2Mean: r.cabin.co2Mean,
+    baseline: r.cabin.baseline,
+    drifting: r.decision.driftingCo2.length,
+    ship: r.decision.outcome === 'ship',
+  }))
+  const visible = viewer.kind === 'crew' ? crewIds.filter((id) => id === viewer.crewId) : crewIds
+  const rows = visible.map((id) => ({ crewId: id, cells: window.map((r) => boardCell(r.people[id], shielded(id, r.day))) }))
+  return { days, rows, crewSize, needed }
 }

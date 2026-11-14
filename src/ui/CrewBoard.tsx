@@ -3,7 +3,7 @@ import { boardPerson, privateCount } from '../engine/privacy.ts'
 import type { DayResult } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
-import { Body } from './Body.tsx'
+import { CrewTimeline } from './CrewTimeline.tsx'
 import { QuestCard } from './QuestCard.tsx'
 import { boardWords, mmHg } from './text.ts'
 import { XpStrip } from './XpStrip.tsx'
@@ -48,53 +48,61 @@ export function ShipBanner({ r, onOpen }: { r: DayResult; onOpen?: () => void })
   )
 }
 
-export function CrewBoard() {
+/** Today's board for a crew member: shared indicators for everyone, today only, as before. */
+function TodayOnBoard({ me }: { me: string }) {
   const s = useStore()
   const r = s.todayResult
-  const me = s.role.kind === 'crew' ? s.role.crewId : null
-  const priv = privateCount(r)
   const shields = s.data.crew.shieldDays.filter((d) => d.day === s.today)
-
   return (
-    <div className="stack">
-      <ShipBanner r={r} onOpen={() => s.setScreen('ship')} />
-
-      <Card title={`Crew, mission day ${s.today}`} aside={<Origin kind="simulated">shared indicators only</Origin>}>
-        <div className="crew">
-          {s.data.crew.crew.map((c) => {
-            const p = boardPerson(r.people[c.id])
-            const words = boardWords(p.off, p.symptoms)
-            const shield = shields.find((d) => d.crewIds.includes(c.id))
-            return (
-              <article key={c.id} className={`person${p.checkedIn && words.length ? ' person-watch' : ''}${me === c.id ? ' person-me' : ''}`}>
-                <Body
-                  zones={words.map((w) => w.zone)}
-                  absent={!p.checkedIn}
-                  label={`${c.name}: ${p.checkedIn ? (words.length ? words.map((w) => w.word).join(', ') : 'OK') : 'no check-in today'}`}
-                />
-                <h3>
-                  {c.name}
-                  {me === c.id && <span className="you"> (you)</span>}
-                </h3>
+    <section className="today" aria-label="Today on the crew board">
+      <h3>Today on the board</h3>
+      <ul>
+        {s.data.crew.crew.map((c) => {
+          const p = boardPerson(r.people[c.id])
+          const words = boardWords(p.off, p.symptoms)
+          const shield = shields.find((d) => d.crewIds.includes(c.id))
+          return (
+            <li key={c.id} className={p.checkedIn && words.length ? 'today-watch' : undefined}>
+              <span className="tl-person">
+                {c.name}
+                {me === c.id && <span className="you"> (you)</span>}
+              </span>
+              <span className="today-words">
                 {!p.checkedIn ? (
                   <Mark tone="idle">{shield ? `${shield.label} day, shielded` : 'No check-in yet'}</Mark>
                 ) : words.length === 0 ? (
                   <Mark tone="ok">OK</Mark>
                 ) : (
-                  <ul className="words">
-                    {words.map((w) => (
-                      <li key={w.word}>
-                        <Mark tone="watch">{w.word}</Mark>
-                      </li>
-                    ))}
-                  </ul>
+                  <Mark tone="watch">{words.map((w) => w.word).join(', ')}</Mark>
                 )}
-                {p.shipAffected && <p className="fine">Likely the ship</p>}
+                {p.shipAffected && <span className="fine"> · likely the ship</span>}
                 {p.live && <Origin kind="live">entered in this browser</Origin>}
-              </article>
-            )
-          })}
-        </div>
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
+export function CrewBoard() {
+  const s = useStore()
+  const r = s.todayResult
+  const me = s.role.kind === 'crew' ? s.role.crewId : null
+  const priv = privateCount(r)
+
+  return (
+    <div className="stack">
+      <ShipBanner r={r} onOpen={() => s.setScreen('ship')} />
+
+      <Card
+        title="Crew timeline, last 14 days"
+        aside={<Origin kind="simulated">crew · shared indicators only</Origin>}
+      >
+        {me && <p className="muted">You see the cabin air, how many crew drift, and your own row. Nobody else's history is shown to you.</p>}
+        <CrewTimeline viewer={s.role} />
+        {me && <TodayOnBoard me={me} />}
         <p className="private-count">
           <span aria-hidden="true">🔒</span> Mood and stress: {priv.off} of {priv.of} crew are off their own usual today. Counts only, never names.
         </p>

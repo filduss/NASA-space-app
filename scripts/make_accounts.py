@@ -33,6 +33,12 @@ DEMO_ACCOUNTS = {
     "dana": ("medical", "4444"),
 }
 
+# People on Earth who log in but are not crew: id -> (name, role, demo PIN). They never have a
+# dashboard; the flight surgeon sees the crew app filled only with what was sent to Earth.
+EARTH_ACCOUNTS = {
+    "mira": ("Mira", "surgeon", "5555"),
+}
+
 
 def b64(data: bytes) -> str:
     return base64.b64encode(data).decode("ascii")
@@ -44,14 +50,23 @@ def main() -> int:
     if sorted(crew_ids) != sorted(DEMO_ACCOUNTS):
         print(f"crew.json has {crew_ids}; DEMO_ACCOUNTS has {list(DEMO_ACCOUNTS)}. Update the script.")
         return 1
+    if set(EARTH_ACCOUNTS) & set(crew_ids):
+        print(f"EARTH_ACCOUNTS {list(EARTH_ACCOUNTS)} must not reuse a crew id from crew.json.")
+        return 1
 
-    accounts = []
-    for crew_id in crew_ids:
-        role, pin = DEMO_ACCOUNTS[crew_id]
+    def account(account_id: str, role: str, pin: str, name: str | None = None) -> dict:
         assert len(pin) == 4 and pin.isdigit()
+        assert role in ("astronaut", "medical", "surgeon")
         salt = secrets.token_bytes(SALT_BYTES)
         key = hashlib.pbkdf2_hmac("sha256", pin.encode("utf-8"), salt, ITERATIONS, KEY_BYTES)
-        accounts.append({"crewId": crew_id, "role": role, "salt": b64(salt), "hash": b64(key)})
+        out = {"crewId": account_id, "role": role}
+        if name is not None:
+            out["name"] = name
+        return {**out, "salt": b64(salt), "hash": b64(key)}
+
+    accounts = [account(crew_id, *DEMO_ACCOUNTS[crew_id]) for crew_id in crew_ids]
+    for account_id, (name, role, pin) in EARTH_ACCOUNTS.items():
+        accounts.append(account(account_id, role, pin, name))
 
     out = PUBLIC_DATA / "accounts.json"
     write_json(

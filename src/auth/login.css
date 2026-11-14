@@ -145,6 +145,24 @@ body.login-body {
   content: '+ ';
   font-weight: 700;
 }
+.login-role-surgeon {
+  color: #64b5ff;
+  border-color: rgba(10, 132, 255, 0.4);
+}
+.login-avatar-earth {
+  background: linear-gradient(135deg, #30d158, #0a84ff);
+}
+.login-group + .login-crew {
+  margin-top: 0;
+}
+.login-group {
+  margin: 16px 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--l-ink-3);
+}
 
 .login-back {
   background: none;

@@ -1,11 +1,11 @@
 import { useEffect, type ReactNode } from 'react'
 import { useStore } from '../state.tsx'
 import { hrefOf, type Page } from './paths.ts'
-import { mayOpen } from './session.ts'
+import { homePage, mayOpen } from './session.ts'
 
 /**
  * Shows a page only to a logged-in person whose role may open it. Nobody logged in goes to the
- * login with a way back; a logged-in person without access goes to their own dashboard.
+ * login with a way back; a logged-in person without access goes to their own home page.
  */
 export function RequireUser({ page, children }: { page: Page; children: ReactNode }) {
   const { user } = useStore()
@@ -14,7 +14,7 @@ export function RequireUser({ page, children }: { page: Page; children: ReactNod
     if (allowed) return
     const base = import.meta.env.BASE_URL
     if (user) {
-      window.location.replace(hrefOf('dashboard', base))
+      window.location.replace(hrefOf(homePage(user), base))
       return
     }
     const here = window.location.pathname + window.location.search
