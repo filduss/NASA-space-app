@@ -26,13 +26,21 @@ BURN_IN_DAYS = 10  # the rules need history before they can judge; these days ar
 SHIP_TRUTH_RISE_MMHG = 1.0  # a "ship event" day: mean CO2 at least this far above the trace's own median
 GRACE_DAYS = 1  # an alert the day after an event ends still belongs to that event
 
+SLOW_MIN_DAYS = 30  # a slow decline is scored when its trace leaves it at least this many days
+
 SCENARIOS = [
     ("Base case", {}),
     ("CO₂ effect halved", {"co2_effect_scale": 0.5}),
     ("CO₂ effect doubled", {"co2_effect_scale": 2.0}),
     ("20% of check-ins missed", {"miss_rate": 0.20}),
     ("Noisier self-reports (×1.5)", {"noise_scale": 1.5}),
+    ("Slow mood decline, one person (0.1/day)", {"slow_decline_rate": 0.1}),
+    ("One crew member under-reports", {"underreporter": True}),
 ]
+
+
+def median_or_none(xs: list[float]):
+    return round(st.median(xs), 1) if xs else None
 
 
 def load_traces() -> dict[str, list[dict]]:
@@ -90,6 +98,10 @@ def score(traces: dict[str, list[dict]], seed_base: int, overrides: dict) -> dic
     ship_delays, me_delays = [], []
     ship_total = ship_missed = big_total = big_missed = 0
     me_total = me_missed = 0
+    # Masking: does a personal problem that overlaps a ship alert still get a personal label, and how
+    # long until it reaches the flight surgeon, against personal problems with no alert?
+    mask = {k: dict(events=0, labelledShip=0, neverPersonal=0, neverToSurgeon=0, delays=[]) for k in ("overlap", "clear")}
+    slow = dict(events=0, flagged=0, flag_delays=[], to_surgeon=0, surgeon_delays=[])
 
     for rid, days in results.items():
         mission, sim = sims[rid]
@@ -153,7 +165,7 @@ def score(traces: dict[str, list[dict]], seed_base: int, overrides: dict) -> dic
                     load[name]["personSummaries"] += d["summaries"].count("person")
                     load[name]["shipSummaries"] += d["summaries"].count("ship")
         for e in sim.events:
-            if e.startDay < first or e.startDay > last:
+            if e.kind == "slow_decline" or e.startDay < first or e.startDay > last:
                 continue
             me_total += 1
             hit = next(
@@ -164,6 +176,31 @@ def score(traces: dict[str, list[dict]], seed_base: int, overrides: dict) -> dic
                 me_missed += 1
             else:
                 me_delays.append(hit - e.startDay)
+            if e.endDay > last:
+                continue
+            span = range(e.startDay, e.endDay + 1)
+            m = mask["overlap" if any(by_day[d]["outcome"] == "ship" for d in span) else "clear"]
+            m["events"] += 1
+            m["labelledShip"] += any(by_day[d]["people"][e.crewId]["a"] == "ship" for d in span)
+            m["neverPersonal"] += not any(by_day[d]["people"][e.crewId]["a"] in ("me", "shared") for d in span)
+            sent = next((d for d in range(e.startDay, min(e.endDay + GRACE_DAYS, last) + 1) if e.crewId in by_day[d]["sent"]), None)
+            if sent is None:
+                m["neverToSurgeon"] += 1
+            else:
+                m["delays"].append(sent - e.startDay)
+        for e in sim.events:
+            if e.kind != "slow_decline" or e.startDay < first or last - e.startDay + 1 < SLOW_MIN_DAYS:
+                continue
+            slow["events"] += 1
+            span = range(e.startDay, last + 1)
+            flag = next((d for d in span if by_day[d]["people"][e.crewId].get("slow")), None)
+            if flag is not None:
+                slow["flagged"] += 1
+                slow["flag_delays"].append(flag - e.startDay)
+            sent = next((d for d in span if e.crewId in by_day[d]["sent"]), None)
+            if sent is not None:
+                slow["to_surgeon"] += 1
+                slow["surgeon_delays"].append(sent - e.startDay)
 
     judged = c["correct"] + c["wrong"]
 
@@ -198,6 +235,30 @@ def score(traces: dict[str, list[dict]], seed_base: int, overrides: dict) -> dic
             "surgeonSummaryPerCrewDay": r(c["tier3_fa"] / c["crew_days"], 4),
         },
         "alertLoad": {"shipEvents": ship_total, **load},
+        "masking": {
+            k: {
+                "events": m["events"],
+                "labelledShipOnADay": m["labelledShip"],
+                "neverLabelledPersonal": m["neverPersonal"],
+                "toSurgeonDelayDaysMedian": median_or_none(m["delays"]),
+                "neverReachedSurgeon": m["neverToSurgeon"],
+            }
+            for k, m in (("overlappingShipAlert", mask["overlap"]), ("noShipAlert", mask["clear"]))
+        },
+        **(
+            {
+                "slowDecline": {
+                    "events": slow["events"],
+                    "minDays": SLOW_MIN_DAYS,
+                    "flaggedShare": r(slow["flagged"] / slow["events"]) if slow["events"] else None,
+                    "flagDelayDaysMedian": median_or_none(slow["flag_delays"]),
+                    "toSurgeonShare": r(slow["to_surgeon"] / slow["events"]) if slow["events"] else None,
+                    "toSurgeonDelayDaysMedian": median_or_none(slow["surgeon_delays"]),
+                }
+            }
+            if params.slow_decline_rate > 0
+            else {}
+        ),
     }
 
 
@@ -222,6 +283,9 @@ def main() -> int:
         )
         ld = m["alertLoad"]
         print(f"{'':30s} load over {ld['shipEvents']} ship events: shipshape {ld['shipshape']} | one case per person {ld['perPerson']}")
+        print(f"{'':30s} masking: {m['masking']}")
+        if "slowDecline" in m:
+            print(f"{'':30s} slow decline: {m['slowDecline']}")
     if args.no_write:
         return 0
 
@@ -246,6 +310,9 @@ def main() -> int:
             "falseAlarms": "Alerts on days with no event behind them, allowing one day of grace after an event ends.",
             "missedEvents": "Events that never raised an alert.",
             "alertLoad": "During ship events (plus one day of grace): person-days treated as an individual problem ('likely you') and summaries sent to the flight surgeon. 'perPerson' runs the same crews through a comparator that gives every drifting person their own case and never blames the ship, as apps with one alert per person do.",
+            "masking": "Personal events (4-7 days) that overlap a ship alert, against those with no alert: how many were put down to the ship on at least one day, how many never got a personal label, and the median days from the event's start to the day-3 summary naming that person.",
+            "slowDecline": f"One crew member's mood falls and stress rises by 0.1 slider points a day from day 15 of the trace, with no other event for that person. Scored when the trace leaves at least {SLOW_MIN_DAYS} days of decline: the share flagged as a slow change against their starting normal, the share that reached the flight surgeon, and the median days from the decline's start.",
+            "underreporter": "One crew member never ticks a symptom and reports every slider one point better than it is.",
             "deviationFromPlan": "Crews run over one whole real trace each (27-73 days) instead of 90 days: real data is never stitched or looped.",
         },
         "scenarios": scenarios,

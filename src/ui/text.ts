@@ -37,12 +37,23 @@ export function indicatorLine(r: IndicatorResult, symptoms: string[] = []): stri
   if (r.reason === 'short_sleep') {
     return `Under ${RULES.shortSleepHours} h of sleep on ${RULES.shortSleepNights} or more of the last ${RULES.shortSleepWindow} nights`
   }
+  if (r.reason === 'below_start' && r.start && r.baseline) {
+    return `Your usual ${spec.label.toLowerCase()} has ${slowly(r.key, r.start.median, r.baseline.median)} since your first ${RULES.startNormalDays} check-ins`
+  }
   return `${spec.offText} your usual ${days(r.daysOff)}`
 }
 
+/** "slipped from 7/10 to 5/10" or "risen from 3/10 to 5/10", in the indicator's unwanted direction. */
+function slowly(key: IndicatorKey, start: number, now: number): string {
+  return `${SPEC[key].direction === 'lowBad' ? 'slipped' : 'risen'} from ${fmt(key, start)} to ${fmt(key, now)}`
+}
+
 /** The same line for someone else to read (summaries, the crew medical officer). */
-export function indicatorLineThird(r: { key: IndicatorKey; daysOff: number }): string {
+export function indicatorLineThird(r: { key: IndicatorKey; daysOff: number; start?: number | null; usual?: number | null }): string {
   if (r.key === 'symptoms') return `Symptoms reported ${r.daysOff > 1 ? `${r.daysOff} days running` : 'today'}`
+  if (r.start != null && r.usual != null) {
+    return `${SPEC[r.key].label}: own usual has ${slowly(r.key, r.start, r.usual)} since the first ${RULES.startNormalDays} check-ins`
+  }
   return `${SPEC[r.key].offText} own usual ${days(r.daysOff)}`
 }
 

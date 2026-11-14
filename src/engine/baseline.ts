@@ -39,6 +39,23 @@ export interface BaselineOptions {
 }
 
 /**
+ * The starting normal: median and spread of the first `n` samples. It exists only once all `n` are
+ * before `day`, so a result never depends on today or later. A slow change is judged against it,
+ * because a decline too slow to jump out on any one day becomes the rolling normal.
+ */
+export function startingBaseline(samples: Sample[], day: number, n: number, minSpread: number): Baseline | null {
+  const first = samples
+    .filter((s) => Number.isFinite(s.value))
+    .sort((a, b) => a.day - b.day)
+    .slice(0, n)
+  if (first.length < n || first[n - 1].day >= day) return null
+  return robustBaseline(
+    first.map((s) => s.value),
+    minSpread,
+  )
+}
+
+/**
  * Baseline for `day` from earlier samples only: the most recent `window` usable samples
  * within `lookback` days. Falls back to including excluded days when too few remain,
  * and returns null when there is still not enough history.

@@ -1,4 +1,4 @@
-import { trailingBaseline, type Sample } from './baseline.ts'
+import { startingBaseline, trailingBaseline, type Sample } from './baseline.ts'
 import { RULES } from './config.ts'
 import type { CheckIn, IndicatorKey, IndicatorResult, PersonDay, SymptomKey } from './types.ts'
 
@@ -11,6 +11,12 @@ export interface IndicatorSpec {
   co2Linked: boolean
   /** Shared on the crew board by default, or private to the person. */
   privacy: 'shared' | 'private'
+  /**
+   * Also checked for a slow change against the starting normal. Mood and stress only: they are the
+   * isolation signals and never enter the ship rule, while a CO2 week itself shifts the usual of the
+   * CO2-linked indicators and would look like a slow change.
+   */
+  slowDrift?: boolean
   /** Floor for the own-normal spread, in the indicator's units (or a fraction of the median). */
   minSpread: number
   minSpreadRelative?: boolean
@@ -101,6 +107,7 @@ export const INDICATORS: IndicatorSpec[] = [
     direction: 'highBad',
     co2Linked: false,
     privacy: 'private',
+    slowDrift: true,
     minSpread: 1,
     unit: '/10',
     offText: 'Stress above',
@@ -113,6 +120,7 @@ export const INDICATORS: IndicatorSpec[] = [
     direction: 'lowBad',
     co2Linked: false,
     privacy: 'private',
+    slowDrift: true,
     minSpread: 1,
     unit: '/10',
     offText: 'Mood below',
@@ -168,7 +176,7 @@ export function newMemory(): PersonMemory {
 }
 
 function blank(key: IndicatorKey, reason: IndicatorResult['reason']): IndicatorResult {
-  return { key, value: null, baseline: null, z: null, off: false, reason, daysOff: 0 }
+  return { key, value: null, baseline: null, start: null, z: null, off: false, reason, daysOff: 0 }
 }
 
 /**
@@ -194,7 +202,7 @@ export function assessPerson(crewId: string, day: number, history: CheckIn[], me
     if (key === 'symptoms') {
       // A ticked symptom is a report, not a deviation: it needs no baseline.
       const off = today.symptoms.length > 0
-      result = { key, value, baseline: null, z: null, off, reason: off ? 'symptom' : 'ok', daysOff: 0 }
+      result = { key, value, baseline: null, start: null, z: null, off, reason: off ? 'symptom' : 'ok', daysOff: 0 }
     } else {
       const samples: Sample[] = []
       for (const c of history) {
@@ -206,13 +214,22 @@ export function assessPerson(crewId: string, day: number, history: CheckIn[], me
         provisional && spec.minSpreadRelative
           ? { ...provisional, spread: Math.max(provisional.spread, spec.minSpread * provisional.median) }
           : provisional
+      const sign = spec.direction === 'highBad' ? 1 : -1
       if (!baseline) {
-        result = { key, value, baseline: null, z: null, off: false, reason: 'no_baseline', daysOff: 0 }
+        result = { key, value, baseline: null, start: null, z: null, off: false, reason: 'no_baseline', daysOff: 0 }
       } else {
-        const sign = spec.direction === 'highBad' ? 1 : -1
         const z = (sign * (value - baseline.median)) / baseline.spread
         const off = z >= RULES.driftZ
-        result = { key, value, baseline, z, off, reason: off ? 'off_usual' : 'ok', daysOff: 0 }
+        result = { key, value, baseline, start: null, z, off, reason: off ? 'off_usual' : 'ok', daysOff: 0 }
+      }
+      if (spec.slowDrift) {
+        // A slow change: today's own normal (which leaves out days judged off) has moved away from the
+        // starting normal, though no single day jumped far enough to count as drift.
+        const start = startingBaseline(samples, day, RULES.startNormalDays, spec.minSpread)
+        result = { ...result, start }
+        if (!result.off && start && baseline && (sign * (baseline.median - start.median)) / start.spread >= RULES.startDriftZ) {
+          result = { ...result, off: true, reason: 'below_start' }
+        }
       }
       if (key === 'sleepHours' && !result.off) {
         // Cited rule: under 6 h on 3 or more of the last 7 nights, including last night.
@@ -224,7 +241,9 @@ export function assessPerson(crewId: string, day: number, history: CheckIn[], me
       }
     }
     if (result.off) {
-      memory.offDays[key].add(day)
+      // A slow change is judged against the starting normal, so its days stay in the rolling one:
+      // leaving them out would freeze that normal and make the flag switch on and off.
+      if (result.reason !== 'below_start') memory.offDays[key].add(day)
       memory.runs[key] += 1
     } else {
       memory.runs[key] = 0

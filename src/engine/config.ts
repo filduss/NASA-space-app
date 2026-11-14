@@ -11,6 +11,14 @@ export const RULES = {
   /** A reading this many robust spreads from own normal counts as drift. Demo parameter. */
   driftZ: 2.5,
 
+  /** Starting normal: each person's first N check-ins of an indicator. Demo parameter. */
+  startNormalDays: 14,
+  /**
+   * A slow change: own normal has moved this many starting spreads the unwanted way from the starting
+   * normal. Checked on mood and stress only. Demo parameter.
+   */
+  startDriftZ: 2,
+
   /** Under 6 h of sleep ... (ISS Reaction Self Test study: linked to slower responses, higher stress) */
   shortSleepHours: 6,
   /** ... on 3 or more nights ... */

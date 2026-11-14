@@ -86,6 +86,8 @@ For each indicator, the baseline is the median of the person's last 14 usable ch
 
 A reading drifts when it is 2.5 spreads from the median in the unwanted direction. The spread has a floor (0.5 h of sleep, 1 slider point, 4% of response speed).
 
+**A slow change.** A decline too slow to jump out on any one day becomes the rolling normal, so mood and stress are also compared with the person's **starting normal**: the median and spread of their first 14 check-ins. When today's own normal (the rolling one above) has moved 2 or more starting spreads the unwanted way, the indicator is off as a slow change ("your usual mood has slipped from 7/10 to 5/10 since your first 14 check-ins"). Those days stay in the rolling normal, so the flag does not switch itself off. Only mood and stress are checked: they are the isolation signals and never enter the ship rule, while a week of high CO₂ itself moves the usual of the CO₂-linked indicators and would read as a slow change. Both numbers are demo parameters, set on the tuning seeds.
+
 | Indicator | Unwanted direction | Counts toward a ship alert | Board |
 | --- | --- | --- | --- |
 | Sleep duration | Low; also under 6 h on 3 of the last 7 nights | Yes | Shared |
@@ -114,7 +116,7 @@ The air is a suspect when it is above baseline or its 24 h mean is over 3 mmHg. 
 | Tier | Trigger | Who sees it |
 | --- | --- | --- |
 | 0 | Nothing off | You |
-| 1 | Any drift: a private Watch card | You |
+| 1 | Any drift, or a slow change against your starting normal: a private Watch card | You |
 | 2 | A ship alert or shared pattern, or a Watch you chose to share | Crew medical officer |
 | 3 | Still off on day 3 of the same likely cause; again every 3 days | Flight surgeon, with the comm delay |
 | 4 | The safety answer | Crew medical officer and flight surgeon, immediately; game paused |
@@ -171,7 +173,7 @@ Times: on board, ship time is UTC and the check-in is at 08:00. The flight surge
 
 `viewsFor` in `src/auth/session.ts` lists the views a login may take; **Viewing as** offers only those. Nobody can view as another crew member: their screens are reached with their own login. The crew medical officer's view is the only thing the medical role adds. The flight surgeon's login is fixed to the flight surgeon's view: summaries and the timeline of what reached Earth. "Reset my inputs" is not offered to the flight surgeon. The mission day, mission setting and comm delay controls stay for the demo. The personal dashboard links to the person's own check-in.
 
-**Judge's tour.** The login page opens with four links that walk the golden path: day 213 as Dana (Ship screen), day 219 as Chen (dashboard), day 221 as Mira (what reached Earth), and the challenge page. Each link logs in with that person's demo PIN through the same check as typing it, then opens the page. The demo PINs are printed on each person's card; they are public on purpose (`src/auth/demo.ts`, the README and `scripts/make_accounts.py` list the same PINs). `?day=`, `?screen=` and `?mission=` open a page on a given mission day, screen and setting.
+**Judge's tour.** The login page opens with four links that walk the golden path: day 213 as Dana (Ship screen), day 221 as Chen (dashboard), day 223 as Mira (what reached Earth), and the challenge page. Each link logs in with that person's demo PIN through the same check as typing it, then opens the page. The demo PINs are printed on each person's card; they are public on purpose (`src/auth/demo.ts`, the README and `scripts/make_accounts.py` list the same PINs). `?day=`, `?screen=` and `?mission=` open a page on a given mission day, screen and setting.
 
 - The PIN is checked in the browser with Web Crypto: PBKDF2-SHA256 against the salted hash in `accounts.json`, compared over every byte. The PIN is never stored, logged or kept in state after the check.
 - The session is in `sessionStorage` (`shipshape.session.v1`): the crew id and an expiry 8 hours on, nothing else. The role is read from `accounts.json` on every load, never from the session. Closing the tab logs out; each tab logs in on its own.
@@ -182,6 +184,7 @@ Times: on board, ship time is UTC and the check-in is at 08:00. The flight surge
 
 These are the places where the plan could be read two ways, or where the build goes beyond it.
 
+- **A slow change is drift too.** The plan's own normal is the last 14 check-ins, which follows a slow decline down, so a slide never shows. Built: mood and stress are also compared with the starting normal, and a slow change opens the same private card and, if it lasts to day 3, the same summary to the flight surgeon, where the privacy table already allows mood and stress. Numbers under "Evidence".
 - **"Watch" is one day of drift.** The plan's indicator table says Watch after 3 or more days below normal; its demo needs a private card before day 3. Built: one day of drift opens a private card (tier 1), three days sends the summary (tier 3). The cited "under 6 h on 3 nights" rule is kept as written.
 - **A ship alert is held.** Once raised, it stays on while the cabin is above baseline, even on a day when fewer than half the crew drift. Without this the banner flickered during the 8-day rise in the real trace.
 - **Day 3 counts per likely cause.** When a ship alert ends and someone is still off, their count restarts at day 1 as "me". This is what makes the golden path's "day 3" land two days after the air clears.
@@ -223,9 +226,11 @@ The "Golden path" control jumps between the four days of the demo. The crew is s
 
 The real rise lasts from day 213 to day 220; the quest cannot shorten a recording. Chen's sleep loss (days 219-226) and Ben's stress dip (days 188-192) are scripted events, listed in `crew.json`.
 
+Chen's sleep loss starts on day 219, while the ship alert is still on, so the app puts it down to the ship on days 219-220 and his day 3 counts from day 221, when the air is back to normal. Day 223 is the fifth day of his problem. This is the masking measured under "Evidence".
+
 ## Evidence
 
-`scripts/backtest.py` runs 200 simulated crews over 10 real ISS CO₂ traces through the app's own engine (`scripts/engine_cli.ts`), with five scenarios. The numbers are in `public/data/backtest.json` and on the challenge page (Demo controls → How it answers the challenge).
+`scripts/backtest.py` runs 200 simulated crews over 10 real ISS CO₂ traces through the app's own engine (`scripts/engine_cli.ts`), with seven scenarios. The numbers are in `public/data/backtest.json` and on the challenge page (Demo controls → How it answers the challenge).
 
 - A ship event is a run of days at least 1 mmHg above that trace's median. An individual event is an injected 4-7 day sleep loss, run of headaches or stress dip.
 - Thresholds were set on seeds 5000-5199; the reported seeds are 1000-1199.
@@ -239,11 +244,11 @@ Most health apps give each person their own alert. The backtest runs the same cr
 
 | During CO₂ rises | Shipshape | One alert per person |
 | --- | --- | --- |
-| Person-days treated as a personal problem | 94 | 342 |
+| Person-days treated as a personal problem | 95 | 343 |
 | Individual summaries to the flight surgeon (they carry private readings) | 5 | 39 |
 | Crew-level ship summaries | 71 | 0 |
 
-Shipshape has 73% fewer personal cases and 87% fewer individual summaries in the base case; the reduction in personal cases is 41% to 95% across the five scenarios. It does send more messages in total, because the ship summary repeats every 3 days while an alert lasts; each is one crew-level note about the cabin, not a medical case.
+Shipshape has 72% fewer personal cases and 87% fewer individual summaries in the base case; the reduction in personal cases is 41% to 95% across the seven scenarios. It does send more messages in total, because the ship summary repeats every 3 days while an alert lasts; each is one crew-level note about the cabin, not a medical case.
 
 ### Which reading of the 3 mmHg limit
 
@@ -255,7 +260,37 @@ Three versions of the rule, base case, on the tuning seeds (5000-5199) and the r
 | ... or the highest 1-hour average is over 3 mmHg | 0.905 / 0.894 | 23.3% / 23.3% | 0.0163 / 0.0192 |
 | ... or the 24 h mean is over 3 mmHg (built) | 0.923 / 0.904 | 23.3% / 23.3% | 0.0131 / 0.0152 |
 
+These were measured before the slow-change check; with it, the built rule scores 0.923 / 0.903.
+
 The scorer counts a ship event only as a rise of 1 mmHg above the trace's median, so an alert on a cabin that is high all along counts as false here even though the simulated crew's headache risk is raised. The cost of the limit check is therefore an upper bound. Days with a 24 h mean over 3 mmHg occur in 3 of the 10 traces (29 days); days with a 1-hour peak over 3 mmHg occur in 5 (64 days).
+
+### Masking: a personal problem during a ship alert
+
+During a ship alert, anyone with a CO₂-linked change is put down to the ship, and the day-3 count runs per likely cause. A personal problem that starts during an alert is therefore labelled "the ship" until the air recovers. Base case:
+
+| Personal events (4-7 days) | Overlapping a ship alert | With no ship alert |
+| --- | --- | --- |
+| Events | 32 | 220 |
+| Put down to the ship on at least one day | 28 | 0 |
+| Never labelled personal | 8 | 17 |
+| Never reached the flight surgeon | 25 | 97 |
+
+The headline accuracy leaves out the 59 person-days on which a personal event and a CO₂ rise coincide. We tried a rule that puts a change down to the person when it starts days into an alert, after the CO₂ peaked: on the reported seeds it left "never labelled personal" at 8 of 32, got one more event to the flight surgeon and lowered accuracy from 0.903 to 0.893, so it is not built.
+
+### A slow decline
+
+One crew member's mood falls and stress rises by 0.1 slider points a day from day 15 of the trace. Scored on the 80 declines whose trace leaves at least 30 days:
+
+| | Before the slow-change check | Built |
+| --- | --- | --- |
+| Flagged as a slow change | 0% | 94%, median 25 days after the decline started |
+| Reached the flight surgeon | 9%, median 33 days | 93%, median 26 days |
+
+In the base case the check leaves accuracy at 0.903 (0.904 before) and raises needless surgeon summaries from 0.0015 to 0.0017 per crew-day.
+
+### One crew member under-reports
+
+One crew member never ticks a symptom and reports every slider one point better than it is. CO₂ rises missed go from 23% to 30%, and personal events missed from 8% to 12%. The rule needs half the crew, so one silent person makes a ship alert harder to reach. The game rewards the report, not the reading, to make silence less likely; whether it does is not measured here.
 
 ## Limits
 
@@ -265,6 +300,8 @@ The scorer counts a ship event only as a rise of 1 mmHg above the trace's median
 - Effect sizes for sleep, fatigue and irritability are demo parameters.
 - The rule is not validated on real crews. Browser reaction times are estimates.
 - Radiation figures are published averages per setting, not dosimeter readings, and leave out solar storms. The Moon and Mars rates are dose equivalent; NASA's limit is effective dose.
+- A personal problem that starts during a ship alert is put down to the ship until the air recovers (masking, under "Evidence").
+- A slow change is judged against the first 14 check-ins. If those were unusually good days, a return to normal can read as a slow change.
 
 ## Open items
 

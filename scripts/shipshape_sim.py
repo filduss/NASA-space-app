@@ -39,6 +39,15 @@ class SimParams:
     event_start_rate: float = 0.012  # chance per person-day that an individual event starts
     short_sleep_rt_penalty: float = 0.06  # slower responses after under 6 h of sleep
     eva_rate: float = 0.035  # chance per day of a spacewalk (two crew skip the check-in)
+    # --- backtest scenarios only (off by default; never used for the demo crew) ---------------
+    # One crew member (CREW_IDS[seed % 4]) has a slow decline: mood falls and stress rises by this
+    # many slider points per day from day `slow_decline_from` of the trace. That person gets no other
+    # events, so the decline is measured on its own.
+    slow_decline_rate: float = 0.0
+    slow_decline_from: int = 15
+    # One crew member (CREW_IDS[seed % 4]) under-reports: never ticks a symptom and reports each slider
+    # one point better than it is.
+    underreporter: bool = False
 
 
 @dataclass
@@ -56,7 +65,7 @@ class Person:
 @dataclass
 class Event:
     crewId: str
-    kind: str  # sleep_loss | symptom_run | stress
+    kind: str  # sleep_loss | symptom_run | stress | slow_decline (backtest scenario)
     startDay: int
     endDay: int
     scripted: bool = False
@@ -120,6 +129,13 @@ def simulate(
     events: list[Event] = list(scripted_events or [])
     shields: list[dict] = list(scripted_shields or [])
     check_ins: list[dict] = []
+    # Scenario people are fixed by the seed and use no random draws, so every other stream is unchanged.
+    special = CREW_IDS[seed % len(CREW_IDS)]
+    decliner = special if p.slow_decline_rate > 0 else None
+    decline_from = days[0] + p.slow_decline_from - 1
+    if decliner:
+        events.append(Event(decliner, "slow_decline", decline_from, days[-1]))
+    silent = special if p.underreporter else None
 
     # Spacewalk days are drawn first so every person's stream stays independent of them.
     if scripted_shields is None:
@@ -133,7 +149,7 @@ def simulate(
         latent = 0.0
         active_until = -1
         for day in days:
-            if random_events and day > active_until and prng.random() < p.event_start_rate:
+            if random_events and person.crew_id != decliner and day > active_until and prng.random() < p.event_start_rate:
                 r = prng.random()
                 kind = EVENT_KINDS[-1][0]
                 acc = 0.0
@@ -173,6 +189,10 @@ def simulate(
                 z["sleep_quality"] -= 0.5
             if "symptom_run" in kinds:
                 z["fatigue"] += 0.6
+            if person.crew_id == decliner and day >= decline_from:
+                drop = p.slow_decline_rate * (day - decline_from)
+                z["mood"] -= drop / SD["mood"]
+                z["stress"] += drop / SD["stress"]
 
             sleep_hours = clamp(round((person.sleep_hours + SD["sleep_hours"] * z["sleep_hours"]) * 2) / 2, 3, 10)
             short = sleep_hours < 6
@@ -191,6 +211,8 @@ def simulate(
             for name, rate in (("congestion", 0.004), ("eye_strain", 0.003), ("dizziness", 0.002), ("nausea", 0.001)):
                 if prng.random() < rate:
                     symptoms.append(name)
+            if person.crew_id == silent:
+                symptoms = []  # the draws above still happen, so the stream does not shift
 
             row = {
                 "crewId": person.crew_id,
@@ -205,6 +227,10 @@ def simulate(
                 "reactionMs": round(reaction),
                 "simulated": True,
             }
+            if person.crew_id == silent:
+                # one point better than it is, in each slider's unwanted direction
+                for k, better in (("sleepQuality", 1), ("fatigue", -1), ("irritability", -1), ("stress", -1), ("mood", 1)):
+                    row[k] = int(clamp(row[k] + better, 0, 10))
             missed = prng.random() < p.miss_rate
             if missed or (day, person.crew_id) in shield_lookup:
                 continue

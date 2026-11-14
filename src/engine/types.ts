@@ -57,6 +57,8 @@ export type IndicatorReason =
   | 'ok'
   | 'off_usual'
   | 'short_sleep'
+  /** A slow change: own normal has moved away from the starting normal (mood and stress). */
+  | 'below_start'
   | 'symptom'
   | 'no_baseline'
   | 'not_measured'
@@ -65,6 +67,8 @@ export interface IndicatorResult {
   key: IndicatorKey
   value: number | null
   baseline: Baseline | null
+  /** Starting normal (the person's first check-ins), for indicators checked for a slow change; else null. */
+  start: Baseline | null
   /** Distance from own normal in spreads; positive means the unwanted direction. */
   z: number | null
   off: boolean
@@ -148,7 +152,8 @@ export interface SurgeonSummary {
   crewId?: string
   episodeDay: number
   attribution?: Attribution
-  indicators: { key: IndicatorKey; daysOff: number; value: number | null; usual: number | null }[]
+  /** `start` is the starting normal when the indicator is off because of a slow change, else null. */
+  indicators: { key: IndicatorKey; daysOff: number; value: number | null; usual: number | null; start: number | null }[]
   affected?: string[]
   cabin: Pick<CabinStatus, 'co2Mean' | 'co2Max1h' | 'baseline' | 'elevated' | 'aboveLimit' | 'overLimit' | 'hasData'>
 }

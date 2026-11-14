@@ -33,8 +33,8 @@ const QUESTIONS: { q: string; a: string; jump: string; stop: TourStop }[] = [
   {
     q: 'When does a result need the crew or the flight surgeon?',
     a: 'One day off your own normal: a private card (tier 1). A ship alert or a crew-wide pattern: the crew medical officer (tier 2). Still off on day 3: a summary to the flight surgeon, sent with the comm delay (tier 3). A safety answer: both, at once (tier 4).',
-    jump: 'See what reached Earth by day 221, as the flight surgeon',
-    stop: { as: 'mira', page: 'app', search: '?day=221' },
+    jump: 'See what reached Earth by day 223, as the flight surgeon',
+    stop: { as: 'mira', page: 'app', search: '?day=223' },
   },
   {
     q: 'What actions can prevent a critical condition?',

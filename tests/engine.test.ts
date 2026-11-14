@@ -280,6 +280,60 @@ describe('escalation tiers', () => {
   })
 })
 
+describe('slow change against the starting normal', () => {
+  // Anna's mood slides one point every 8 days from day 15: never far enough in one day to be drift.
+  const sliding = (to: number) =>
+    crewHistory(1, to).map((c) => (c.crewId === 'anna' && c.day >= 15 ? { ...c, mood: c.mood - Math.floor((c.day - 15) / 8) } : c))
+  const slow = (r: { people: Record<string, { assessment: PersonDay }> }, id: string) => r.people[id].assessment.indicators.mood.reason === 'below_start'
+
+  it('a stable person never gets a slow-change flag', () => {
+    const res = runEngine({ crewIds: CREW, checkIns: crewHistory(1, 90), cabin: cabin(1, 90), fromDay: 1, toDay: 90 })
+    expect(res.some((r) => CREW.some((id) => slow(r, id)))).toBe(false)
+  })
+  it('flags a slow mood decline that never jumps on one day, and says where it started', () => {
+    const res = runEngine({ crewIds: CREW, checkIns: sliding(70), cabin: cabin(1, 70), fromDay: 1, toDay: 70 })
+    const first = res.find((r) => slow(r, 'anna'))
+    expect(first?.day).toBeGreaterThan(30)
+    expect(first?.day).toBeLessThanOrEqual(50)
+    const mood = first!.people.anna.assessment.indicators.mood
+    expect(mood.start?.median).toBe(6.5)
+    expect(mood.baseline!.median).toBeLessThanOrEqual(6.5 - RULES.startDriftZ * mood.start!.spread)
+    expect(first!.people.anna.attribution).toBe('me')
+    expect(first!.people.anna.assessment.co2LinkedOff).toEqual([])
+  })
+  it('reaches the flight surgeon on day 3, with the starting normal in the summary', () => {
+    const res = runEngine({ crewIds: CREW, checkIns: sliding(70), cabin: cabin(1, 70), fromDay: 1, toDay: 70 })
+    const sent = res.flatMap((r) => r.summaries).find((x) => x.kind === 'person' && x.crewId === 'anna')
+    expect(sent).toBeDefined()
+    expect(sent!.indicators.find((i) => i.key === 'mood')?.start).toBe(6.5)
+  })
+  it('has no starting normal, and so no flag, before the first 14 check-ins are in', () => {
+    const res = runEngine({ crewIds: CREW, checkIns: crewHistory(1, 20), cabin: cabin(1, 20), fromDay: 1, toDay: 20 })
+    expect(res[RULES.startNormalDays - 1].people.anna.assessment.indicators.mood.start).toBeNull()
+    expect(res[RULES.startNormalDays].people.anna.assessment.indicators.mood.start?.n).toBe(RULES.startNormalDays)
+  })
+  it('keeps slow-change days in the rolling normal, so the flag does not switch itself off', () => {
+    const history = sliding(60).filter((c) => c.crewId === 'anna')
+    const mem = newMemory()
+    let flagged: number | null = null
+    for (let d = 1; d <= 60; d++) {
+      const p = assessPerson('anna', d, history, mem)
+      if (p.indicators.mood.reason === 'below_start' && flagged === null) flagged = d
+    }
+    expect(flagged).not.toBeNull()
+    expect(mem.offDays.mood.has(flagged as number)).toBe(false)
+    expect(mem.runs.mood).toBeGreaterThan(0)
+  })
+  it('only mood and stress are checked for a slow change', () => {
+    const res = runEngine({ crewIds: CREW, checkIns: crewHistory(1, 30), cabin: cabin(1, 30), fromDay: 1, toDay: 30 })
+    const ind = res[29].people.anna.assessment.indicators
+    expect(ind.mood.start).not.toBeNull()
+    expect(ind.stress.start).not.toBeNull()
+    expect(ind.fatigue.start).toBeNull()
+    expect(ind.sleepHours.start).toBeNull()
+  })
+})
+
 describe('privacy', () => {
   const run = (over: Partial<CheckIn>, shareWatch: Record<string, boolean> = {}) => {
     const all = replace(crewHistory(1, 20), checkIn('anna', 20, over))

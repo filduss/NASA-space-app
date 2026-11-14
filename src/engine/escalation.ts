@@ -113,6 +113,7 @@ export function runEngine(input: EngineInput): DayResult[] {
         daysOff: a.indicators[key].daysOff,
         value: a.indicators[key].value,
         usual: a.indicators[key].baseline?.median ?? null,
+        start: a.indicators[key].reason === 'below_start' ? (a.indicators[key].start?.median ?? null) : null,
       }))
       if (a.safety) {
         summaries.push({
