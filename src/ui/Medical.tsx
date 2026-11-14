@@ -1,3 +1,4 @@
+import { cabinLevel } from '../dashboard/model.ts'
 import { cmoInbox, type CmoItem } from '../engine/privacy.ts'
 import { SPEC } from '../engine/deviation.ts'
 import type { SurgeonSummary } from '../engine/types.ts'
@@ -12,7 +13,7 @@ function CmoLine({ item }: { item: CmoItem }) {
   switch (item.kind) {
     case 'safety':
       return (
-        <li>
+        <li className="inbox-alert">
           <Mark tone="alert">
             {s.nameOf(item.crewId as string)} asked to talk to someone now. Reach them privately. The flight surgeon has been sent a message.
           </Mark>
@@ -20,7 +21,7 @@ function CmoLine({ item }: { item: CmoItem }) {
       )
     case 'ship':
       return (
-        <li>
+        <li className="inbox-watch">
           <Mark tone="watch">
             Ship alert: {item.count} of {item.of} crew show CO₂-linked changes{labels ? ` (${labels})` : ''}.
           </Mark>
@@ -28,16 +29,17 @@ function CmoLine({ item }: { item: CmoItem }) {
       )
     case 'shared_pattern':
       return (
-        <li>
+        <li className="inbox-watch">
           <Mark tone="watch">
             A shared pattern that is not the air: {item.count} of {item.of} crew are off their usual ({labels}). No names are given.
           </Mark>
         </li>
       )
     case 'persistent':
+      // Day 3 or later is red, as on the personal dashboard.
       return (
-        <li>
-          <Mark tone="watch">
+        <li className="inbox-alert">
+          <Mark tone="alert">
             {s.nameOf(item.crewId as string)}: still off their usual on day 3 or later ({labels}). A summary has gone to the flight surgeon.
           </Mark>
         </li>
@@ -88,7 +90,7 @@ export function CmoInbox() {
                 const a = p.assessment
                 const shared = s.local.shareWatch[c.id] === true
                 return (
-                  <tr key={c.id}>
+                  <tr key={c.id} className={a.checkedIn && !a.safety && a.symptoms.length ? 'row-watch' : undefined}>
                     <th scope="row">{c.name}</th>
                     {a.checkedIn ? (
                       <>
@@ -134,7 +136,7 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
     quest = `Crew quest "Clear the air": ${p.done} of ${p.total} steps done.`
   }
   return (
-    <article className="doc">
+    <article className={`doc doc-${sum.kind === 'ship' && cabinLevel(sum.cabin) !== 'alert' ? 'watch' : 'alert'}`}>
       <header>
         <h3>{title}</h3>
         <p className="fine">

@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { cabinLevel } from '../dashboard/model.ts'
 import { RULES } from '../engine/config.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin, Stat } from './bits.tsx'
@@ -31,6 +32,7 @@ export function ShipAlert() {
   ]
   const needed = Math.ceil(decision.crewSize * RULES.crewShare)
   const affected = decision.driftingCo2.map(s.nameOf)
+  const level = cabinLevel(cabin)
   const recent = s.data.cabin.daily.filter((d) => d.day <= s.today && d.day > s.today - CHART_DAYS)
 
   return (
@@ -39,14 +41,15 @@ export function ShipAlert() {
 
       <Card title="Cabin CO₂" aside={<Origin kind="real">{meta.mission}, NASA OSDR</Origin>}>
         <div className="stats">
-          <Stat label="Last 24 h" value={mmHg(cabin.co2Mean)} note={cabin.hasData ? `${cabin.hours} of 24 h of data` : 'no usable data'} />
+          <Stat label="Last 24 h" tone={level === 'ok' ? undefined : level} value={mmHg(cabin.co2Mean)} note={cabin.hasData ? `${cabin.hours} of 24 h of data` : 'no usable data'} />
           <Stat label="Cabin's usual" value={mmHg(cabin.baseline)} note={`median of the last ${RULES.cabinBaselineDays} normal days`} />
           <Stat
             label="Difference"
+            tone={cabin.elevated ? 'watch' : undefined}
             value={cabin.delta === null ? 'n/a' : `${cabin.delta >= 0 ? '+' : '−'}${Math.abs(cabin.delta).toFixed(1)} mmHg`}
             note={`above baseline from +${RULES.cabinMarginMmHg} mmHg`}
           />
-          <Stat label="Highest 1-hour average" value={mmHg(cabin.co2Max1h)} note={cabin.aboveLimit ? 'above the 3 mmHg limit' : 'under the 3 mmHg limit'} />
+          <Stat label="Highest 1-hour average" tone={cabin.aboveLimit ? 'watch' : undefined} value={mmHg(cabin.co2Max1h)} note={cabin.aboveLimit ? 'above the 3 mmHg limit' : 'under the 3 mmHg limit'} />
         </div>
         <LineChart
           points={points}
@@ -92,7 +95,7 @@ export function ShipAlert() {
 
       <Card title="Why the app says this">
         <ol className="rule">
-          <li>
+          <li className={cabin.elevated ? 'rule-watch' : undefined}>
             <Mark tone={cabin.elevated ? 'watch' : cabin.hasData ? 'ok' : 'idle'}>
               {cabin.hasData
                 ? cabin.elevated
@@ -101,13 +104,13 @@ export function ShipAlert() {
                 : 'No cabin data today: the air cannot be checked'}
             </Mark>
           </li>
-          <li>
+          <li className={affected.length >= needed ? 'rule-watch' : undefined}>
             <Mark tone={affected.length >= needed ? 'watch' : 'ok'}>
               {affected.length} of {decision.crewSize} crew drift on CO₂-linked indicators today{affected.length ? ` (${list(affected)})` : ''}; the rule
               needs {needed}
             </Mark>
           </li>
-          <li>
+          <li className={decision.outcome === 'ship' ? 'rule-watch rule-verdict' : 'rule-verdict'}>
             <strong>
               {decision.outcome === 'ship'
                 ? decision.held

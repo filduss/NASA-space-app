@@ -5,6 +5,7 @@
 | 14 Nov 2026 | Claude (plan v0.1) | Drafting the overall plan and finding sources by web search | Team review pending |
 | 14 Nov 2026 | Claude Code (Claude Fable 5.2) | Building the MVP on branch `mvp`: rules engine, game rules, unit tests, data scripts, the seven screens, docs | Team review pending |
 | 14 Nov 2026 | Claude Code (Claude Opus 5.5) | PIN login on branch `personal-dashboard`: `src/auth/`, `scripts/make_accounts.py`, dashboard per logged-in person, crew app limited to the medical officer, tests, docs | Team review pending |
+| 14 Nov 2026 | Claude Code (Claude Opus 5.5) | Crew app (`/app`) restyled to match the personal dashboard: dark only with the dashboard's palette, orange / red sections taken from `dashboard/model.ts` levels | Team review pending |
 
 ## What AI does not do in the product
 

@@ -67,7 +67,7 @@ export interface ZoneState {
 }
 
 /** Cabin air: mean above the 3 mmHg limit is red; above its own usual or a 1-hour peak over the limit is orange. */
-export function cabinLevel(c: CabinStatus): Level {
+export function cabinLevel(c: Pick<CabinStatus, 'hasData' | 'co2Mean' | 'elevated' | 'aboveLimit'>): Level {
   if (!c.hasData) return 'ok'
   if (c.co2Mean !== null && c.co2Mean > RULES.co2LimitMmHg) return 'alert'
   if (c.elevated || c.aboveLimit) return 'watch'

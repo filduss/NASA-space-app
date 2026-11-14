@@ -68,7 +68,7 @@ XP, weekly streak with shield days, quests. Game functions cannot read check-in 
 `src/main.tsx` picks one of three pages by pathname (`src/auth/paths.ts`), without a router:
 
 - `/` → `src/auth/Login.tsx`: pick a crew member, type a 4-digit PIN.
-- `/dashboard` → `src/dashboard/`: the logged-in person's own dashboard with a three.js skeleton point cloud (`public/models/skeleton.glb`), lazy-loaded. `dashboard/model.ts` maps engine output to body-zone levels and notices; it must not introduce rules of its own.
+- `/dashboard` → `src/dashboard/`: the logged-in person's own dashboard with a three.js skeleton point cloud (`public/models/skeleton.glb`), lazy-loaded. `dashboard/model.ts` maps engine output to body-zone levels and notices; it must not introduce rules of its own. The crew app reuses its `cabinLevel` / `indicatorLevel`, so orange (watch) and red (alert) mean the same on both pages.
 - `/app` → `App.tsx` + `src/ui/`: the crew app, medical officer only. Seven screens, with tabs depending on the demo "Viewing as" role (crew member, crew medical officer, flight surgeon).
 
 The golden path the demo depends on is mission days 212 → 213 → 221 → 223 (table in `docs/SPEC.md`). The crew is seed 402 with scripted events recorded in `crew.json`.
@@ -95,4 +95,4 @@ These come from the plan and are easy to break by accident:
 - **Mood and stress are private.** They appear on the crew board only as a count with no names, and never count toward a ship alert. Only headache among symptoms counts toward one.
 - **No leaderboards, no reward tied to a reading, no celebration on an alert.**
 - **Sources:** `docs/CITATIONS.md` tracks whether a human has opened each source. Do not mark one as checked or add a sourced claim to UI text unless it has been verified. Log AI contributions in `docs/AI_USE_LOG.md`.
-- Charts follow one-series, one-axis conventions with status shown by shape and word as well as color, and need to work in light and dark themes and at 390 px width.
+- Charts follow one-series, one-axis conventions with status shown by shape and word as well as color, and need to work at 390 px width. Every page is dark only, with `/dashboard` as the colour reference: `src/styles.css` (crew app) uses the same values as the `--d-*` tokens in `dashboard.css`.

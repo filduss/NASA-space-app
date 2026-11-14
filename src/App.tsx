@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { hrefOf } from './auth/paths.ts'
+import { cabinLevel } from './dashboard/model.ts'
 import { useStore, type Screen } from './state.tsx'
 import { Origin } from './ui/bits.tsx'
 import { CheckInScreen } from './ui/CheckInScreen.tsx'
@@ -25,44 +27,74 @@ export function App() {
     s.role.kind === 'crew' ? ['board', 'checkin', 'me', 'ship', 'learn'] : s.role.kind === 'cmo' ? ['board', 'inbox', 'ship', 'learn'] : ['summary', 'learn']
   const screen = tabs.includes(s.screen) ? s.screen : tabs[0]
   const crewId = s.role.kind === 'crew' ? s.role.crewId : null
-  const shipOn = s.todayResult.decision.outcome === 'ship'
+  // The Ship tab carries the same orange / red as the cabin air on the dashboard.
+  const shipLevel = s.todayResult.decision.outcome === 'ship' ? (cabinLevel(s.todayResult.cabin) === 'alert' ? 'alert' : 'watch') : null
   const who = s.role.kind === 'crew' ? s.nameOf(s.role.crewId) : s.role.kind === 'cmo' ? 'Crew medical officer' : 'Flight surgeon'
+  const me = s.user ? s.nameOf(s.user.crewId) : ''
+
+  useEffect(() => {
+    document.title = `${LABELS[screen]} · Shipshape`
+  }, [screen])
 
   return (
     <div className="app">
-      <header className="top">
-        <div className="brand">
-          <h1>Shipshape</h1>
-          <p>Is it me, or the ship?</p>
-        </div>
-        <div className="context">
-          <span>Mars transit · mission day {s.today} · {who}</span>
-          <span className="origins">
-            <Origin kind="simulated">crew</Origin>
-            <Origin kind="real">ISS CO₂, {s.data.cabin.meta.mission}</Origin>
+      <header className="appbar">
+        <div className="appbar-brand">
+          <span className="appicon" aria-hidden="true">
+            S
           </span>
+          <div>
+            <p className="appbar-name">Shipshape</p>
+            <p className="appbar-meta">Is it me, or the ship?</p>
+          </div>
         </div>
+
+        <nav className="tabs" aria-label="Screens">
+          {tabs.map((t) => (
+            <button key={t} type="button" className={t === screen ? 'tab tab-on' : 'tab'} aria-current={t === screen ? 'page' : undefined} onClick={() => s.setScreen(t)}>
+              {LABELS[t]}
+              {t === 'ship' && shipLevel && (
+                <span className={`tab-flag tab-flag-${shipLevel}`} role="img" aria-label="ship alert active">
+                  {shipLevel === 'alert' ? '◆' : '▲'}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+
         <nav className="account" aria-label="Account">
-          <span>Logged in as {s.user ? s.nameOf(s.user.crewId) : ''} · medical officer</span>
+          <span className="account-who">
+            <span className="avatar-sm" aria-hidden="true">
+              {me.slice(0, 1)}
+            </span>
+            <span>
+              {me} <span className="account-role">· medical officer</span>
+            </span>
+          </span>
           <a href={hrefOf('dashboard', import.meta.env.BASE_URL)}>My dashboard</a>
           <button type="button" className="link" onClick={s.logOut}>
             Log out
           </button>
         </nav>
-        <details className="controls" open>
-          <summary>Demo controls</summary>
-          <RoleSwitcher />
-        </details>
       </header>
 
-      <nav className="tabs" aria-label="Screens">
-        {tabs.map((t) => (
-          <button key={t} type="button" className={t === screen ? 'tab tab-on' : 'tab'} aria-current={t === screen ? 'page' : undefined} onClick={() => s.setScreen(t)}>
-            {LABELS[t]}
-            {t === 'ship' && shipOn && <span className="tab-flag" aria-label="alert active"> ▲</span>}
-          </button>
-        ))}
-      </nav>
+      <section className="intro">
+        <div>
+          <p className="intro-eyebrow">
+            Mars transit · mission day {s.today} · {who}
+          </p>
+          <h1>{LABELS[screen]}</h1>
+        </div>
+        <span className="origins">
+          <Origin kind="simulated">crew</Origin>
+          <Origin kind="real">ISS CO₂, {s.data.cabin.meta.mission}</Origin>
+        </span>
+      </section>
+
+      <details className="controls" open>
+        <summary>Demo controls</summary>
+        <RoleSwitcher />
+      </details>
 
       {/* Keyed by person and day so forms start fresh when either changes. */}
       <main key={`${crewId ?? s.role.kind}-${s.today}`}>

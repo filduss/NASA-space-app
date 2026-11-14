@@ -1,3 +1,4 @@
+import { cabinLevel } from '../dashboard/model.ts'
 import { boardPerson, privateCount } from '../engine/privacy.ts'
 import type { DayResult } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
@@ -9,11 +10,12 @@ import { XpStrip } from './XpStrip.tsx'
 
 export function ShipBanner({ r, onOpen }: { r: DayResult; onOpen?: () => void }) {
   const { cabin, decision } = r
-  let tone: 'ok' | 'watch' | 'idle' = 'ok'
+  // Orange or red follows the same cabin level as the personal dashboard.
+  const level = cabinLevel(cabin)
+  let tone: 'ok' | 'watch' | 'alert' | 'idle' = level
   let head = 'Cabin air is at its usual level'
   let body = `CO₂ ${mmHg(cabin.co2Mean)} over the last 24 h; usual ${mmHg(cabin.baseline)}.`
   if (decision.outcome === 'ship') {
-    tone = 'watch'
     head = 'Likely the ship, not you'
     body = `Cabin CO₂ is ${mmHg(cabin.delta)} above its usual level and ${decision.driftingCo2.length} of ${decision.crewSize} crew show CO₂-linked changes today.`
     if (decision.held) body += ' The alert stays on until the air is back to normal.'
@@ -22,17 +24,15 @@ export function ShipBanner({ r, onOpen }: { r: DayResult; onOpen?: () => void })
     head = 'No cabin air data for today'
     body = cabin.lastDataDay ? `Last usable reading: day ${cabin.lastDataDay}. The ship-or-me rule cannot check the air until data returns.` : 'The ship-or-me rule cannot check the air.'
   } else if (cabin.elevated) {
-    tone = 'watch'
     head = 'Cabin CO₂ is above its usual level'
     body = `${mmHg(cabin.co2Mean)} against a usual ${mmHg(cabin.baseline)}. Fewer than half the crew show CO₂-linked changes, so this is not a ship alert.`
   } else if (cabin.aboveLimit) {
     head = 'Cabin air is near its usual level'
     body = `24 h mean ${mmHg(cabin.co2Mean)} (usual ${mmHg(cabin.baseline)}), but a 1-hour average reached ${mmHg(cabin.co2Max1h)}, above the 3 mmHg limit.`
-    tone = 'watch'
   }
   return (
     <section className={`banner banner-${tone}`}>
-      <div>
+      <div className="banner-text">
         <h2>
           <Mark tone={tone}>{head}</Mark>
         </h2>
@@ -40,7 +40,7 @@ export function ShipBanner({ r, onOpen }: { r: DayResult; onOpen?: () => void })
         <Origin kind="real">ISS telemetry, NASA OSDR · {cabin.hours} of 24 h of data for day {r.day}</Origin>
       </div>
       {onOpen && (
-        <button type="button" className="btn" onClick={onOpen}>
+        <button type="button" className={tone === 'ok' || tone === 'idle' ? 'btn' : 'btn btn-primary'} onClick={onOpen}>
           {decision.outcome === 'ship' ? 'Why, and what to do' : 'Cabin air'}
         </button>
       )}
@@ -66,7 +66,7 @@ export function CrewBoard() {
             const words = boardWords(p.off, p.symptoms)
             const shield = shields.find((d) => d.crewIds.includes(c.id))
             return (
-              <article key={c.id} className={`person${me === c.id ? ' person-me' : ''}`}>
+              <article key={c.id} className={`person${p.checkedIn && words.length ? ' person-watch' : ''}${me === c.id ? ' person-me' : ''}`}>
                 <Body
                   zones={words.map((w) => w.zone)}
                   absent={!p.checkedIn}
