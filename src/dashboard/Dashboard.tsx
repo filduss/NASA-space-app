@@ -136,13 +136,8 @@ export function Dashboard() {
     return () => window.clearTimeout(t)
   }, [today]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ?day=223 opens the dashboard on that mission day (handy for the demo and for links).
-  const setToday = s.setToday
+  // ?day=219 opens the dashboard on that mission day: the store reads it at start-up.
   const [lo, hi] = s.dayRange
-  useEffect(() => {
-    const d = Number(new URLSearchParams(window.location.search).get('day'))
-    if (Number.isInteger(d) && d >= lo && d <= hi) setToday(d)
-  }, [setToday, lo, hi])
 
   useEffect(() => {
     document.title = `${name} · Shipshape`
@@ -210,6 +205,7 @@ export function Dashboard() {
             {user.role === 'medical' ? ' · medical officer' : ''}
           </span>
           <span className="acct-links">
+            <a href={hrefOf('app', import.meta.env.BASE_URL, `?screen=checkin&day=${today}`)}>Check in</a>
             {mayOpen(user, 'app') && <a href={hrefOf('app', import.meta.env.BASE_URL)}>Crew app</a>}
             <button type="button" onClick={s.logOut}>
               Log out

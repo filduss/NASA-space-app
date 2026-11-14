@@ -591,6 +591,17 @@ input {
   font-size: 13px;
   height: 34px;
 }
+.switcher-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+/* A tour link's "Opening…" note, on the challenge page. */
+.tour-state {
+  margin-left: 8px;
+  font-weight: 400;
+  color: var(--ink-2);
+}
 
 /* ---------- banner (cabin air) ---------- */
 .banner {

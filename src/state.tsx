@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { hrefOf } from './auth/paths.ts'
 import { isPinShaped, verifyPin } from './auth/pin.ts'
-import { attemptsFor, clearFailures, currentUser, endSession, FREE_ATTEMPTS, mayOpen, recordFailure, startSession, type User } from './auth/session.ts'
+import { attemptsFor, clearFailures, currentUser, endSession, FREE_ATTEMPTS, recordFailure, startSession, viewKey, viewsFor, type User } from './auth/session.ts'
 import type { AccountsFile, BacktestFile, CabinFile, CrewFile } from './data/types.ts'
 import { runEngine } from './engine/escalation.ts'
 import { MISSIONS, type MissionKey, type MissionSetting } from './engine/mission.ts'
@@ -12,8 +12,22 @@ import type { QuestLog } from './game/quests.ts'
 import { checkInEvent, totalXp, type GameEvent } from './game/xp.ts'
 
 export type Role = Viewer
-const SURGEON: Role = { kind: 'surgeon' }
-export type Screen = 'board' | 'checkin' | 'me' | 'ship' | 'inbox' | 'summary' | 'about'
+export type Screen = 'board' | 'checkin' | 'me' | 'ship' | 'inbox' | 'summary'
+const SCREENS: Screen[] = ['board', 'checkin', 'me', 'ship', 'inbox', 'summary']
+/** Screens only a crew member's own view has: a link to one opens that view. */
+const OWN_SCREENS: Screen[] = ['checkin', 'me']
+
+/** ?day=, ?screen= and ?mission= open a page on a given day, screen and setting (links and the judge's tour). */
+function fromUrl(): { day: number; screen: Screen | null; mission: MissionKey | null } {
+  const q = new URLSearchParams(window.location.search)
+  const screen = q.get('screen') as Screen | null
+  const mission = q.get('mission') as MissionKey | null
+  return {
+    day: Number(q.get('day')),
+    screen: screen && SCREENS.includes(screen) ? screen : null,
+    mission: mission && mission in MISSIONS ? mission : null,
+  }
+}
 
 /** What the browser keeps between visits. Reaction-test results are never in here. */
 interface Local {
@@ -131,14 +145,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 function Ready({ data, children }: { data: Data; children: ReactNode }) {
   const [firstDay, lastDay] = data.crew.meta.days
   const dayRange: [number, number] = [firstDay + 21, lastDay]
+  const [url] = useState(fromUrl)
   const [user, setUser] = useState<User | null>(() => currentUser(sessionStorage, data.accounts.accounts, Date.now()))
-  const [roleState, setRoleState] = useState<Role>({ kind: 'crew', crewId: data.crew.crew[0].id })
-  // The flight surgeon's login always views as the flight surgeon: that view is all the role may see.
-  const role: Role = user?.role === 'surgeon' ? SURGEON : roleState
-  const [screen, setScreen] = useState<Screen>(() => (user?.role === 'surgeon' ? 'summary' : 'board'))
-  const [today, setToday] = useState(data.crew.meta.demoDay)
-  const [missionKey, setMissionKey] = useState<MissionKey>('mars')
-  const [commDelaySec, setCommDelaySec] = useState(MISSIONS.mars.defaultDelaySec)
+  // A person only ever takes the views their role allows (viewsFor): never another crew member's.
+  const [role, setRoleState] = useState<Role>(() => {
+    if (!user) return { kind: 'crew', crewId: data.crew.crew[0].id }
+    const views = viewsFor(user)
+    const own = views.find((v) => v.kind === 'crew')
+    return url.screen && OWN_SCREENS.includes(url.screen) && own ? own : views[0]
+  })
+  const [screen, setScreen] = useState<Screen>(() => url.screen ?? (role.kind === 'surgeon' ? 'summary' : 'board'))
+  const [today, setToday] = useState(() => (Number.isInteger(url.day) && url.day >= dayRange[0] && url.day <= dayRange[1] ? url.day : data.crew.meta.demoDay))
+  const [missionKey, setMissionKey] = useState<MissionKey>(url.mission ?? 'mars')
+  const [commDelaySec, setCommDelaySec] = useState(MISSIONS[url.mission ?? 'mars'].defaultDelaySec)
   const [local, setLocal] = useState<Local>(loadLocal)
   const [liveReaction, setLiveReaction] = useState<Record<string, ReactionResult>>({})
 
@@ -150,10 +169,10 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
     }
   }, [local])
 
-  // "Viewing as" is part of the crew app, so only someone who may open the crew app can change it.
+  // "Viewing as" offers only the views this person's role allows.
   const setRole = useCallback(
     (r: Role) => {
-      if (!user || !mayOpen(user, 'app') || user.role === 'surgeon') return
+      if (!user || !viewsFor(user).some((v) => viewKey(v) === viewKey(r))) return
       setRoleState(r)
       setScreen(r.kind === 'surgeon' ? 'summary' : 'board')
     },

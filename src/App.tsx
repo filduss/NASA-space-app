@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import { hrefOf } from './auth/paths.ts'
 import { mayOpen } from './auth/session.ts'
+import type { AccountRole } from './data/types.ts'
 import { cabinLevel } from './dashboard/model.ts'
 import { useStore, type Screen } from './state.tsx'
-import { About } from './ui/About.tsx'
 import { Origin } from './ui/bits.tsx'
 import { CheckInScreen } from './ui/CheckInScreen.tsx'
 import { CrewBoard } from './ui/CrewBoard.tsx'
@@ -19,20 +19,20 @@ const LABELS: Record<Screen, string> = {
   ship: 'Ship',
   inbox: 'Inbox',
   summary: 'Summaries',
-  about: 'How it answers the challenge',
 }
+
+const ROLE_WORD: Record<AccountRole, string> = { astronaut: 'astronaut', medical: 'medical officer', surgeon: 'flight surgeon, Earth' }
 
 export function App() {
   const s = useStore()
   const tabs: Screen[] = s.role.kind === 'crew' ? ['board', 'checkin', 'me', 'ship'] : s.role.kind === 'cmo' ? ['board', 'inbox', 'ship'] : ['summary']
-  // The challenge page is for judges and visitors: it opens from the demo controls, not from a tab.
-  const screen = s.screen === 'about' || tabs.includes(s.screen) ? s.screen : tabs[0]
+  const screen = tabs.includes(s.screen) ? s.screen : tabs[0]
   const crewId = s.role.kind === 'crew' ? s.role.crewId : null
   // The Ship tab carries the same orange / red as the cabin air on the dashboard.
   const shipLevel = s.todayResult.decision.outcome === 'ship' ? (cabinLevel(s.todayResult.cabin) === 'alert' ? 'alert' : 'watch') : null
   const who = s.role.kind === 'crew' ? s.nameOf(s.role.crewId) : s.role.kind === 'cmo' ? 'Crew medical officer' : 'Flight surgeon, Mission Control (Earth)'
   const me = s.user ? s.nameOf(s.user.crewId) : ''
-  const myRole = s.user?.role === 'surgeon' ? 'flight surgeon, Earth' : 'medical officer'
+  const myRole = s.user ? ROLE_WORD[s.user.role] : ''
 
   useEffect(() => {
     document.title = `${LABELS[screen]} · Shipshape`
@@ -104,7 +104,6 @@ export function App() {
         {screen === 'checkin' && crewId && <CheckInScreen crewId={crewId} />}
         {screen === 'me' && crewId && <MeView crewId={crewId} />}
         {screen === 'ship' && <ShipAlert />}
-        {screen === 'about' && <About />}
         {screen === 'inbox' && <CmoInbox />}
         {screen === 'summary' && <SurgeonView />}
       </main>

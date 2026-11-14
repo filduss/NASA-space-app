@@ -5,10 +5,11 @@ import { Login } from './auth/Login.tsx'
 import { appPath, pageOf } from './auth/paths.ts'
 import { RequireUser } from './auth/RequireUser.tsx'
 import { StoreProvider } from './state.tsx'
+import { ChallengePage } from './ui/Challenge.tsx'
 import './styles.css'
 
-// Three pages, no router: "/" is the login, /dashboard the personal dashboard, /app the crew app
-// (medical officer only).
+// Four pages, no router: "/" is the login with the judge's tour, /challenge the public challenge page,
+// /dashboard the personal dashboard and /app the crew app. The last two need a logged-in person.
 // The dashboard (and three.js with it) loads only when that page is opened.
 const Dashboard = lazy(() => import('./dashboard/Dashboard.tsx').then((m) => ({ default: m.Dashboard })))
 const page = pageOf(appPath(window.location.pathname, import.meta.env.BASE_URL))
@@ -19,6 +20,8 @@ createRoot(document.getElementById('root') as HTMLElement).render(
       <Suspense fallback={<p className="boot">Loading…</p>}>
         {page === 'login' ? (
           <Login />
+        ) : page === 'challenge' ? (
+          <ChallengePage />
         ) : (
           <RequireUser page={page}>{page === 'dashboard' ? <Dashboard /> : <App />}</RequireUser>
         )}

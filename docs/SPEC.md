@@ -160,15 +160,18 @@ Times: on board, ship time is UTC and the check-in is at 08:00. The flight surge
 
 ### Login
 
-`/` is the login, `/dashboard` the personal dashboard and `/app` the crew app. Both need a logged-in person; without one they send you to the login and back afterwards (only to those two pages).
+`/` is the login with the judge's tour, `/challenge` the challenge page, `/dashboard` the personal dashboard and `/app` the crew app. The challenge page needs no login. The last two need a logged-in person; without one they send you to the login and back afterwards (only to our own pages).
 
 | | Astronaut | Medical officer | Flight surgeon (Earth) |
 | --- | --- | --- | --- |
 | Own dashboard (`/dashboard`) | Yes | Yes | None: not crew, sent to the crew app |
 | Anyone else's dashboard | No | No | No |
-| Crew app (`/app`) | No: sent to their own dashboard | Yes, with its **Viewing as** control | Yes, always viewing as the flight surgeon |
+| Crew app (`/app`) | Yes, as themselves: check-in, Me, crew board, Ship | Yes, as the crew medical officer or as herself | Yes, always viewing as the flight surgeon |
+| Challenge page (`/challenge`) | Yes | Yes | Yes, and with no login |
 
-The crew app is the only thing the medical role adds. The flight surgeon's login opens the crew app fixed to the flight surgeon's view: summaries and the timeline of what reached Earth; the challenge page opens from the demo controls as for everyone. **Viewing as** and "Reset my inputs" are not offered; the mission day, mission setting and comm delay controls stay for the demo. Inside the app, the screens and the privacy table work as before.
+`viewsFor` in `src/auth/session.ts` lists the views a login may take; **Viewing as** offers only those. Nobody can view as another crew member: their screens are reached with their own login. The crew medical officer's view is the only thing the medical role adds. The flight surgeon's login is fixed to the flight surgeon's view: summaries and the timeline of what reached Earth. "Reset my inputs" is not offered to the flight surgeon. The mission day, mission setting and comm delay controls stay for the demo. The personal dashboard links to the person's own check-in.
+
+**Judge's tour.** The login page opens with four links that walk the golden path: day 213 as Dana (Ship screen), day 219 as Chen (dashboard), day 221 as Mira (what reached Earth), and the challenge page. Each link logs in with that person's demo PIN through the same check as typing it, then opens the page. The demo PINs are printed on each person's card; they are public on purpose (`src/auth/demo.ts`, the README and `scripts/make_accounts.py` list the same PINs). `?day=`, `?screen=` and `?mission=` open a page on a given mission day, screen and setting.
 
 - The PIN is checked in the browser with Web Crypto: PBKDF2-SHA256 against the salted hash in `accounts.json`, compared over every byte. The PIN is never stored, logged or kept in state after the check.
 - The session is in `sessionStorage` (`shipshape.session.v1`): the crew id and an expiry 8 hours on, nothing else. The role is read from `accounts.json` on every load, never from the session. Closing the tab logs out; each tab logs in on its own.
@@ -191,7 +194,8 @@ These are the places where the plan could be read two ways, or where the build g
 - **Radiation is shown, not judged.** It has no tier, no card per person and no part in ship or me: the whole crew gets about the same dose and nobody can feel it at everyday levels. A solar-storm warning would be a second "ship" cause; that is not built.
 - **The flight surgeon has a login.** The plan names the flight surgeon as a reader of summaries; the build gives the role a login (Mira, on Earth) so the Earth view can be shown on its own. It adds no access: the login sees what the "Flight surgeon" column of the privacy table allows.
 - **The flight surgeon's timeline is rebuilt from summaries.** Nothing reaches Earth between summaries, so a row's cells come only from what a summary states: a day-3 summary covers the days each listed indicator has been off; a ship summary names who had CO₂-linked changes that day and how long the alert has run.
-- **The medical officer is one of the crew.** The plan's crew medical officer is a role, not a person; the build gives it to Dana. Her login opens her own dashboard like anyone's, plus the crew app. The crew app keeps its demo **Viewing as** control, so as the medical officer she can still show every screen of the demo.
+- **The medical officer is one of the crew.** The plan's crew medical officer is a role, not a person; the build gives it to Dana. Her login opens her own dashboard like anyone's, plus the crew app as the crew medical officer or as herself. She cannot view as another crew member, because that would show their private mood and stress; the judge's tour opens the other people's screens with their own logins.
+- **Astronauts use the crew app too.** The check-in, the reaction test, the quest steps, the share toggle and the safety question live in the crew app, so every crew member opens it, in their own view only.
 
 ## Game
 

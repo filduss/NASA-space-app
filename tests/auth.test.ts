@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import { DEMO_PINS, TOUR } from '../src/auth/demo.ts'
 import { appPath, hrefOf, pageOf, safeNext } from '../src/auth/paths.ts'
 import { derive, isPinShaped, sameBytes, verifyPin } from '../src/auth/pin.ts'
 import {
@@ -16,6 +17,7 @@ import {
   SESSION_KEY,
   SESSION_MS,
   startSession,
+  viewsFor,
   type User,
 } from '../src/auth/session.ts'
 import type { AccountsFile } from '../src/data/types.ts'
@@ -37,8 +39,6 @@ function memoryStorage(): Storage {
 
 const file = JSON.parse(readFileSync(new URL('../public/data/accounts.json', import.meta.url), 'utf-8')) as AccountsFile
 const accounts = file.accounts
-// The demo PINs printed in the README and set in scripts/make_accounts.py.
-const DEMO_PINS: Record<string, string> = { anna: '1111', ben: '2222', chen: '3333', dana: '4444', mira: '5555' }
 
 describe('PIN hashing', () => {
   it('matches Python hashlib.pbkdf2_hmac (same parameters as scripts/make_accounts.py)', async () => {
@@ -125,20 +125,39 @@ describe('wrong-PIN lockout', () => {
 describe('roles', () => {
   const astronaut: User = { crewId: 'anna', role: 'astronaut' }
   const medical: User = { crewId: 'dana', role: 'medical' }
-  it('an astronaut gets their own dashboard and not the crew app', () => {
+  const surgeon: User = { crewId: 'mira', role: 'surgeon' }
+  it('an astronaut gets their own dashboard, and the crew app only as themselves, so they can check in', () => {
     expect(mayOpen(astronaut, 'dashboard')).toBe(true)
-    expect(mayOpen(astronaut, 'app')).toBe(false)
+    expect(mayOpen(astronaut, 'app')).toBe(true)
+    expect(viewsFor(astronaut)).toEqual([{ kind: 'crew', crewId: 'anna' }])
+    expect(homePage(astronaut)).toBe('dashboard')
   })
-  it('the medical officer gets their own dashboard and the crew app', () => {
+  it('the medical officer views the crew app as the crew medical officer or as herself, never as a crewmate', () => {
     expect(mayOpen(medical, 'dashboard')).toBe(true)
     expect(mayOpen(medical, 'app')).toBe(true)
+    expect(viewsFor(medical)).toEqual([{ kind: 'cmo' }, { kind: 'crew', crewId: 'dana' }])
+    expect(viewsFor(medical).some((v) => v.kind === 'surgeon' || (v.kind === 'crew' && v.crewId !== 'dana'))).toBe(false)
   })
-  it('the flight surgeon on Earth gets the crew app and no dashboard, and lands there', () => {
-    const surgeon: User = { crewId: 'mira', role: 'surgeon' }
+  it('the flight surgeon on Earth gets the crew app and no dashboard, lands there, and only views as the flight surgeon', () => {
     expect(mayOpen(surgeon, 'app')).toBe(true)
     expect(mayOpen(surgeon, 'dashboard')).toBe(false)
     expect(homePage(surgeon)).toBe('app')
-    expect(homePage(astronaut)).toBe('dashboard')
+    expect(viewsFor(surgeon)).toEqual([{ kind: 'surgeon' }])
+  })
+  it('everyone may open the challenge page', () => {
+    for (const u of [astronaut, medical, surgeon]) expect(mayOpen(u, 'challenge')).toBe(true)
+  })
+  it("every stop of the judge's tour opens a page that person may open, with a working demo PIN", () => {
+    for (const stop of TOUR) {
+      if (!stop.as) {
+        expect(stop.page).toBe('challenge')
+        continue
+      }
+      const account = accounts.find((a) => a.crewId === stop.as)
+      expect(account).toBeDefined()
+      expect(DEMO_PINS[stop.as]).toMatch(/^\d{4}$/)
+      expect(mayOpen({ crewId: stop.as, role: account!.role }, stop.page)).toBe(true)
+    }
   })
   it('accounts.json has a flight surgeon who is not in the crew, with a name of their own', () => {
     const file = JSON.parse(readFileSync('public/data/accounts.json', 'utf8')) as AccountsFile
@@ -156,6 +175,7 @@ describe('pages', () => {
     expect(pageOf(appPath('/', base))).toBe('login')
     expect(pageOf(appPath('/dashboard/', base))).toBe('dashboard')
     expect(pageOf(appPath('/app', base))).toBe('app')
+    expect(pageOf(appPath('/challenge', base))).toBe('challenge')
     expect(pageOf(appPath('/anything', base))).toBe('login')
     expect(pageOf(appPath('/sub/dashboard', '/sub/'))).toBe('dashboard')
     expect(hrefOf('app', '/sub/')).toBe('/sub/app')
@@ -164,6 +184,7 @@ describe('pages', () => {
     expect(safeNext(null, base, origin)).toBe('/dashboard')
     expect(safeNext('/dashboard?day=223', base, origin)).toBe('/dashboard?day=223')
     expect(safeNext('/app', base, origin)).toBe('/app')
+    expect(safeNext('/challenge', base, origin)).toBe('/challenge')
     for (const evil of ['https://evil.example/dashboard', '//evil.example/app', 'javascript:alert(1)', '/']) {
       expect(safeNext(evil, base, origin)).toBe('/dashboard')
     }

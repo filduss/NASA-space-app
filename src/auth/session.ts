@@ -2,6 +2,7 @@
 // so the rules are testable without a browser. See docs/SPEC.md, "Login".
 
 import type { Account, AccountRole } from '../data/types.ts'
+import type { Viewer } from '../engine/privacy.ts'
 import type { Page } from './paths.ts'
 
 /** sessionStorage: gone when the tab closes. Holds only who and until when, never the PIN or role. */
@@ -109,14 +110,28 @@ export function clearFailures(store: Storage, crewId: string): void {
 // ---- What a role may open -----------------------------------------------------------------
 
 /**
- * Every crew member gets their own dashboard. The crew app (/app) is for the medical officer, who
- * sees the rest of the crew there, and for the flight surgeon on Earth, who sees there only what
- * the summaries sent to Earth contain. The flight surgeon is not crew, so has no dashboard.
+ * Every crew member gets their own dashboard. Everyone gets the crew app (/app), in the views
+ * `viewsFor` allows. The flight surgeon is not crew, so has no dashboard.
  */
 export function mayOpen(user: User, page: Page): boolean {
-  if (page === 'app') return user.role === 'medical' || user.role === 'surgeon'
   if (page === 'dashboard') return user.role !== 'surgeon'
   return true
+}
+
+/**
+ * The views of the crew app a person may take. Crew check in as themselves; the medical officer can
+ * also view as the crew medical officer, who sees the rest of the crew through the privacy table;
+ * the flight surgeon sees only what the summaries sent to Earth contain. Never another crew member.
+ */
+export function viewsFor(user: User): Viewer[] {
+  if (user.role === 'surgeon') return [{ kind: 'surgeon' }]
+  const own: Viewer = { kind: 'crew', crewId: user.crewId }
+  return user.role === 'medical' ? [{ kind: 'cmo' }, own] : [own]
+}
+
+/** One string per view, for comparing views and for form values. */
+export function viewKey(v: Viewer): string {
+  return v.kind === 'crew' ? v.crewId : v.kind
 }
 
 /** Where a person lands after login, or when they open a page their role may not open. */
