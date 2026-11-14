@@ -79,6 +79,14 @@ class SimResult:
     people: list[Person] = field(default_factory=list)
 
 
+# Exercise the day before each check-in, in minutes: shown on the dashboard, never judged. Demo
+# parameters: most days a full session, sometimes a short one, rarely none. Drawn from a stream of its
+# own, so adding it changed no other value.
+EXERCISE_NONE_P = 0.02
+EXERCISE_SHORT_P = 0.08
+EXERCISE_SHORT = [30, 45, 60, 75, 90]
+EXERCISE_FULL = [120, 135, 150]
+
 SD = {"sleep_hours": 0.55, "sleep_quality": 0.9, "fatigue": 0.9, "irritability": 0.8, "stress": 0.9, "mood": 0.8, "reaction_ms": 11.0}
 EVENT_KINDS = [("sleep_loss", 0.4), ("symptom_run", 0.3), ("stress", 0.3)]
 
@@ -146,6 +154,7 @@ def simulate(
 
     for person in people:
         prng = random.Random(f"{seed}:{person.crew_id}")
+        erng = random.Random(f"{seed}:{person.crew_id}:exercise")
         latent = 0.0
         active_until = -1
         for day in days:
@@ -214,6 +223,9 @@ def simulate(
             if person.crew_id == silent:
                 symptoms = []  # the draws above still happen, so the stream does not shift
 
+            r = erng.random()
+            exercise = 0 if r < EXERCISE_NONE_P else erng.choice(EXERCISE_SHORT if r < EXERCISE_NONE_P + EXERCISE_SHORT_P else EXERCISE_FULL)
+
             row = {
                 "crewId": person.crew_id,
                 "day": day,
@@ -225,6 +237,7 @@ def simulate(
                 "mood": slider("mood"),
                 "symptoms": symptoms,
                 "reactionMs": round(reaction),
+                "exerciseMin": exercise,
                 "simulated": True,
             }
             if person.crew_id == silent:

@@ -42,10 +42,11 @@ scripts/*.py ──> public/data/{cabin,crew,backtest}.json ──> src/state.ts
 
 Pure functions with no React and no I/O. `runEngine(input)` in `escalation.ts` returns one `DayResult` per day by composing:
 
-- `baseline.ts` and `deviation.ts`: each person's own normal (robust median/MAD) and which indicators drift.
+- `baseline.ts` and `deviation.ts`: each person's own normal (robust median/MAD), their starting normal (first 14 check-ins, for slow changes in mood and stress), and which indicators drift.
 - `shipOrMe.ts`: cabin status and the ship / me / shared decision.
 - `escalation.ts`: episodes, day counts and tiers 0–4, flight-surgeon summaries.
 - `privacy.ts`: the only path from engine output to another viewer's screen. UI code must not read another person's `PersonStatus` directly.
+- `gravity.ts` and `mission.ts`: shown, never judged. Exercise against its daily target (Bone & muscle on the dashboard) and the radiation dose budget; neither has a tier or any part in ship or me.
 
 Every threshold lives in `config.ts` as `RULES`, each either cited or labeled a "demo parameter". Do not put rule numbers anywhere else.
 

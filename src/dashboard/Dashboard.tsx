@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { hrefOf } from '../auth/paths.ts'
 import { mayOpen, type User } from '../auth/session.ts'
 import { RULES } from '../engine/config.ts'
+import { exerciseWeek } from '../engine/gravity.ts'
 import { useStore } from '../state.tsx'
 import { delayText, symptomLabel } from '../ui/text.ts'
 import { ChartSheet, type ChartTarget } from './ChartSheet.tsx'
@@ -95,6 +96,7 @@ function NoticeCard({ n, onOpen }: { n: Notice; onOpen?: () => void }) {
 const NOTICE_ZONE = (id: string): ZoneKey | null => {
   if (id === 'co2' || id === 'ship') return 'chest'
   if (id === 'ind-fatigue') return 'limbs'
+  if (id === 'exercise') return 'core'
   if (id.startsWith('ind-') || id === 'safety') return 'head'
   return null
 }
@@ -115,9 +117,10 @@ export function Dashboard() {
   const cabin = s.todayResult.cabin
   const cabinDay = s.data.cabin.daily.find((d) => d.day === today) ?? null
 
-  const zones = useMemo(() => zoneStates(me, cabin), [me, cabin])
-  const list = useMemo(() => notices(me, cabin, s.commDelaySec), [me, cabin, s.commDelaySec])
   const history = useMemo(() => s.checkIns.filter((c) => c.crewId === crewId), [s.checkIns, crewId])
+  const exercise = useMemo(() => exerciseWeek(history, today), [history, today])
+  const zones = useMemo(() => zoneStates(me, cabin, exercise), [me, cabin, exercise])
+  const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise), [me, cabin, s.commDelaySec, exercise])
   const tiles = useMemo(() => vitals(me, history, today, TREND_DAYS), [me, history, today])
   const hours = useMemo(() => s.data.cabin.hourly.filter((h) => h.day === today), [s.data, today])
   const overall = worst(...ZONES.map((z) => zones[z.key].level))
@@ -343,6 +346,28 @@ export function Dashboard() {
               <Co2Chart hours={hours} limit={RULES.co2LimitMmHg} usual={cabin.baseline} />
             </div>
           </div>
+
+          <div className={`panel bone bone-${exercise.lapse ? 'watch' : 'ok'}`}>
+            <h2 className="panel-title">
+              Bone &amp; muscle
+              {exercise.lapse && (
+                <span className="pill pill-watch">
+                  <LevelIcon level="watch" size={12} />
+                  {LEVEL_WORD.watch}
+                </span>
+              )}
+            </h2>
+            <p className="bone-main">
+              {exercise.logged === 0 ? (
+                'No exercise logged this week'
+              ) : (
+                <>
+                  <strong>{exercise.onTarget}</strong> of the last {exercise.logged} logged days at {RULES.exerciseTargetMin} min or more
+                </>
+              )}
+            </p>
+            <p className="bone-note">{GRAVITY_NOTE[s.mission.gravity]} Shown here only, never judged or shared.</p>
+          </div>
         </section>
       </main>
 
@@ -368,6 +393,13 @@ export function Dashboard() {
       </footer>
     </div>
   )
+}
+
+/** Why exercise matters where the crew is. Plain statements, no numbers: those wait for a checked source. */
+const GRAVITY_NOTE: Record<'none' | 'lunar' | 'earth', string> = {
+  none: 'Without gravity, bones and muscles carry no load; daily exercise is the countermeasure.',
+  lunar: "At a sixth of Earth's gravity, bones and muscles carry less load; daily exercise still counts.",
+  earth: "Earth's gravity loads bones and muscles; exercise is tracked for fitness.",
 }
 
 function heroText(overall: Level, attribution: string, tier: number, episodeDay: number, checkedIn: boolean, co2: Level): { title: string; body: string } {

@@ -49,11 +49,11 @@ ISS telemetry for the Rodent Research 7 payload from the NASA OSDR Environmental
   "crew": [{ "id": "anna", "name": "Anna" }],
   "shieldDays": [{ "day": 200, "kind": "eva", "crewIds": ["anna", "dana"], "label": "Spacewalk" }],
   "checkIns": [{ "crewId": "anna", "day": 213, "sleepHours": 7, "sleepQuality": 7, "fatigue": 3, "irritability": 2,
-                 "stress": 3, "mood": 7, "symptoms": ["headache"], "reactionMs": 262, "simulated": true }]
+                 "stress": 3, "mood": 7, "symptoms": ["headache"], "reactionMs": 262, "exerciseMin": 135, "simulated": true }]
 }
 ```
 
-Sliders run 0-10. `symptoms` is any of `headache`, `dizziness`, `nausea`, `congestion`, `eye_strain`. A live check-in has `simulated: false`, `reactionMs: null` and may carry `safetyFlag: true`.
+Sliders run 0-10. `symptoms` is any of `headache`, `dizziness`, `nausea`, `congestion`, `eye_strain`. `exerciseMin` is the day before's exercise in minutes; the simulator draws it from a stream of its own, so adding it changed no other value. A live check-in has `simulated: false`, `reactionMs: null`, may leave out `exerciseMin` and may carry `safetyFlag: true`.
 
 ### `backtest.json` (simulated crews on real traces)
 
@@ -143,6 +143,8 @@ The air is a suspect when it is above baseline or its 24 h mean is over 3 mmHg. 
 | Mars transit (default) | 4, 12 or 22 min; 12 by default | 1.8 mSv (dose equivalent, Curiosity's RAD in cruise) | Zeitlin et al. 2013 |
 | Antarctic station | Less than a second | None: on Earth the atmosphere and magnetic field shield the station | - |
 
+The setting also says how much gravity loads the bones: none in orbit and in cruise, a sixth of Earth's on the Moon, Earth's in Antarctica. That changes only the wording of the dashboard's Bone & muscle panel.
+
 The radiation card on the Ship screen shows the dose rate, the dose so far (rate × mission day), its share of NASA's 600 mSv career limit (NASA-STD-3001 Vol 1 [V1 4030]) and the mission day the limit would be reached. It says what to do in a solar storm: go to the storm shelter until the all-clear. Every number there is labeled an estimate. Sources are in `docs/CITATIONS.md`.
 
 ### Crew timeline
@@ -195,6 +197,7 @@ These are the places where the plan could be read two ways, or where the build g
 - **Quest steps are illustrative,** not a flight procedure, and say so.
 - **Did the fix work?** For 7 days after a ship alert ends, the board and the Ship screen say whether the air is back to its usual level and how many of the crew it touched are back to theirs. Counts only, judged on shared indicators as the board does (`shipFollowUp` in `src/engine/privacy.ts`). Anyone still off is already "likely you" with a new 3-day count. This is the re-check the quest's last step asks for; it does not claim the fix caused the recovery.
 - **The limit check uses the 24 h mean.** NASA writes the limit as a 1-hour average, but a single 1-hour peak would make the air a suspect on many quiet days. In the backtest the 24 h mean raised fewer false ship alarms (table under "Evidence"). The highest 1-hour average is still shown on the Ship screen and in summaries.
+- **Bone and muscle are shown, not judged.** The gravity hazard is covered through its countermeasure, exercise: a check-in can log the day before's exercise, and the personal dashboard shows how many of the last 7 logged days reached 120 minutes. Below target on 3 of them turns the core (hip and spine) and limbs zones orange, never red. Like radiation it has no tier, no card on the crew board, nothing for the crew medical officer and no part in ship or me. The 120-minute target and the 3-of-7 count are demo parameters; NASA's figures on bone loss and daily exercise go on screen once someone on the team has checked them (`docs/CITATIONS.md`).
 - **Radiation is shown, not judged.** It has no tier, no card per person and no part in ship or me: the whole crew gets about the same dose and nobody can feel it at everyday levels. A solar-storm warning would be a second "ship" cause; that is not built.
 - **The flight surgeon has a login.** The plan names the flight surgeon as a reader of summaries; the build gives the role a login (Mira, on Earth) so the Earth view can be shown on its own. It adds no access: the login sees what the "Flight surgeon" column of the privacy table allows.
 - **The flight surgeon's timeline is rebuilt from summaries.** Nothing reaches Earth between summaries, so a row's cells come only from what a summary states: a day-3 summary covers the days each listed indicator has been off; a ship summary names who had CO₂-linked changes that day and how long the alert has run.

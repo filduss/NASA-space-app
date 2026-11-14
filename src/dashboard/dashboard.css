@@ -785,6 +785,24 @@ body.dash-body {
   border-color: rgba(255, 69, 58, 0.4);
   background: linear-gradient(170deg, rgba(255, 69, 58, 0.12), transparent 50%), var(--d-surface);
 }
+/* Bone & muscle: exercise against its daily target; orange (watch) when it lapses, never red. */
+.bone-watch {
+  border-color: rgba(255, 159, 10, 0.3);
+}
+.bone-main {
+  font-size: 15px;
+  color: var(--d-ink-2);
+}
+.bone-main strong {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--d-ink);
+}
+.bone-note {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--d-ink-3);
+}
 .cabin-stats {
   display: grid;
   grid-template-columns: 1.6fr 1fr 1fr 1fr;

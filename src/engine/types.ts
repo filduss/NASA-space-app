@@ -26,6 +26,8 @@ export interface CheckIn {
   symptoms: SymptomKey[]
   /** Mean reaction time in ms; null when the test was not taken. */
   reactionMs: number | null
+  /** Minutes of exercise the day before; missing or null when not logged. Shown, never judged (engine/gravity.ts). */
+  exerciseMin?: number | null
   /** The safety answer: "I need to talk to someone now". */
   safetyFlag?: boolean
   /** True for generated check-ins, false for ones entered live in the app. */

@@ -26,7 +26,7 @@ const QUESTIONS: { q: string; a: string; jump: string; stop: TourStop }[] = [
   },
   {
     q: 'How do spaceflight hazards affect these indicators?',
-    a: "Closed environment: cabin CO₂ is linked to headaches, poor sleep and fatigue. Space radiation: a dose budget against NASA's career limit. Distance from Earth: the mission setting sets the delay to the flight surgeon. Gravity: microgravity fluid shifts cause headaches too, so one headache never blames the air. Isolation and confinement: mood and stress are tracked privately, against the person's usual and against their starting normal, so a slow slide is caught too.",
+    a: "Closed environment: cabin CO₂ is linked to headaches, poor sleep and fatigue. Space radiation: a dose budget against NASA's career limit. Distance from Earth: the mission setting sets the delay to the flight surgeon. Gravity: without it bones and muscles carry no load, so each check-in can log yesterday's exercise, and the dashboard flags the hip, spine and muscles when it falls short; and since microgravity fluid shifts cause headaches too, one headache never blames the air. Isolation and confinement: mood and stress are tracked privately, against the person's usual and against their starting normal, so a slow slide is caught too.",
     jump: 'Open the Ship screen on day 213',
     stop: { as: 'dana', page: 'app', search: '?day=213&screen=ship' },
   },

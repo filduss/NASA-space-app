@@ -34,6 +34,17 @@ Sources behind the rules and the "why" text. The links come from [plan v0.1](pla
 - The Earth-Mars one-way delay options (4, 12, 22 minutes) reflect the commonly cited range of roughly 3 to 22 minutes.
 - Everything labeled "demo parameter" in `src/engine/config.ts` and `scripts/shipshape_sim.py`.
 
+## Waiting for a human check
+
+Found during the judge-fixes work on 14-15 Nov 2026. None of these is quoted on screen until someone on the team has opened it and confirmed the claim.
+
+| Would be used for | Claim | Source | Checked |
+| --- | --- | --- | --- |
+| Context for the real CO₂ rise (Ship screen) | On 16 Aug 2018 the ISS ran a "split atmosphere" test of the Lab CO₂ removal assembly (CDRA), planned for at least 5 days. NASA's reports do not link it to the August 2018 rise | [NASA ISS Daily Summary Report, 16 Aug 2018](https://www.nasa.gov/blogs/stationreport/2018/08/16/iss-daily-summary-report-8-16-2018/) | No: read by an AI subagent on 14 Nov 2026; a human should confirm |
+| Reaction test lapse | PVT-B counts a lapse at 355 ms (the app uses 500 ms, a demo parameter) | Basner M, Mollicone DJ, Dinges DF. Validity and sensitivity of a brief psychomotor vigilance test (PVT-B) to total and partial sleep deprivation. *Acta Astronautica* 2011;69(11-12):949-959 | No |
+| Bone & muscle panel | In spaceflight, weight-bearing bones lose on average 1% to 1.5% of mineral density per month | [NASA, The Human Body in Space](https://www.nasa.gov/humans-in-space/the-human-body-in-space/); [HRP Bone Fracture evidence report (2024)](https://humanresearchroadmap.nasa.gov/evidence/reports/Bone%20Fracture%20Evidence%20Report_07-18-2024.pdf) | No: found by web search on 15 Nov 2026 |
+| Exercise target (now a demo parameter, 120 min) | ISS crews exercise about two hours a day; the schedule allows 2.5 hours a day, 6 days a week, including setup | [NASA, Counteracting Bone and Muscle Loss in Microgravity](https://www.nasa.gov/missions/station/iss-research/counteracting-bone-and-muscle-loss-in-microgravity/); [NASA OCHMO-TB-031, Exercise Overview](https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-031-exercise-overview.pdf) | No: found by web search on 15 Nov 2026 |
+
 ## Radiation and mission settings
 
 Added with the mission setting and the radiation card on the Ship screen.

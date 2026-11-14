@@ -33,6 +33,12 @@ export const RULES = {
   /** After a ship alert ends, the app shows for this many days whether the air and the crew recovered. Demo parameter. */
   followUpDays: 7,
 
+  /** Bone and muscle (shown, not judged): a day's exercise counts as on target from this many minutes. Demo parameter. */
+  exerciseTargetMin: 120,
+  /** Below target on this many of the last `exerciseWindowDays` logged days: the card turns to watch. Demo parameter. */
+  exerciseLapseDays: 3,
+  exerciseWindowDays: 7,
+
   /** Cabin's own baseline: median of the most recent N normal days. Demo parameter. */
   cabinBaselineDays: 14,
   cabinLookbackDays: 28,

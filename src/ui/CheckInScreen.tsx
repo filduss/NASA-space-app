@@ -40,6 +40,8 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
   const restAsUsual = () =>
     setValues((v) => Object.fromEntries(SLIDERS.map((sl) => [sl.key, v[sl.key] ?? usualOf(sl)])) as Record<SliderKey, number>)
   const [symptoms, setSymptoms] = useState<SymptomKey[]>(existing && !existing.simulated ? existing.symptoms : [])
+  // Optional; shown on the person's own dashboard only, never judged (engine/gravity.ts).
+  const [exercise, setExercise] = useState<number | null>(existing && !existing.simulated ? (existing.exerciseMin ?? null) : null)
   const [safety, setSafety] = useState(existing?.safetyFlag === true)
   const [reaction, setReaction] = useState<ReactionResult | null>(s.liveReaction[`${crewId}|${s.today}`] ?? null)
   const [sent, setSent] = useState(false)
@@ -47,7 +49,7 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
   const submit = () => {
     if (unset.length > 0) return
     const rated = values as Record<SliderKey, number>
-    const c: CheckIn = { crewId, day: s.today, ...rated, symptoms, reactionMs: null, safetyFlag: safety || undefined, simulated: false }
+    const c: CheckIn = { crewId, day: s.today, ...rated, symptoms, reactionMs: null, exerciseMin: exercise, safetyFlag: safety || undefined, simulated: false }
     s.submitCheckIn(c, reaction)
     setSent(true)
     window.scrollTo({ top: 0 })
@@ -141,6 +143,33 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
           ))}
         </div>
         <p className="why">Why we ask: {SPEC.symptoms.whyWeAsk} Symptoms are shared with the crew by default.</p>
+      </Card>
+
+      <Card title="Exercise yesterday">
+        <div className={exercise === null ? 'slider slider-unset' : 'slider'}>
+          <label htmlFor="sl-exercise">
+            <span>Minutes</span>
+            <output>{exercise === null ? 'Not logged' : `${exercise} min`}</output>
+          </label>
+          <input
+            id="sl-exercise"
+            type="range"
+            min={0}
+            max={180}
+            step={15}
+            value={exercise ?? 90}
+            onChange={(e) => setExercise(Number(e.target.value))}
+            onClick={(e) => exercise === null && setExercise(Number(e.currentTarget.value))}
+          />
+          <div className="ends">
+            <span>None</span>
+            <span>3 h</span>
+          </div>
+        </div>
+        <p className="why">
+          Why we ask: without gravity, bones and muscles carry no load, and exercise is the countermeasure. Shown only on your dashboard, never
+          judged. Optional.
+        </p>
       </Card>
 
       <Card title="Reaction test" aside={<Origin kind="live" />}>

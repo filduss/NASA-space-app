@@ -1,9 +1,10 @@
 // Turns one person's engine result into what the personal dashboard draws: a level per body
 // zone, vital tiles, and the notifications for the day. No new rules live here; every level
-// comes from the engine's own output (drift, days off, tier) or the cabin CO2 limit.
+// comes from the engine's own output (drift, days off, tier, exercise lapse) or the cabin CO2 limit.
 
 import { RULES } from '../engine/config.ts'
 import { SPEC } from '../engine/deviation.ts'
+import type { ExerciseWeek } from '../engine/gravity.ts'
 import type { CabinStatus, CheckIn, IndicatorKey, PersonStatus, SymptomKey } from '../engine/types.ts'
 import { delayText, indicatorLine, symptomLabel } from '../ui/text.ts'
 
@@ -82,7 +83,12 @@ export function indicatorLevel(me: PersonStatus, key: IndicatorKey): Level {
   return 'watch'
 }
 
-export function zoneStates(me: PersonStatus, cabin: CabinStatus): Record<ZoneKey, ZoneState> {
+/** Exercise below target on enough days of the week (engine/gravity.ts): the hip and spine, and the muscles. */
+function exerciseWhy(w: ExerciseWeek): string {
+  return `Exercise below target, ${w.below} of ${w.logged} days`
+}
+
+export function zoneStates(me: PersonStatus, cabin: CabinStatus, exercise?: ExerciseWeek): Record<ZoneKey, ZoneState> {
   const out: Record<ZoneKey, ZoneState> = {
     head: { level: 'ok', reasons: [] },
     chest: { level: 'ok', reasons: [] },
@@ -103,6 +109,10 @@ export function zoneStates(me: PersonStatus, cabin: CabinStatus): Record<ZoneKey
     }
   }
   if (a.safety) raise('head', 'alert', 'Asked to talk to someone')
+  if (exercise?.lapse) {
+    raise('core', 'watch', exerciseWhy(exercise))
+    raise('limbs', 'watch', exerciseWhy(exercise))
+  }
   const cl = cabinLevel(cabin)
   if (cl !== 'ok') {
     const peakOnly = !cabin.elevated && (cabin.co2Mean ?? 0) <= RULES.co2LimitMmHg
@@ -118,7 +128,7 @@ export interface Notice {
   body: string
 }
 
-export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number): Notice[] {
+export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, exercise?: ExerciseWeek): Notice[] {
   const out: Notice[] = []
   const a = me.assessment
   if (a.safety) {
@@ -160,6 +170,14 @@ export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number):
   }
   if (me.attribution === 'ship' && a.off.length > 0) {
     out.push({ id: 'ship', level: 'watch', title: 'Likely the ship, not you', body: 'Most of the crew show the same change while cabin CO₂ is up.' })
+  }
+  if (exercise?.lapse) {
+    out.push({
+      id: 'exercise',
+      level: 'watch',
+      title: 'Exercise below target',
+      body: `Under ${RULES.exerciseTargetMin} min on ${exercise.below} of your last ${exercise.logged} logged days. Exercise is what protects bone and muscle here.`,
+    })
   }
   return out.sort((x, y) => RANK[y.level] - RANK[x.level])
 }
