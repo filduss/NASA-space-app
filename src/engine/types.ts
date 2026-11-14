@@ -98,8 +98,10 @@ export interface CabinStatus {
   delta: number | null
   /** Mean CO2 is above the cabin's own baseline by the margin. */
   elevated: boolean
-  /** A 1-hour average above the 3 mmHg limit (NASA-STD-3001 Vol 2 [V2 6004]). */
+  /** A 1-hour average above the 3 mmHg limit (NASA-STD-3001 Vol 2 [V2 6004]). Shown; the rule does not use it. */
   aboveLimit: boolean
+  /** The 24 h mean is above the same limit: bad air even after a long run of high days has made it the cabin's usual. */
+  overLimit: boolean
   /** Most recent day with a usable mean, for the freshness label. */
   lastDataDay: number | null
 }
@@ -115,7 +117,7 @@ export interface Decision {
   /** Crew drifting on any indicator today. */
   driftingAny: string[]
   cabinElevated: boolean
-  /** Ship alert carried over from an earlier day because the cabin is still above baseline. */
+  /** Ship alert carried over from an earlier day because the cabin is still above baseline or over the limit. */
   held: boolean
   /** False when the cabin had no usable data: the rule could not check the air. */
   cabinKnown: boolean
@@ -148,7 +150,7 @@ export interface SurgeonSummary {
   attribution?: Attribution
   indicators: { key: IndicatorKey; daysOff: number; value: number | null; usual: number | null }[]
   affected?: string[]
-  cabin: Pick<CabinStatus, 'co2Mean' | 'co2Max1h' | 'baseline' | 'elevated' | 'aboveLimit' | 'hasData'>
+  cabin: Pick<CabinStatus, 'co2Mean' | 'co2Max1h' | 'baseline' | 'elevated' | 'aboveLimit' | 'overLimit' | 'hasData'>
 }
 
 export interface DayResult {

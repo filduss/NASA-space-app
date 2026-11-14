@@ -88,9 +88,11 @@ A reading drifts when it is 2.5 spreads from the median in the unwanted directio
 
 The cabin's baseline is the median of its last 14 normal days. The cabin is "above baseline" when the 24 h mean is 0.5 mmHg or more above it. Separately, a 1-hour average above 3 mmHg is flagged (NASA-STD-3001 Vol 2 [V2 6004]).
 
+The air is a suspect when it is above baseline or its 24 h mean is over 3 mmHg. A cabin that stays high for weeks becomes its own baseline; the limit check keeps it a suspect.
+
 ### Ship or me
 
-1. **Ship:** at least half the crew drift on CO₂-linked indicators today and the cabin is above baseline.
+1. **Ship:** at least half the crew drift on CO₂-linked indicators today and the air is a suspect (above baseline, or a 24 h mean over 3 mmHg).
 2. **Me:** one person drifts.
 3. **Shared, not the air:** two or more drift, and the rule cannot blame the air.
 
@@ -138,6 +140,7 @@ These are the places where the plan could be read two ways, or where the build g
 - **Headache is the only symptom that counts toward a ship alert.** It is the one with a published dose-response. Other ticks open a private Watch.
 - **The live reaction test is shown, not compared.** The presenter has no baseline, and the result is never stored, so it does not feed the rules.
 - **Quest steps are illustrative,** not a flight procedure, and say so.
+- **The limit check uses the 24 h mean.** NASA writes the limit as a 1-hour average, but a single 1-hour peak would make the air a suspect on many quiet days. In the backtest the 24 h mean raised fewer false ship alarms (table under "Evidence"). The highest 1-hour average is still shown on the Ship screen and in summaries.
 - **Radiation is shown, not judged.** It has no tier, no card per person and no part in ship or me: the whole crew gets about the same dose and nobody can feel it at everyday levels. A solar-storm warning would be a second "ship" cause; that is not built.
 
 ## Game
@@ -175,6 +178,18 @@ The real rise lasts from day 213 to day 220; the quest cannot shorten a recordin
 - Each crew runs over one whole real trace (27-73 days), not 90 days: real data is never stitched or looped.
 - The 10 traces contain 3 distinct CO₂ rises of 1 mmHg or more. That is a small sample, replayed for many crews.
 - Unit tests in `tests/` cover every rule, including "XP never depends on a reading" and "mood never decides ship or me".
+
+### Which reading of the 3 mmHg limit
+
+Three versions of the rule, base case, on the tuning seeds (5000-5199) and the reported seeds (1000-1199):
+
+| Air counts as a suspect when | Accuracy | Ship events missed | False ship alarms per crew-day |
+| --- | --- | --- | --- |
+| Above its own baseline only (before) | 0.920 / 0.906 | 26.7% / 23.3% | 0.0122 / 0.0148 |
+| ... or the highest 1-hour average is over 3 mmHg | 0.905 / 0.894 | 23.3% / 23.3% | 0.0163 / 0.0192 |
+| ... or the 24 h mean is over 3 mmHg (built) | 0.923 / 0.904 | 23.3% / 23.3% | 0.0131 / 0.0152 |
+
+The scorer counts a ship event only as a rise of 1 mmHg above the trace's median, so an alert on a cabin that is high all along counts as false here even though the simulated crew's headache risk is raised. The cost of the limit check is therefore an upper bound. Days with a 24 h mean over 3 mmHg occur in 3 of the 10 traces (29 days); days with a 1-hour peak over 3 mmHg occur in 5 (64 days).
 
 ## Limits
 

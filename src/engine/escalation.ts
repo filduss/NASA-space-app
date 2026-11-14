@@ -82,6 +82,7 @@ export function runEngine(input: EngineInput): DayResult[] {
       baseline: cabin.baseline,
       elevated: cabin.elevated,
       aboveLimit: cabin.aboveLimit,
+      overLimit: cabin.overLimit,
       hasData: cabin.hasData,
     }
 

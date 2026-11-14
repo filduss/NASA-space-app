@@ -29,7 +29,7 @@ export const RULES = {
   cabinMinDays: 5,
   /** Mean CO2 this far above the cabin baseline counts as "above baseline". Demo parameter. */
   cabinMarginMmHg: 0.5,
-  /** 1-hour average CO2 limit, mmHg. NASA-STD-3001 Vol 2 [V2 6004]. */
+  /** 1-hour average CO2 limit, mmHg. NASA-STD-3001 Vol 2 [V2 6004]. The ship-or-me rule applies it to the 24 h mean. */
   co2LimitMmHg: 3,
 
   /** Ship needs at least this share of the crew drifting on CO2-linked indicators. From the plan. */

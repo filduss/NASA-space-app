@@ -1,7 +1,7 @@
 {
  "meta": {
   "simulated": true,
-  "generatedAt": "2026-11-14T12:38:13Z",
+  "generatedAt": "2026-11-14T17:38:24Z",
   "generator": "scripts/backtest.py",
   "engine": "src/engine (the app's own rules, run through scripts/engine_cli.ts)",
   "crews": 200,
@@ -78,7 +78,7 @@
    },
    "crewDays": 6560,
    "personDays": 25021,
-   "shipOrMeAccuracy": 0.906,
+   "shipOrMeAccuracy": 0.904,
    "accuracyJudgedAlerts": 1183,
    "accuracyMixedExcluded": 59,
    "ship": {
@@ -96,7 +96,7 @@
     "delayDaysP90": 2
    },
    "falseAlarms": {
-    "shipPerCrewDay": 0.0148,
+    "shipPerCrewDay": 0.0152,
     "sharedPatternPerCrewDay": 0.0066,
     "privateCardPerPersonDay": 0.0475,
     "surgeonSummaryPerCrewDay": 0.0015
@@ -118,7 +118,7 @@
    },
    "crewDays": 6560,
    "personDays": 25021,
-   "shipOrMeAccuracy": 0.882,
+   "shipOrMeAccuracy": 0.879,
    "accuracyJudgedAlerts": 1064,
    "accuracyMixedExcluded": 58,
    "ship": {
@@ -136,7 +136,7 @@
     "delayDaysP90": 2
    },
    "falseAlarms": {
-    "shipPerCrewDay": 0.0122,
+    "shipPerCrewDay": 0.0127,
     "sharedPatternPerCrewDay": 0.0073,
     "privateCardPerPersonDay": 0.0455,
     "surgeonSummaryPerCrewDay": 0.0008
@@ -198,7 +198,7 @@
    },
    "crewDays": 6560,
    "personDays": 20613,
-   "shipOrMeAccuracy": 0.918,
+   "shipOrMeAccuracy": 0.915,
    "accuracyJudgedAlerts": 1010,
    "accuracyMixedExcluded": 42,
    "ship": {
@@ -216,7 +216,7 @@
     "delayDaysP90": 2
    },
    "falseAlarms": {
-    "shipPerCrewDay": 0.0117,
+    "shipPerCrewDay": 0.0122,
     "sharedPatternPerCrewDay": 0.0053,
     "privateCardPerPersonDay": 0.0481,
     "surgeonSummaryPerCrewDay": 0.002
@@ -247,7 +247,7 @@
     "eventsRise2Plus": 20,
     "missedShareRise2Plus": 0.0,
     "delayDaysMedian": 0.0,
-    "delayDaysP90": 3
+    "delayDaysP90": 2
    },
    "individual": {
     "events": 295,
@@ -256,10 +256,10 @@
     "delayDaysP90": 2
    },
    "falseAlarms": {
-    "shipPerCrewDay": 0.0431,
-    "sharedPatternPerCrewDay": 0.0657,
+    "shipPerCrewDay": 0.0444,
+    "sharedPatternPerCrewDay": 0.0652,
     "privateCardPerPersonDay": 0.1364,
-    "surgeonSummaryPerCrewDay": 0.0284
+    "surgeonSummaryPerCrewDay": 0.028
    }
   }
  ],

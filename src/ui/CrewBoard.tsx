@@ -1,3 +1,4 @@
+import { RULES } from '../engine/config.ts'
 import { boardPerson, privateCount } from '../engine/privacy.ts'
 import type { DayResult } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
@@ -15,7 +16,10 @@ export function ShipBanner({ r, onOpen }: { r: DayResult; onOpen?: () => void })
   if (decision.outcome === 'ship') {
     tone = 'watch'
     head = 'Likely the ship, not you'
-    body = `Cabin CO₂ is ${mmHg(cabin.delta)} above its usual level and ${decision.driftingCo2.length} of ${decision.crewSize} crew show CO₂-linked changes today.`
+    const air = cabin.elevated
+      ? `Cabin CO₂ is ${mmHg(cabin.delta)} above its usual level`
+      : `Cabin CO₂ is ${mmHg(cabin.co2Mean)} over 24 h, above NASA's ${RULES.co2LimitMmHg} mmHg limit`
+    body = `${air} and ${decision.driftingCo2.length} of ${decision.crewSize} crew show CO₂-linked changes today.`
     if (decision.held) body += ' The alert stays on until the air is back to normal.'
   } else if (!cabin.hasData) {
     tone = 'idle'
@@ -25,6 +29,10 @@ export function ShipBanner({ r, onOpen }: { r: DayResult; onOpen?: () => void })
     tone = 'watch'
     head = 'Cabin CO₂ is above its usual level'
     body = `${mmHg(cabin.co2Mean)} against a usual ${mmHg(cabin.baseline)}. Fewer than half the crew show CO₂-linked changes, so this is not a ship alert.`
+  } else if (cabin.overLimit) {
+    tone = 'watch'
+    head = `Cabin CO₂ is above NASA's ${RULES.co2LimitMmHg} mmHg limit`
+    body = `${mmHg(cabin.co2Mean)} over 24 h, even though that has become its usual level. Fewer than half the crew show CO₂-linked changes, so this is not a ship alert.`
   } else if (cabin.aboveLimit) {
     head = 'Cabin air is near its usual level'
     body = `24 h mean ${mmHg(cabin.co2Mean)} (usual ${mmHg(cabin.baseline)}), but a 1-hour average reached ${mmHg(cabin.co2Max1h)}, above the 3 mmHg limit.`

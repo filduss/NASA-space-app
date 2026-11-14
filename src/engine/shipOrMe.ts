@@ -31,20 +31,26 @@ export function cabinStatus(days: CabinDay[], day: number, elevatedDays: Readonl
     delta,
     elevated: delta !== null && delta >= RULES.cabinMarginMmHg,
     aboveLimit: co2Max1h !== null && co2Max1h > RULES.co2LimitMmHg,
+    overLimit: co2Mean !== null && co2Mean > RULES.co2LimitMmHg,
     lastDataDay: lastData ? lastData.day : null,
   }
 }
 
 /**
  * The ship-or-me rule.
- *   ship   - at least half the crew drift on CO2-linked indicators while cabin CO2 is above its baseline
+ *   ship   - at least half the crew drift on CO2-linked indicators while the air is a suspect: cabin CO2
+ *            is above its own baseline, or its 24 h mean is over the 3 mmHg limit
  *   me     - one person drifts
  *   shared - several drift, but the rule cannot blame the air
  * Mood and stress are never read here: `co2LinkedOff` cannot contain them.
  *
- * Once a ship alert is raised it stays active (`shipActive`) for as long as the cabin stays above
- * its baseline, so the banner does not flicker while the cause is still there. It is re-checked at
- * every check-in and ends on the first day the cabin is back to normal.
+ * The limit check matters when the air has been high for weeks: by then that level is the cabin's
+ * own baseline, but it is still above what NASA allows. In the backtest, the 24 h mean raised fewer
+ * false ship alarms than the highest 1-hour average (docs/SPEC.md, "Evidence").
+ *
+ * Once a ship alert is raised it stays active (`shipActive`) for as long as the air stays a suspect,
+ * so the banner does not flicker while the cause is still there. It is re-checked at every check-in
+ * and ends on the first day the cabin is back to normal.
  */
 export function decideShipOrMe(
   people: PersonDay[],
@@ -57,8 +63,9 @@ export function decideShipOrMe(
   const driftingAny = checked.filter((p) => p.off.length > 0).map((p) => p.crewId)
   const needed = Math.ceil(crewSize * RULES.crewShare)
   let outcome: Decision['outcome'] = 'none'
-  const fires = cabin.elevated && driftingCo2.length >= needed
-  const held = cabin.elevated && shipActive
+  const suspect = cabin.elevated || cabin.overLimit
+  const fires = suspect && driftingCo2.length >= needed
+  const held = suspect && shipActive
   if (fires || held) outcome = 'ship'
   else if (driftingAny.length >= RULES.sharedMin) outcome = 'shared'
   else if (driftingAny.length === 1) outcome = 'me'

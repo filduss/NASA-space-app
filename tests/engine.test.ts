@@ -111,6 +111,12 @@ describe('cabin CO2', () => {
     const s = cabinStatus(cabin(1, 20, 2.9), 20, new Set())
     expect(s.aboveLimit).toBe(true)
     expect(s.elevated).toBe(false)
+    expect(s.overLimit).toBe(false)
+  })
+  it('a 24-hour mean above 3 mmHg is over the limit even when it is the cabin\'s normal', () => {
+    const s = cabinStatus(cabin(1, 20, 4.2), 20, new Set())
+    expect(s.elevated).toBe(false)
+    expect(s.overLimit).toBe(true)
   })
   it('says so when there is no data, and remembers the last day that had some', () => {
     const s = cabinStatus(cabin(1, 20, 2.4, { 19: null, 20: null }), 20, new Set())
@@ -153,6 +159,19 @@ describe('ship-or-me rule', () => {
     expect(decideShipOrMe(quiet, up, 4, true).outcome).toBe('ship')
     expect(decideShipOrMe(quiet, up, 4, true).held).toBe(true)
     expect(decideShipOrMe(quiet, normal, 4, true).outcome).toBe('none')
+  })
+
+  const highForWeeks = cabinStatus(cabin(1, 20, 4.2), 20, new Set())
+  const spiky = cabinStatus(cabin(1, 20, 2.8), 20, new Set())
+  it('a cabin held over the 3 mmHg limit is still a suspect, even when that level is its usual', () => {
+    const d = decideShipOrMe([person('a', ['symptoms']), person('b', ['sleepQuality']), person('c', []), person('d', [])], highForWeeks, 4)
+    expect(d.outcome).toBe('ship')
+    expect(decideShipOrMe([person('a', []), person('b', []), person('c', []), person('d', [])], highForWeeks, 4, true).held).toBe(true)
+  })
+  it('a 1-hour peak over the limit is not enough when the 24-hour mean is under it', () => {
+    expect(spiky.aboveLimit).toBe(true)
+    const d = decideShipOrMe([person('a', ['symptoms']), person('b', ['sleepQuality']), person('c', []), person('d', [])], spiky, 4)
+    expect(d.outcome).toBe('shared')
   })
 })
 

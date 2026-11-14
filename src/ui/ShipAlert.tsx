@@ -94,12 +94,14 @@ export function ShipAlert() {
       <Card title="Why the app says this">
         <ol className="rule">
           <li>
-            <Mark tone={cabin.elevated ? 'watch' : cabin.hasData ? 'ok' : 'idle'}>
-              {cabin.hasData
-                ? cabin.elevated
+            <Mark tone={cabin.elevated || cabin.overLimit ? 'watch' : cabin.hasData ? 'ok' : 'idle'}>
+              {!cabin.hasData
+                ? 'No cabin data today: the air cannot be checked'
+                : cabin.elevated
                   ? `Cabin CO₂ is above its own baseline (${mmHg(cabin.co2Mean)} against ${mmHg(cabin.baseline)})`
-                  : `Cabin CO₂ is within its own baseline (${mmHg(cabin.co2Mean)} against ${mmHg(cabin.baseline)})`
-                : 'No cabin data today: the air cannot be checked'}
+                  : cabin.overLimit
+                    ? `Cabin CO₂ is at its own baseline, but its 24 h mean (${mmHg(cabin.co2Mean)}) is above the ${RULES.co2LimitMmHg} mmHg limit`
+                    : `Cabin CO₂ is within its own baseline (${mmHg(cabin.co2Mean)} against ${mmHg(cabin.baseline)}) and its 24 h mean is under ${RULES.co2LimitMmHg} mmHg`}
             </Mark>
           </li>
           <li>
@@ -127,6 +129,10 @@ export function ShipAlert() {
           <li>
             On the ISS, the odds of a reported headache doubled for each 1 mmHg of CO₂ (Law et al. 2014). NASA limits the 1-hour average to
             3 mmHg (NASA-STD-3001 Vol 2 [V2 6004]).
+          </li>
+          <li>
+            The air is a suspect when it is above its own usual level, or when its 24 h mean is over 3 mmHg, so a cabin that stays high for
+            weeks never counts as normal.
           </li>
           <li>Fluid shifts in microgravity cause headaches too, so one headache is never enough: the rule needs crew-wide timing and the CO₂ rise.</li>
           <li>This is a likely cause, re-checked at every check-in. It is not a diagnosis.</li>

@@ -68,8 +68,8 @@ function StatusCard({ me }: { me: PersonStatus }) {
       {me.attribution === 'me' && (
         <p>
           {s.todayResult.cabin.hasData
-            ? s.todayResult.cabin.elevated
-              ? 'Cabin CO₂ is above its usual level, but you are the only one showing a change, so the rule does not blame the air yet.'
+            ? s.todayResult.cabin.elevated || s.todayResult.cabin.overLimit
+              ? `Cabin CO₂ is ${s.todayResult.cabin.elevated ? 'above its usual level' : `above the ${RULES.co2LimitMmHg} mmHg limit`}, but you are the only one showing a change, so the rule does not blame the air yet.`
               : 'The cabin air is at its usual level and the rest of the crew is steady, so this is likely about you, not the ship.'
             : 'There is no cabin data today, so the air could not be checked.'}
         </p>

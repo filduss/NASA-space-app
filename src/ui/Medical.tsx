@@ -120,7 +120,7 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
   const s = useStore()
   const name = sum.crewId ? s.nameOf(sum.crewId) : ''
   const cabinLine = sum.cabin.hasData
-    ? `Cabin CO₂ ${mmHg(sum.cabin.co2Mean)} over 24 h (usual ${mmHg(sum.cabin.baseline)}), highest 1-hour average ${mmHg(sum.cabin.co2Max1h)}${sum.cabin.aboveLimit ? ', above the 3 mmHg limit' : ''}.`
+    ? `Cabin CO₂ ${mmHg(sum.cabin.co2Mean)} over 24 h${sum.cabin.overLimit ? ', above the 3 mmHg limit' : ''} (usual ${mmHg(sum.cabin.baseline)}), highest 1-hour average ${mmHg(sum.cabin.co2Max1h)}${sum.cabin.aboveLimit && !sum.cabin.overLimit ? ', above the 3 mmHg limit' : ''}.`
     : 'No usable cabin CO₂ data for this day.'
   const title =
     sum.kind === 'ship' ? `Ship alert, day ${sum.episodeDay} of the alert` : sum.kind === 'safety' ? `Safety answer: ${name}` : `${name}: off own usual for ${sum.episodeDay} days`
