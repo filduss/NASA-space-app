@@ -1,48 +1,52 @@
-# NASA Space Apps Challenge Project
+# Shipshape
 
-A project built for the NASA International Space Apps Challenge hackathon.
+A crew check-in game for long missions. It rewards honest reporting and tells the crew whether a bad day is likely them or the ship.
 
-## Overview
+Built for the NASA International Space Apps Challenge. This is the MVP of [plan v0.1](<Shipshape — overall plan v0.1 (for team input).md>).
 
-This repository contains the source code, documentation, and assets for our hackathon submission.
+- **Real:** ISS cabin CO₂, temperature and humidity from NASA's Open Science Data Repository (mission RR-7), and the thresholds.
+- **Simulated:** the four-person crew, seeded and labeled as simulated on every screen.
+- **Not in it:** an AI model, a diagnosis, a leaderboard, a backend or a login.
 
-## Getting Started
-
-### Prerequisites
-
-- Git
-- A recent version of the runtime/toolchain used by the project (to be documented)
-
-### Installation
+## Run it
 
 ```bash
-git clone <repository-url>
-cd NASA-space-app
+npm install
+npm run dev        # http://localhost:5173
+npm test           # unit tests for the rules and the game
+npm run build      # production build, installable and offline-capable
 ```
 
-Further setup instructions will be added as the project develops.
+Open the app and use the **Golden path** control: day 212 (all OK), 213 (CO₂ rises, "Likely the ship, not you"), 221 (air back to normal, one person still off), 223 (day 3, summary to the flight surgeon). **Viewing as** switches between the four crew members, the crew medical officer and the flight surgeon.
 
-## Usage
+## Rebuild the data
 
-Usage instructions will be added once the first working version is available.
+Needs Python 3.10+ (standard library only) and network access for the first step.
 
-## Project Structure
+```bash
+npm run data:snapshot   # download ISS telemetry from NASA OSDR, write snapshots and checksums
+npm run data:crew       # generate the seeded demo crew
+npm run data:backtest   # 200 simulated crews through the app's own engine
+python3 scripts/snapshot_eda.py --verify
+```
+
+## Layout
 
 ```
-.
-├── README.md
-└── ...
+src/engine/   baseline.ts  deviation.ts  shipOrMe.ts  escalation.ts  privacy.ts  config.ts
+src/game/     xp.ts  streak.ts  quests.ts
+src/ui/       CrewBoard  CheckInScreen  MeView  ShipAlert  LearnCards  Medical  RoleSwitcher
+scripts/      snapshot_eda.py  simulate_crew.py  backtest.py  engine_cli.ts  snapshots/
+public/data/  cabin.json  crew.json  backtest.json
+tests/        engine.test.ts  game.test.ts
+docs/         SPEC.md  CITATIONS.md  AI_USE_LOG.md
 ```
+
+`docs/SPEC.md` has the JSON shapes, every rule, the readings of the plan that this build chose, and the open items.
 
 ## Team
 
 - Filip Kolar
-
-## Contributing
-
-1. Create a feature branch from `main`
-2. Commit your changes with clear messages
-3. Open a pull request for review
 
 ## License
 

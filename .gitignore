@@ -1,0 +1,11 @@
+node_modules
+dist
+dev-dist
+*.local
+*.log
+.DS_Store
+*:Zone.Identifier
+__pycache__/
+# raw API responses are cached locally; hourly snapshots in scripts/snapshots are committed
+scripts/.cache/
+.vercel

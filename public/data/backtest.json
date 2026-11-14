@@ -1,0 +1,272 @@
+{
+ "meta": {
+  "simulated": true,
+  "generatedAt": "2026-11-14T12:38:13Z",
+  "generator": "scripts/backtest.py",
+  "engine": "src/engine (the app's own rules, run through scripts/engine_cli.ts)",
+  "crews": 200,
+  "crewSize": 4,
+  "seeds": "1000..1199",
+  "tuning": "Rule thresholds were set on a separate seed set (5000..5199), not on the seeds reported here.",
+  "traces": {
+   "RR-1": {
+    "days": 42,
+    "source": "NASA OSDR EDA, ISS telemetry (real)"
+   },
+   "RR-3": {
+    "days": 44,
+    "source": "NASA OSDR EDA, ISS telemetry (real)"
+   },
+   "RR-5": {
+    "days": 59,
+    "source": "NASA OSDR EDA, ISS telemetry (real)"
+   },
+   "RR-6": {
+    "days": 53,
+    "source": "NASA OSDR EDA, ISS telemetry (real)"
+   },
+   "RR-7": {
+    "days": 74,
+    "source": "NASA OSDR EDA, ISS telemetry (real)"
+   },
+   "RR-9": {
+    "days": 31,
+    "source": "NASA OSDR EDA, ISS telemetry (real)"
+   },
+   "RR-10": {
+    "days": 27,
+    "source": "NASA OSDR EDA, ISS telemetry (real)"
+   },
+   "RR-12": {
+    "days": 36,
+    "source": "NASA OSDR EDA, ISS telemetry (real)"
+   },
+   "RR-19": {
+    "days": 28,
+    "source": "NASA OSDR EDA, ISS telemetry (real)"
+   },
+   "RR-23": {
+    "days": 34,
+    "source": "NASA OSDR EDA, ISS telemetry (real)"
+   }
+  },
+  "burnInDays": 10
+ },
+ "definitions": {
+  "shipEvent": "A run of days whose mean CO₂ is at least 1.0 mmHg above that trace's own median (the rule never sees this median).",
+  "individualEvent": "An injected 4-7 day event for one person: sleep loss, a run of headaches, or a stress dip.",
+  "shipOrMeAccuracy": "Of the alerts raised during a true event, the share that named the right cause (ship vs. not the ship). Person-days with both kinds of event at once are excluded.",
+  "detectionDelay": "Days from an event's first day to its first alert (0 = same day).",
+  "falseAlarms": "Alerts on days with no event behind them, allowing one day of grace after an event ends.",
+  "missedEvents": "Events that never raised an alert.",
+  "deviationFromPlan": "Crews run over one whole real trace each (27-73 days) instead of 90 days: real data is never stitched or looped."
+ },
+ "scenarios": [
+  {
+   "name": "Base case",
+   "params": {
+    "headache_p_ref": 0.01,
+    "headache_ref_mmhg": 2.5,
+    "headache_odds_per_mmhg": 2.0,
+    "co2_shift_sd_per_mmhg": 0.6,
+    "co2_effect_scale": 1.0,
+    "noise_scale": 1.0,
+    "miss_rate": 0.03,
+    "event_start_rate": 0.012,
+    "short_sleep_rt_penalty": 0.06,
+    "eva_rate": 0.035
+   },
+   "crewDays": 6560,
+   "personDays": 25021,
+   "shipOrMeAccuracy": 0.906,
+   "accuracyJudgedAlerts": 1183,
+   "accuracyMixedExcluded": 59,
+   "ship": {
+    "events": 60,
+    "missedShare": 0.233,
+    "eventsRise2Plus": 20,
+    "missedShareRise2Plus": 0.1,
+    "delayDaysMedian": 0.0,
+    "delayDaysP90": 3
+   },
+   "individual": {
+    "events": 295,
+    "missedShare": 0.078,
+    "delayDaysMedian": 0.0,
+    "delayDaysP90": 2
+   },
+   "falseAlarms": {
+    "shipPerCrewDay": 0.0148,
+    "sharedPatternPerCrewDay": 0.0066,
+    "privateCardPerPersonDay": 0.0475,
+    "surgeonSummaryPerCrewDay": 0.0015
+   }
+  },
+  {
+   "name": "CO₂ effect halved",
+   "params": {
+    "headache_p_ref": 0.01,
+    "headache_ref_mmhg": 2.5,
+    "headache_odds_per_mmhg": 2.0,
+    "co2_shift_sd_per_mmhg": 0.6,
+    "co2_effect_scale": 0.5,
+    "noise_scale": 1.0,
+    "miss_rate": 0.03,
+    "event_start_rate": 0.012,
+    "short_sleep_rt_penalty": 0.06,
+    "eva_rate": 0.035
+   },
+   "crewDays": 6560,
+   "personDays": 25021,
+   "shipOrMeAccuracy": 0.882,
+   "accuracyJudgedAlerts": 1064,
+   "accuracyMixedExcluded": 58,
+   "ship": {
+    "events": 60,
+    "missedShare": 0.633,
+    "eventsRise2Plus": 20,
+    "missedShareRise2Plus": 0.6,
+    "delayDaysMedian": 0.0,
+    "delayDaysP90": 3
+   },
+   "individual": {
+    "events": 295,
+    "missedShare": 0.075,
+    "delayDaysMedian": 0,
+    "delayDaysP90": 2
+   },
+   "falseAlarms": {
+    "shipPerCrewDay": 0.0122,
+    "sharedPatternPerCrewDay": 0.0073,
+    "privateCardPerPersonDay": 0.0455,
+    "surgeonSummaryPerCrewDay": 0.0008
+   }
+  },
+  {
+   "name": "CO₂ effect doubled",
+   "params": {
+    "headache_p_ref": 0.01,
+    "headache_ref_mmhg": 2.5,
+    "headache_odds_per_mmhg": 2.0,
+    "co2_shift_sd_per_mmhg": 0.6,
+    "co2_effect_scale": 2.0,
+    "noise_scale": 1.0,
+    "miss_rate": 0.03,
+    "event_start_rate": 0.012,
+    "short_sleep_rt_penalty": 0.06,
+    "eva_rate": 0.035
+   },
+   "crewDays": 6560,
+   "personDays": 25021,
+   "shipOrMeAccuracy": 0.94,
+   "accuracyJudgedAlerts": 1622,
+   "accuracyMixedExcluded": 63,
+   "ship": {
+    "events": 60,
+    "missedShare": 0.0,
+    "eventsRise2Plus": 20,
+    "missedShareRise2Plus": 0.0,
+    "delayDaysMedian": 0.0,
+    "delayDaysP90": 2
+   },
+   "individual": {
+    "events": 295,
+    "missedShare": 0.075,
+    "delayDaysMedian": 0,
+    "delayDaysP90": 2
+   },
+   "falseAlarms": {
+    "shipPerCrewDay": 0.0308,
+    "sharedPatternPerCrewDay": 0.0055,
+    "privateCardPerPersonDay": 0.0508,
+    "surgeonSummaryPerCrewDay": 0.0029
+   }
+  },
+  {
+   "name": "20% of check-ins missed",
+   "params": {
+    "headache_p_ref": 0.01,
+    "headache_ref_mmhg": 2.5,
+    "headache_odds_per_mmhg": 2.0,
+    "co2_shift_sd_per_mmhg": 0.6,
+    "co2_effect_scale": 1.0,
+    "noise_scale": 1.0,
+    "miss_rate": 0.2,
+    "event_start_rate": 0.012,
+    "short_sleep_rt_penalty": 0.06,
+    "eva_rate": 0.035
+   },
+   "crewDays": 6560,
+   "personDays": 20613,
+   "shipOrMeAccuracy": 0.918,
+   "accuracyJudgedAlerts": 1010,
+   "accuracyMixedExcluded": 42,
+   "ship": {
+    "events": 60,
+    "missedShare": 0.233,
+    "eventsRise2Plus": 20,
+    "missedShareRise2Plus": 0.05,
+    "delayDaysMedian": 0.0,
+    "delayDaysP90": 3
+   },
+   "individual": {
+    "events": 295,
+    "missedShare": 0.085,
+    "delayDaysMedian": 0.0,
+    "delayDaysP90": 2
+   },
+   "falseAlarms": {
+    "shipPerCrewDay": 0.0117,
+    "sharedPatternPerCrewDay": 0.0053,
+    "privateCardPerPersonDay": 0.0481,
+    "surgeonSummaryPerCrewDay": 0.002
+   }
+  },
+  {
+   "name": "Noisier self-reports (×1.5)",
+   "params": {
+    "headache_p_ref": 0.01,
+    "headache_ref_mmhg": 2.5,
+    "headache_odds_per_mmhg": 2.0,
+    "co2_shift_sd_per_mmhg": 0.6,
+    "co2_effect_scale": 1.0,
+    "noise_scale": 1.5,
+    "miss_rate": 0.03,
+    "event_start_rate": 0.012,
+    "short_sleep_rt_penalty": 0.06,
+    "eva_rate": 0.035
+   },
+   "crewDays": 6560,
+   "personDays": 25021,
+   "shipOrMeAccuracy": 0.871,
+   "accuracyJudgedAlerts": 1360,
+   "accuracyMixedExcluded": 60,
+   "ship": {
+    "events": 60,
+    "missedShare": 0.067,
+    "eventsRise2Plus": 20,
+    "missedShareRise2Plus": 0.0,
+    "delayDaysMedian": 0.0,
+    "delayDaysP90": 3
+   },
+   "individual": {
+    "events": 295,
+    "missedShare": 0.044,
+    "delayDaysMedian": 0.0,
+    "delayDaysP90": 2
+   },
+   "falseAlarms": {
+    "shipPerCrewDay": 0.0431,
+    "sharedPatternPerCrewDay": 0.0657,
+    "privateCardPerPersonDay": 0.1364,
+    "surgeonSummaryPerCrewDay": 0.0284
+   }
+  }
+ ],
+ "limits": [
+  "The crew is simulated; only the CO₂ traces are real.",
+  "Headache risk follows the published odds (doubling per 1 mmHg); other CO₂ effect sizes are demo parameters.",
+  "The rule is not validated on real crews.",
+  "Browser reaction times are estimates."
+ ]
+}
