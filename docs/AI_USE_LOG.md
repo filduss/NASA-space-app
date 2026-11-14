@@ -17,4 +17,4 @@
 - Each source in `docs/CITATIONS.md` (none opened yet).
 - The readings of the plan listed in `docs/SPEC.md`.
 - The wording of cards and summaries in `src/ui/text.ts` and `src/ui/Medical.tsx`.
-- The Moon and Mars dose rates in `src/engine/mission.ts`: the two papers were not opened (see `docs/CITATIONS.md`).
+- The Mars cruise dose rate in `src/engine/mission.ts`: only the abstract of Zeitlin et al. 2013 was read; the per-day figure comes from the press release (see `docs/CITATIONS.md`).
