@@ -8,7 +8,8 @@ import { Origin } from './bits.tsx'
 const DURATION_MS = 30_000
 const MIN_WAIT_MS = 1000
 const MAX_WAIT_MS = 4000
-const LAPSE_MS = 500 // demo parameter
+// A lapse as PVT-B counts it, the brief test behind the ISS Reaction Self-Test (Basner, Mollicone and Dinges 2011).
+const LAPSE_MS = 355
 const TIMEOUT_MS = 3000
 
 type Phase = 'idle' | 'waiting' | 'go' | 'done'
@@ -123,7 +124,7 @@ export function ReactionTest({ result, onResult }: { result: ReactionResult | nu
         <div className="rt-result">
           {result ? (
             <p>
-              <strong>{result.meanMs} ms</strong> mean response · {result.responses} responses · {result.lapses} slow (≥ {LAPSE_MS} ms) ·{' '}
+              <strong>{result.meanMs} ms</strong> mean response · {result.responses} responses · {result.lapses} lapses (≥ {LAPSE_MS} ms, as PVT-B counts them) ·{' '}
               {result.falseStarts} early taps
             </p>
           ) : (

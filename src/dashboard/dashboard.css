@@ -803,6 +803,10 @@ body.dash-body {
   font-size: 12px;
   color: var(--d-ink-3);
 }
+.bone-note a {
+  color: var(--d-blue);
+  text-decoration: none;
+}
 .cabin-stats {
   display: grid;
   grid-template-columns: 1.6fr 1fr 1fr 1fr;

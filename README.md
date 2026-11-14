@@ -6,6 +6,7 @@ Built for the NASA Space Apps Challenge 2026, "Create Health Monitoring Software
 
 ## For judges
 
+- **Live demo: [shipshape-rho.vercel.app](https://shipshape-rho.vercel.app/)**, installable and offline-capable.
 - **The start page is a judge's tour.** One click per step, no PIN to type: day 213 "likely the ship" (as Dana, the medical officer), day 221 "likely you" (Chen's own dashboard), day 223 "day 3 reaches Earth" (Mira, the flight surgeon).
 - **How it answers the challenge:** the `/challenge` page, no login: the five questions, the evidence and the limits.
 

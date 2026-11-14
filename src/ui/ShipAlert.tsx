@@ -192,6 +192,15 @@ export function ShipAlert() {
             published, not changes in the cabin; the 1-hour peak that flags day 212 comes from them. The app replays the series as published
             and repairs nothing.
           </dd>
+          <dt>Context</dt>
+          <dd>
+            Context, not cause: NASA's{' '}
+            <a href="https://www.nasa.gov/blogs/stationreport/2018/08/16/iss-daily-summary-report-8-16-2018/" target="_blank" rel="noreferrer">
+              ISS Daily Summary Report of 16 Aug 2018
+            </a>
+            , four days before this rise, describes a "split atmosphere" test of the Lab CO₂ removal assembly (CDRA), planned to last at least 5
+            days. NASA's reports don't say whether the two are linked.
+          </dd>
         </dl>
       </Card>
     </div>

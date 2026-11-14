@@ -4,7 +4,7 @@ Sources behind the rules and the "why" text. The links come from [plan v0.1](pla
 
 | Used for | Claim in the app | Source | Checked |
 | --- | --- | --- | --- |
-| CO₂ limit | 1-hour average limited to 3 mmHg | [NASA OCHMO-TB-004, Carbon Dioxide: NASA-STD-3001 Vol 2 \[V2 6004\]](https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-004-carbon-dioxide.pdf) | No |
+| CO₂ limit | 1-hour average limited to 3 mmHg | [NASA OCHMO-TB-004, Carbon Dioxide: NASA-STD-3001 Vol 2 \[V2 6004\]](https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-004-carbon-dioxide.pdf) | Yes: opened by Frantisek Kares on 15 Nov 2026 |
 | Headache rule, simulator | Odds of a reported headache doubled per 1 mmHg of CO₂; risk below 1% needs a 7-day average under 2.5 mmHg | [Law et al. 2014, J Occup Environ Med 56(5):477-83](https://doi.org/10.1097/JOM.0000000000000158) (full reference below) | Abstract only: read on PubMed (PMID 24806559) on 14 Nov 2026; both claims are in it. Full text not read |
 | Mood is not in the ship rule | No CO₂ evidence for mood | [Smithsonian on Law et al. 2014](https://www.smithsonianmag.com/daily-planet/why-living-space-can-be-pain-head-180951507/) | No |
 | Reaction test | PVT-B, flown as the ISS Reaction Self-Test, 3 minutes | [NASA Spinoff 2013](https://spinoff.nasa.gov/Spinoff2013/hm_1.html) | No |
@@ -34,16 +34,16 @@ Sources behind the rules and the "why" text. The links come from [plan v0.1](pla
 - The Earth-Mars one-way delay options (4, 12, 22 minutes) reflect the commonly cited range of roughly 3 to 22 minutes.
 - Everything labeled "demo parameter" in `src/engine/config.ts` and `scripts/shipshape_sim.py`.
 
-## Waiting for a human check
+## Added with the judge fixes
 
-Found during the judge-fixes work on 14-15 Nov 2026. None of these is quoted on screen until someone on the team has opened it and confirmed the claim.
+Found during the judge-fixes work on 14-15 Nov 2026 (by an AI subagent and by web search), then opened and confirmed by the team before going on screen.
 
-| Would be used for | Claim | Source | Checked |
+| Used for | Claim in the app | Source | Checked |
 | --- | --- | --- | --- |
-| Context for the real CO₂ rise (Ship screen) | On 16 Aug 2018 the ISS ran a "split atmosphere" test of the Lab CO₂ removal assembly (CDRA), planned for at least 5 days. NASA's reports do not link it to the August 2018 rise | [NASA ISS Daily Summary Report, 16 Aug 2018](https://www.nasa.gov/blogs/stationreport/2018/08/16/iss-daily-summary-report-8-16-2018/) | No: read by an AI subagent on 14 Nov 2026; a human should confirm |
-| Reaction test lapse | PVT-B counts a lapse at 355 ms (the app uses 500 ms, a demo parameter) | Basner M, Mollicone DJ, Dinges DF. Validity and sensitivity of a brief psychomotor vigilance test (PVT-B) to total and partial sleep deprivation. *Acta Astronautica* 2011;69(11-12):949-959 | No |
-| Bone & muscle panel | In spaceflight, weight-bearing bones lose on average 1% to 1.5% of mineral density per month | [NASA, The Human Body in Space](https://www.nasa.gov/humans-in-space/the-human-body-in-space/); [HRP Bone Fracture evidence report (2024)](https://humanresearchroadmap.nasa.gov/evidence/reports/Bone%20Fracture%20Evidence%20Report_07-18-2024.pdf) | No: found by web search on 15 Nov 2026 |
-| Exercise target (now a demo parameter, 120 min) | ISS crews exercise about two hours a day; the schedule allows 2.5 hours a day, 6 days a week, including setup | [NASA, Counteracting Bone and Muscle Loss in Microgravity](https://www.nasa.gov/missions/station/iss-research/counteracting-bone-and-muscle-loss-in-microgravity/); [NASA OCHMO-TB-031, Exercise Overview](https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-031-exercise-overview.pdf) | No: found by web search on 15 Nov 2026 |
+| Context for the real CO₂ rise (Ship screen, "Where the cabin data comes from") | On 16 Aug 2018, four days before the rise, the ISS was set up for a "split atmosphere" test of the Lab CO₂ removal assembly (CDRA), planned for at least 5 days. Shown as context, not cause: NASA's reports don't say whether the two are linked | [NASA ISS Daily Summary Report, 16 Aug 2018](https://www.nasa.gov/blogs/stationreport/2018/08/16/iss-daily-summary-report-8-16-2018/) | Yes: opened by Frantisek Kares on 15 Nov 2026 (first read by an AI subagent on 14 Nov) |
+| Reaction test lapse | PVT-B counts a lapse at 355 ms; the app's test counts lapses the same way | Basner M, Mollicone DJ, Dinges DF. Validity and sensitivity of a brief psychomotor vigilance test (PVT-B) to total and partial sleep deprivation. *Acta Astronautica* 2011;69(11-12):949-959 | Yes: opened by Frantisek Kares on 15 Nov 2026 |
+| Bone & muscle panel, exercise "why we ask" | In spaceflight, weight-bearing bones lose on average 1% to 1.5% of mineral density per month | [NASA, The Human Body in Space](https://www.nasa.gov/humans-in-space/the-human-body-in-space/); also [HRP Bone Fracture evidence report (2024)](https://humanresearchroadmap.nasa.gov/evidence/reports/Bone%20Fracture%20Evidence%20Report_07-18-2024.pdf) | Yes: NASA page opened by Frantisek Kares on 15 Nov 2026 |
+| Exercise target (120 min a day) | ISS crews exercise about two hours a day; the schedule allows 2.5 hours a day, 6 days a week, including setup | [NASA, Counteracting Bone and Muscle Loss in Microgravity](https://www.nasa.gov/missions/station/iss-research/counteracting-bone-and-muscle-loss-in-microgravity/); also [NASA OCHMO-TB-031, Exercise Overview](https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-031-exercise-overview.pdf) | Yes: NASA page opened by Frantisek Kares on 15 Nov 2026 |
 
 ## Radiation and mission settings
 

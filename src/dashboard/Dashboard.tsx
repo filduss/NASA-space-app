@@ -366,7 +366,12 @@ export function Dashboard() {
                 </>
               )}
             </p>
-            <p className="bone-note">{GRAVITY_NOTE[s.mission.gravity]} Shown here only, never judged or shared.</p>
+            <p className="bone-note">
+              {GRAVITY_NOTE[s.mission.gravity]} Shown here only, never judged or shared.{' '}
+              <a href="https://www.nasa.gov/humans-in-space/the-human-body-in-space/" target="_blank" rel="noreferrer">
+                Source: NASA
+              </a>
+            </p>
           </div>
         </section>
       </main>
@@ -395,9 +400,9 @@ export function Dashboard() {
   )
 }
 
-/** Why exercise matters where the crew is. Plain statements, no numbers: those wait for a checked source. */
+/** Why exercise matters where the crew is. The loss rate is NASA's, measured in spaceflight (docs/CITATIONS.md). */
 const GRAVITY_NOTE: Record<'none' | 'lunar' | 'earth', string> = {
-  none: 'Without gravity, bones and muscles carry no load; daily exercise is the countermeasure.',
+  none: 'In spaceflight, weight-bearing bones lose on average 1 to 1.5% of their mineral density a month; daily exercise is the countermeasure.',
   lunar: "At a sixth of Earth's gravity, bones and muscles carry less load; daily exercise still counts.",
   earth: "Earth's gravity loads bones and muscles; exercise is tracked for fitness.",
 }

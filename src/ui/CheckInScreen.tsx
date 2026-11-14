@@ -167,8 +167,8 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
           </div>
         </div>
         <p className="why">
-          Why we ask: without gravity, bones and muscles carry no load, and exercise is the countermeasure. Shown only on your dashboard, never
-          judged. Optional.
+          Why we ask: in spaceflight, weight-bearing bones lose on average 1 to 1.5% of their mineral density a month (NASA), and exercise is the
+          countermeasure; ISS crews exercise about two hours a day. Shown only on your dashboard, never judged. Optional.
         </p>
       </Card>
 
