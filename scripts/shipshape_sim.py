@@ -22,7 +22,7 @@ CREW_IDS = [c[0] for c in CREW]
 @dataclass
 class SimParams:
     # --- calibrated to published figures -------------------------------------------------
-    # Law et al. 2014 (ISS): the odds of a reported headache doubled per 1 mmHg of CO2, and
+    # Law et al. 2014, J Occup Environ Med 56(5):477-83, doi:10.1097/JOM.0000000000000158: the odds of a reported headache doubled per 1 mmHg of CO2, and
     # keeping the risk below 1% needed CO2 under 2.5 mmHg. We apply it per daily check-in to
     # the 24 h mean; the paper used 7-day averages, so the daily use is our simplification.
     headache_p_ref: float = 0.01

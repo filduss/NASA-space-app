@@ -23,7 +23,7 @@ const CARDS = [
       'Higher CO₂ has also been linked to poor sleep, fatigue and irritability. NASA limits the 1-hour average to 3 mmHg.',
       'That is why this app checks the air before it asks about you. There is no good evidence that CO₂ changes mood, so mood never counts toward a ship alert.',
     ],
-    sources: ['Law et al. 2014, ISS CO₂ levels and reported headaches', 'NASA OCHMO-TB-004 / NASA-STD-3001 Vol 2 [V2 6004]'],
+    sources: ['Law et al. 2014, Relationship between carbon dioxide levels and reported headaches on the ISS, J Occup Environ Med 56(5):477-83', 'NASA OCHMO-TB-004 / NASA-STD-3001 Vol 2 [V2 6004]'],
   },
 ]
 
