@@ -4,7 +4,7 @@ import type { SurgeonSummary } from '../engine/types.ts'
 import { clearTheAirQuest, questProgress } from '../game/quests.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
-import { fmt, indicatorLineThird, list, mmHg, symptomLabel } from './text.ts'
+import { delayText, fmt, indicatorLineThird, list, mmHg, symptomLabel } from './text.ts'
 
 function CmoLine({ item }: { item: CmoItem }) {
   const s = useStore()
@@ -138,8 +138,8 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
       <header>
         <h3>{title}</h3>
         <p className="fine">
-          Sent mission day {sum.day} at check-in · {sum.immediate ? 'sent immediately' : 'day-3 summary'} · received on Earth {s.commDelayMin} min
-          later
+          Sent mission day {sum.day} at check-in · {sum.immediate ? 'sent immediately' : 'day-3 summary'} · received on Earth{' '}
+          {delayText(s.commDelaySec)} later
         </p>
       </header>
       {sum.kind === 'ship' && (
@@ -190,7 +190,7 @@ export function SurgeonView() {
       <Card title="Flight-surgeon summaries" aside={<Origin kind="simulated">crew</Origin>}>
         <p className="muted">
           One page per event, written from fixed templates by the rules engine; no AI wording. It supports your judgement and does not
-          replace it. Messages arrive {s.commDelayMin} minutes after they are sent.
+          replace it. Messages arrive {delayText(s.commDelaySec)} after they are sent.
         </p>
         {s.summaries.length === 0 && <p>Nothing has been sent up to mission day {s.today}.</p>}
       </Card>

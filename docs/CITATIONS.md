@@ -26,3 +26,18 @@ Sources behind the rules and the "why" text. The links come from plan v0.1 (foun
 - The simulator anchors headache risk at 1% per check-in at 2.5 mmHg. That figure is recalled from the Law et al. abstract and is not in the plan's notes; confirm it against the paper.
 - The Earth-Mars one-way delay options (4, 12, 22 minutes) reflect the commonly cited range of roughly 3 to 22 minutes.
 - Everything labeled "demo parameter" in `src/engine/config.ts` and `scripts/shipshape_sim.py`.
+
+## Radiation and mission settings
+
+Added with the mission setting and the radiation card on the Ship screen.
+
+| Used for | Claim in the app | Source | Checked |
+| --- | --- | --- | --- |
+| Career limit | Career effective dose from spaceflight radiation under 600 mSv, the same for all ages and sexes: NASA-STD-3001 Vol 1 Rev B [V1 4030] | [NASA OCHMO-TB-020 Rev E (2022), Design for Ionizing Radiation Protection](https://www.nasa.gov/wp-content/uploads/2023/03/radiation-protection-technical-brief-ochmo.pdf) | Yes: text read on 14 Nov 2026 |
+| Radiation card text | Dose raises cancer risk and may affect cognition and behavior; a solar particle event can cause nausea, vomiting and fatigue; crews shelter when warned; in a capsule example, water and stowage rearranged as a shelter cut each person's event dose to about a third | Same brief | Yes: text read on 14 Nov 2026 |
+| ISS dose rate | 0.2 to 0.5 mSv a day of effective dose; the app uses 0.5 | [Simonsen, Zawaski and Weeks, NASA, NTRS 20250006168](https://ntrs.nasa.gov/citations/20250006168) | Yes: text read on 14 Nov 2026 |
+| Lunar surface dose rate | 1,369 µSv a day of dose equivalent, measured by Chang'E-4 | [Zhang et al. 2020, Science Advances 6(39):eaaz1334](https://doi.org/10.1126/sciadv.aaz1334) | Figure confirmed in news coverage of the paper; paper not opened |
+| Mars transit dose rate | About 1.8 mSv a day of dose equivalent in cruise, measured by Curiosity's RAD | [Zeitlin et al. 2013, Science 340(6136):1080-1084](https://doi.org/10.1126/science.1235989) | Figure confirmed in the SwRI press release quoting the lead author; paper not opened |
+
+- The Moon delay (1.3 s) is the Earth-Moon distance divided by the speed of light. The ISS delay is shown as "less than a second", not as a measured figure.
+- Dose so far is the rate times the mission day. It leaves out solar storms and earlier missions, and the Moon and Mars rates are dose equivalent while the limit is effective dose, so the card labels every number an estimate.

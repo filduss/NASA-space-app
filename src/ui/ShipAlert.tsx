@@ -5,6 +5,7 @@ import { Card, Mark, Origin, Stat } from './bits.tsx'
 import { LineChart } from './charts.tsx'
 import { ShipBanner } from './CrewBoard.tsx'
 import { QuestCard } from './QuestCard.tsx'
+import { RadiationCard } from './Radiation.tsx'
 import { list, mmHg } from './text.ts'
 
 const CHART_DAYS = 14
@@ -133,6 +134,8 @@ export function ShipAlert() {
       </Card>
 
       {decision.outcome === 'ship' && <QuestCard />}
+
+      <RadiationCard />
 
       <Card title="Where the cabin data comes from" aside={<Origin kind="real" />}>
         <dl className="facts">

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { BacktestFile, CabinFile, CrewFile } from './data/types.ts'
 import { runEngine } from './engine/escalation.ts'
+import { MISSIONS, type MissionKey, type MissionSetting } from './engine/mission.ts'
 import type { Viewer } from './engine/privacy.ts'
 import type { CheckIn, DayResult, SurgeonSummary } from './engine/types.ts'
 import { weeklyStreak, type Streak } from './game/streak.ts'
@@ -51,8 +52,12 @@ interface Store {
   today: number
   setToday: (d: number) => void
   dayRange: [number, number]
-  commDelayMin: number
-  setCommDelayMin: (m: number) => void
+  /** Where the crew is. Changes the comm delay and the radiation dose rate, never the rules. */
+  mission: MissionSetting
+  setMission: (k: MissionKey) => void
+  /** One-way signal delay to Earth, seconds. */
+  commDelaySec: number
+  setCommDelaySec: (s: number) => void
   nameOf: (crewId: string) => string
   /** Check-ins up to today: simulated ones, with live entries replacing them. */
   checkIns: CheckIn[]
@@ -117,7 +122,8 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
   const [role, setRoleState] = useState<Role>({ kind: 'crew', crewId: data.crew.crew[0].id })
   const [screen, setScreen] = useState<Screen>('board')
   const [today, setToday] = useState(data.crew.meta.demoDay)
-  const [commDelayMin, setCommDelayMin] = useState(12)
+  const [missionKey, setMissionKey] = useState<MissionKey>('mars')
+  const [commDelaySec, setCommDelaySec] = useState(MISSIONS.mars.defaultDelaySec)
   const [local, setLocal] = useState<Local>(loadLocal)
   const [liveReaction, setLiveReaction] = useState<Record<string, ReactionResult>>({})
 
@@ -132,6 +138,12 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
   const setRole = useCallback((r: Role) => {
     setRoleState(r)
     setScreen(r.kind === 'surgeon' ? 'summary' : 'board')
+  }, [])
+
+  // A new setting brings its own distance to Earth, so the delay resets to that setting's default.
+  const setMission = useCallback((k: MissionKey) => {
+    setMissionKey(k)
+    setCommDelaySec(MISSIONS[k].defaultDelaySec)
   }, [])
 
   const names = useMemo(() => new Map(data.crew.crew.map((c) => [c.id, c.name])), [data])
@@ -224,8 +236,10 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
     today,
     setToday,
     dayRange,
-    commDelayMin,
-    setCommDelayMin,
+    mission: MISSIONS[missionKey],
+    setMission,
+    commDelaySec,
+    setCommDelaySec,
     nameOf,
     checkIns,
     results,

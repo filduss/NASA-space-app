@@ -1,6 +1,8 @@
+import { MISSIONS, type MissionKey } from '../engine/mission.ts'
 import { useStore, type Role } from '../state.tsx'
+import { delayText } from './text.ts'
 
-// Demo control: who is looking, which mission day it is, and how far away Earth is.
+// Demo control: who is looking, which mission day it is, where the crew is and how far away Earth is.
 // The golden path of the demo is four days: 212 (all OK), 213 (ship), 221 (one still off), 223 (day 3).
 const GOLDEN: { day: number; label: string }[] = [
   { day: 212, label: 'All OK' },
@@ -8,8 +10,6 @@ const GOLDEN: { day: number; label: string }[] = [
   { day: 221, label: 'Air normal' },
   { day: 223, label: 'Day 3' },
 ]
-// One-way light time between Earth and Mars runs from about 3 to 22 minutes.
-const DELAYS = [4, 12, 22]
 
 function roleValue(r: Role): string {
   return r.kind === 'crew' ? r.crewId : r.kind
@@ -71,15 +71,32 @@ export function RoleSwitcher() {
         </div>
       </div>
       <label className="field">
-        <span>Comm delay (one way)</span>
-        <select value={s.commDelayMin} onChange={(e) => s.setCommDelayMin(Number(e.target.value))}>
-          {DELAYS.map((d) => (
-            <option key={d} value={d}>
-              {d} min
+        <span>Mission</span>
+        <select value={s.mission.key} onChange={(e) => s.setMission(e.target.value as MissionKey)}>
+          {Object.values(MISSIONS).map((m) => (
+            <option key={m.key} value={m.key}>
+              {m.label}
             </option>
           ))}
         </select>
       </label>
+      {s.mission.delaysSec.length > 1 ? (
+        <label className="field">
+          <span>Comm delay (one way)</span>
+          <select value={s.commDelaySec} onChange={(e) => s.setCommDelaySec(Number(e.target.value))}>
+            {s.mission.delaysSec.map((d) => (
+              <option key={d} value={d}>
+                {Math.round(d / 60)} min
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : (
+        <div className="field">
+          <span>Comm delay (one way)</span>
+          <output>{delayText(s.commDelaySec)}</output>
+        </div>
+      )}
       <button
         type="button"
         className="link"

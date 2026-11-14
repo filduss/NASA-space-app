@@ -158,6 +158,14 @@ input {
 .field select {
   padding: 0 8px;
 }
+/* A fixed value (the ISS or Moon delay) sits on the same line as the selects, without a box. */
+.field > output {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
 .stepper {
   display: inline-flex;
   align-items: center;
@@ -339,6 +347,9 @@ input {
 }
 .origin-live {
   border-style: dotted;
+}
+.origin-estimate {
+  border-color: var(--accent);
 }
 
 .btn {

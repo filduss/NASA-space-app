@@ -11,7 +11,7 @@ This file describes what the code on this branch does. Where the plan left room,
 | 1 | Name | Shipshape |
 | 2 | Hooks | Both: "Is it me, or the ship?" in the header, "rewards honesty, not perfection" in the footer and on check-in |
 | 3 | Game depth | Full rules as tested functions; UI shows XP, weekly streak and one quest card |
-| 4 | Mission setting | Mars transit, day 212. The CO₂ source (ISS) is stated on every screen |
+| 4 | Mission setting | ISS, lunar surface or Mars transit (default), chosen in the demo controls. It changes the comm delay and the radiation card only. The CO₂ source (ISS) is stated on every screen |
 | 5 | Board default | Sleep and symptoms shared; mood and stress private, shown as a count with no names |
 | 6 | Live input | Live 30-second reaction test, kept in memory only |
 | 7 | Wearable | None |
@@ -115,6 +115,18 @@ The cabin's baseline is the median of its last 14 normal days. The cabin is "abo
 | Ship alerts and quests | Yes | Yes | Yes | In summaries |
 | Safety answer | Yes | Never | Immediately | Immediately |
 
+## Mission setting and radiation
+
+`src/engine/mission.ts` holds the three settings. The setting never changes the rules, the tiers or the game, and the cabin CO₂ is the same ISS replay in every setting.
+
+| Setting | One-way delay to Earth | Radiation dose a day | Source of the rate |
+| --- | --- | --- | --- |
+| ISS | Less than a second | 0.5 mSv, the high end of NASA's 0.2 to 0.5 (effective dose) | Simonsen, Zawaski and Weeks, NASA (2025) |
+| Lunar surface | 1.3 s | 1.37 mSv (dose equivalent, Chang'E-4) | Zhang et al. 2020 |
+| Mars transit (default) | 4, 12 or 22 min; 12 by default | 1.8 mSv (dose equivalent, Curiosity's RAD in cruise) | Zeitlin et al. 2013 |
+
+The radiation card on the Ship screen shows the dose rate, the dose so far (rate × mission day), its share of NASA's 600 mSv career limit (NASA-STD-3001 Vol 1 [V1 4030]) and the mission day the limit would be reached. It says what to do in a solar storm: go to the storm shelter until the all-clear. Every number there is labeled an estimate. Sources are in `docs/CITATIONS.md`.
+
 ## Readings of the plan
 
 These are the places where the plan could be read two ways, or where the build goes beyond it.
@@ -126,6 +138,7 @@ These are the places where the plan could be read two ways, or where the build g
 - **Headache is the only symptom that counts toward a ship alert.** It is the one with a published dose-response. Other ticks open a private Watch.
 - **The live reaction test is shown, not compared.** The presenter has no baseline, and the result is never stored, so it does not feed the rules.
 - **Quest steps are illustrative,** not a flight procedure, and say so.
+- **Radiation is shown, not judged.** It has no tier, no card per person and no part in ship or me: the whole crew gets about the same dose and nobody can feel it at everyday levels. A solar-storm warning would be a second "ship" cause; that is not built.
 
 ## Game
 
@@ -170,6 +183,7 @@ The real rise lasts from day 213 to day 220; the quest cannot shorten a recordin
 - Headache risk follows the published odds per check-in day; the paper used 7-day averages.
 - Effect sizes for sleep, fatigue and irritability are demo parameters.
 - The rule is not validated on real crews. Browser reaction times are estimates.
+- Radiation figures are published averages per setting, not dosimeter readings, and leave out solar storms. The Moon and Mars rates are dose equivalent; NASA's limit is effective dose.
 
 ## Open items
 

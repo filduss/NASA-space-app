@@ -57,6 +57,23 @@ export function boardWords(off: IndicatorKey[], symptoms: string[]): { zone: 'he
   return out
 }
 
+/** One-way signal delay in words: "less than a second", "1.3 seconds", "12 minutes". */
+export function delayText(sec: number): string {
+  if (sec < 1) return 'less than a second'
+  if (sec < 60) return `${sec.toFixed(1)} seconds`
+  const min = Math.round(sec / 60)
+  return `${min} minute${min === 1 ? '' : 's'}`
+}
+
+/** Radiation dose: one decimal under 10 mSv, whole numbers above. */
+export function mSv(v: number): string {
+  return `${v < 10 ? v.toFixed(1) : Math.round(v)} mSv`
+}
+
+export function percent(share: number): string {
+  return `${Math.round(share * 100)}%`
+}
+
 export function mmHg(v: number | null, digits = 1): string {
   return v === null ? 'n/a' : `${v.toFixed(digits)} mmHg`
 }

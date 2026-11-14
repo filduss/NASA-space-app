@@ -4,7 +4,7 @@ import type { IndicatorKey, PersonStatus } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
 import { LineChart } from './charts.tsx'
-import { fmt, indicatorLine } from './text.ts'
+import { delayText, fmt, indicatorLine } from './text.ts'
 import { XpStrip } from './XpStrip.tsx'
 
 const TREND_DAYS = 28
@@ -33,7 +33,7 @@ function StatusCard({ me }: { me: PersonStatus }) {
   if (a.safety) {
     return (
       <Card title="You asked to talk to someone" tone="alert">
-        <p>Your crew medical officer was told privately as soon as you checked in, and a message is on its way to the flight surgeon ({s.commDelayMin} min to Earth).</p>
+        <p>Your crew medical officer was told privately as soon as you checked in, and a message is on its way to the flight surgeon ({delayText(s.commDelaySec)} to Earth).</p>
         <p className="muted">Nothing about this is on the crew board. The game is paused for you today.</p>
       </Card>
     )
@@ -87,7 +87,7 @@ function StatusCard({ me }: { me: PersonStatus }) {
             <p className="notice">
               Day {me.episodeDay} off your usual.{' '}
               {sentToday
-                ? `A summary was sent to the flight surgeon today; it reaches Earth after ${s.commDelayMin} minutes.`
+                ? `A summary was sent to the flight surgeon today; it reaches Earth after ${delayText(s.commDelaySec)}.`
                 : `A summary went to the flight surgeon on day ${RULES.persistDays} of this; the crew medical officer can see your shared indicators.`}
             </p>
           ) : (

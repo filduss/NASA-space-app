@@ -35,7 +35,9 @@ export function App() {
           <p>Is it me, or the ship?</p>
         </div>
         <div className="context">
-          <span>Mars transit · mission day {s.today} · {who}</span>
+          <span>
+            {s.mission.label} · mission day {s.today} · {who}
+          </span>
           <span className="origins">
             <Origin kind="simulated">crew</Origin>
             <Origin kind="real">ISS CO₂, {s.data.cabin.meta.mission}</Origin>
@@ -70,8 +72,8 @@ export function App() {
       <footer className="foot">
         <p>
           Shipshape rewards honesty, not perfection. It says "likely" and never diagnoses; it supports the flight surgeon and never replaces
-          one. The crew is simulated; the cabin CO₂ is real ISS telemetry from NASA's Open Science Data Repository, replayed on a Mars
-          mission calendar.
+          one. The crew is simulated; the cabin CO₂ is real ISS telemetry from NASA's Open Science Data Repository, replayed on the
+          mission calendar in every setting. Radiation figures are published averages for the chosen setting, not dosimeter readings.
         </p>
       </footer>
     </div>

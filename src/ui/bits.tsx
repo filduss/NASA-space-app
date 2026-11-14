@@ -15,9 +15,9 @@ export function Mark({ tone, children }: { tone: Tone; children: ReactNode }) {
   )
 }
 
-/** Where a number came from: simulated, live or real. Shown next to everything. */
-export function Origin({ kind, children }: { kind: 'simulated' | 'real' | 'live'; children?: ReactNode }) {
-  const text = { simulated: 'Simulated', real: 'Real NASA data', live: 'Live, not stored' }[kind]
+/** Where a number came from: simulated, live, real, or an estimate from published figures. Shown next to everything. */
+export function Origin({ kind, children }: { kind: 'simulated' | 'real' | 'live' | 'estimate'; children?: ReactNode }) {
+  const text = { simulated: 'Simulated', real: 'Real NASA data', live: 'Live, not stored', estimate: 'Estimate' }[kind]
   return (
     <span className={`origin origin-${kind}`}>
       {text}

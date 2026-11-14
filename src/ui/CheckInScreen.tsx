@@ -5,6 +5,7 @@ import { XP } from '../game/xp.ts'
 import { useStore, type ReactionResult } from '../state.tsx'
 import { Card, Origin } from './bits.tsx'
 import { ReactionTest } from './ReactionTest.tsx'
+import { delayText } from './text.ts'
 
 type SliderKey = 'sleepHours' | 'sleepQuality' | 'fatigue' | 'irritability' | 'stress' | 'mood'
 const SLIDERS: { key: SliderKey; min: number; max: number; step: number; lo: string; hi: string }[] = [
@@ -53,7 +54,7 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
           <Card title="Thank you for saying so" tone="alert">
             <p>
               Your crew medical officer has been told privately, right now. The flight surgeon has been sent a message; it takes{' '}
-              {s.commDelayMin} minutes to reach Earth.
+              {delayText(s.commDelaySec)} to reach Earth.
             </p>
             <p>Nothing about this appears on the crew board. The game is paused for you today.</p>
           </Card>
