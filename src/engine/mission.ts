@@ -28,6 +28,8 @@ export interface MissionSetting {
   defaultDelaySec: number
   /** Null on Earth, where the atmosphere and the magnetic field shield the crew from space radiation. */
   radiation: Radiation | null
+  /** Weightless in orbit and in cruise; a sixth of Earth's on the Moon; Earth's own in Antarctica. */
+  gravity: 'none' | 'lunar' | 'earth'
 }
 
 export const MISSIONS: Record<MissionKey, MissionSetting> = {
@@ -45,6 +47,7 @@ export const MISSIONS: Record<MissionKey, MissionSetting> = {
       note: "high end of NASA's 0.2 to 0.5 range",
       source: { label: 'Simonsen, Zawaski and Weeks, NASA (2025)', url: 'https://ntrs.nasa.gov/citations/20250006168' },
     },
+    gravity: 'none',
   },
   moon: {
     key: 'moon',
@@ -60,6 +63,7 @@ export const MISSIONS: Record<MissionKey, MissionSetting> = {
       note: "measured on the surface by Chang'E-4",
       source: { label: 'Zhang et al. 2020, Science Advances', url: 'https://doi.org/10.1126/sciadv.aaz1334' },
     },
+    gravity: 'lunar',
   },
   mars: {
     key: 'mars',
@@ -75,6 +79,7 @@ export const MISSIONS: Record<MissionKey, MissionSetting> = {
       note: "measured in cruise by Curiosity's RAD",
       source: { label: 'Zeitlin et al. 2013, Science', url: 'https://doi.org/10.1126/science.1235989' },
     },
+    gravity: 'none',
   },
   antarctica: {
     key: 'antarctica',
@@ -84,6 +89,7 @@ export const MISSIONS: Record<MissionKey, MissionSetting> = {
     delaysSec: [0.5],
     defaultDelaySec: 0.5,
     radiation: null,
+    gravity: 'earth',
   },
 }
 

@@ -1,7 +1,7 @@
 {
  "meta": {
   "simulated": true,
-  "generatedAt": "2026-11-14T17:41:48Z",
+  "generatedAt": "2026-11-14T23:31:16Z",
   "generator": "scripts/backtest.py",
   "engine": "src/engine (the app's own rules, run through scripts/engine_cli.ts)",
   "crews": 200,
@@ -60,6 +60,9 @@
   "falseAlarms": "Alerts on days with no event behind them, allowing one day of grace after an event ends.",
   "missedEvents": "Events that never raised an alert.",
   "alertLoad": "During ship events (plus one day of grace): person-days treated as an individual problem ('likely you') and summaries sent to the flight surgeon. 'perPerson' runs the same crews through a comparator that gives every drifting person their own case and never blames the ship, as apps with one alert per person do.",
+  "masking": "Personal events (4-7 days) that overlap a ship alert, against those with no alert: how many were put down to the ship on at least one day, how many never got a personal label, and the median days from the event's start to the day-3 summary naming that person.",
+  "slowDecline": "One crew member's mood falls and stress rises by 0.1 slider points a day from day 15 of the trace, with no other event for that person. Scored when the trace leaves at least 30 days of decline: the share flagged as a slow change against their starting normal, the share that reached the flight surgeon, and the median days from the decline's start.",
+  "underreporter": "One crew member never ticks a symptom and reports every slider one point better than it is.",
   "deviationFromPlan": "Crews run over one whole real trace each (27-73 days) instead of 90 days: real data is never stitched or looped."
  },
  "scenarios": [
@@ -75,12 +78,15 @@
     "miss_rate": 0.03,
     "event_start_rate": 0.012,
     "short_sleep_rt_penalty": 0.06,
-    "eva_rate": 0.035
+    "eva_rate": 0.035,
+    "slow_decline_rate": 0.0,
+    "slow_decline_from": 15,
+    "underreporter": false
    },
    "crewDays": 6560,
    "personDays": 25021,
-   "shipOrMeAccuracy": 0.904,
-   "accuracyJudgedAlerts": 1183,
+   "shipOrMeAccuracy": 0.903,
+   "accuracyJudgedAlerts": 1184,
    "accuracyMixedExcluded": 59,
    "ship": {
     "events": 60,
@@ -98,21 +104,37 @@
    },
    "falseAlarms": {
     "shipPerCrewDay": 0.0152,
-    "sharedPatternPerCrewDay": 0.0066,
-    "privateCardPerPersonDay": 0.0475,
-    "surgeonSummaryPerCrewDay": 0.0015
+    "sharedPatternPerCrewDay": 0.0067,
+    "privateCardPerPersonDay": 0.0476,
+    "surgeonSummaryPerCrewDay": 0.0017
    },
    "alertLoad": {
     "shipEvents": 60,
     "shipshape": {
-     "caseDays": 94,
+     "caseDays": 95,
      "personSummaries": 5,
      "shipSummaries": 71
     },
     "perPerson": {
-     "caseDays": 342,
+     "caseDays": 343,
      "personSummaries": 39,
      "shipSummaries": 0
+    }
+   },
+   "masking": {
+    "overlappingShipAlert": {
+     "events": 32,
+     "labelledShipOnADay": 28,
+     "neverLabelledPersonal": 8,
+     "toSurgeonDelayDaysMedian": 2,
+     "neverReachedSurgeon": 25
+    },
+    "noShipAlert": {
+     "events": 220,
+     "labelledShipOnADay": 0,
+     "neverLabelledPersonal": 17,
+     "toSurgeonDelayDaysMedian": 2,
+     "neverReachedSurgeon": 97
     }
    }
   },
@@ -128,12 +150,15 @@
     "miss_rate": 0.03,
     "event_start_rate": 0.012,
     "short_sleep_rt_penalty": 0.06,
-    "eva_rate": 0.035
+    "eva_rate": 0.035,
+    "slow_decline_rate": 0.0,
+    "slow_decline_from": 15,
+    "underreporter": false
    },
    "crewDays": 6560,
    "personDays": 25021,
-   "shipOrMeAccuracy": 0.879,
-   "accuracyJudgedAlerts": 1064,
+   "shipOrMeAccuracy": 0.878,
+   "accuracyJudgedAlerts": 1065,
    "accuracyMixedExcluded": 58,
    "ship": {
     "events": 60,
@@ -151,21 +176,37 @@
    },
    "falseAlarms": {
     "shipPerCrewDay": 0.0127,
-    "sharedPatternPerCrewDay": 0.0073,
-    "privateCardPerPersonDay": 0.0455,
-    "surgeonSummaryPerCrewDay": 0.0008
+    "sharedPatternPerCrewDay": 0.0075,
+    "privateCardPerPersonDay": 0.0456,
+    "surgeonSummaryPerCrewDay": 0.0009
    },
    "alertLoad": {
     "shipEvents": 60,
     "shipshape": {
-     "caseDays": 123,
+     "caseDays": 124,
      "personSummaries": 9,
      "shipSummaries": 35
     },
     "perPerson": {
-     "caseDays": 210,
+     "caseDays": 211,
      "personSummaries": 20,
      "shipSummaries": 0
+    }
+   },
+   "masking": {
+    "overlappingShipAlert": {
+     "events": 26,
+     "labelledShipOnADay": 23,
+     "neverLabelledPersonal": 7,
+     "toSurgeonDelayDaysMedian": 2.0,
+     "neverReachedSurgeon": 20
+    },
+    "noShipAlert": {
+     "events": 226,
+     "labelledShipOnADay": 0,
+     "neverLabelledPersonal": 16,
+     "toSurgeonDelayDaysMedian": 2.0,
+     "neverReachedSurgeon": 98
     }
    }
   },
@@ -181,12 +222,15 @@
     "miss_rate": 0.03,
     "event_start_rate": 0.012,
     "short_sleep_rt_penalty": 0.06,
-    "eva_rate": 0.035
+    "eva_rate": 0.035,
+    "slow_decline_rate": 0.0,
+    "slow_decline_from": 15,
+    "underreporter": false
    },
    "crewDays": 6560,
    "personDays": 25021,
-   "shipOrMeAccuracy": 0.94,
-   "accuracyJudgedAlerts": 1622,
+   "shipOrMeAccuracy": 0.939,
+   "accuracyJudgedAlerts": 1623,
    "accuracyMixedExcluded": 63,
    "ship": {
     "events": 60,
@@ -204,21 +248,37 @@
    },
    "falseAlarms": {
     "shipPerCrewDay": 0.0308,
-    "sharedPatternPerCrewDay": 0.0055,
-    "privateCardPerPersonDay": 0.0508,
-    "surgeonSummaryPerCrewDay": 0.0029
+    "sharedPatternPerCrewDay": 0.0056,
+    "privateCardPerPersonDay": 0.051,
+    "surgeonSummaryPerCrewDay": 0.003
    },
    "alertLoad": {
     "shipEvents": 60,
     "shipshape": {
-     "caseDays": 39,
+     "caseDays": 40,
      "personSummaries": 2,
      "shipSummaries": 104
     },
     "perPerson": {
-     "caseDays": 788,
+     "caseDays": 789,
      "personSummaries": 188,
      "shipSummaries": 0
+    }
+   },
+   "masking": {
+    "overlappingShipAlert": {
+     "events": 45,
+     "labelledShipOnADay": 41,
+     "neverLabelledPersonal": 14,
+     "toSurgeonDelayDaysMedian": 2.5,
+     "neverReachedSurgeon": 37
+    },
+    "noShipAlert": {
+     "events": 207,
+     "labelledShipOnADay": 0,
+     "neverLabelledPersonal": 15,
+     "toSurgeonDelayDaysMedian": 2,
+     "neverReachedSurgeon": 94
     }
    }
   },
@@ -234,12 +294,15 @@
     "miss_rate": 0.2,
     "event_start_rate": 0.012,
     "short_sleep_rt_penalty": 0.06,
-    "eva_rate": 0.035
+    "eva_rate": 0.035,
+    "slow_decline_rate": 0.0,
+    "slow_decline_from": 15,
+    "underreporter": false
    },
    "crewDays": 6560,
    "personDays": 20613,
-   "shipOrMeAccuracy": 0.915,
-   "accuracyJudgedAlerts": 1010,
+   "shipOrMeAccuracy": 0.912,
+   "accuracyJudgedAlerts": 1013,
    "accuracyMixedExcluded": 42,
    "ship": {
     "events": 60,
@@ -251,27 +314,43 @@
    },
    "individual": {
     "events": 295,
-    "missedShare": 0.085,
-    "delayDaysMedian": 0.0,
+    "missedShare": 0.081,
+    "delayDaysMedian": 0,
     "delayDaysP90": 2
    },
    "falseAlarms": {
     "shipPerCrewDay": 0.0122,
     "sharedPatternPerCrewDay": 0.0053,
-    "privateCardPerPersonDay": 0.0481,
-    "surgeonSummaryPerCrewDay": 0.002
+    "privateCardPerPersonDay": 0.0486,
+    "surgeonSummaryPerCrewDay": 0.0027
    },
    "alertLoad": {
     "shipEvents": 60,
     "shipshape": {
-     "caseDays": 75,
+     "caseDays": 78,
      "personSummaries": 7,
      "shipSummaries": 73
     },
     "perPerson": {
-     "caseDays": 303,
-     "personSummaries": 31,
+     "caseDays": 306,
+     "personSummaries": 33,
      "shipSummaries": 0
+    }
+   },
+   "masking": {
+    "overlappingShipAlert": {
+     "events": 28,
+     "labelledShipOnADay": 24,
+     "neverLabelledPersonal": 7,
+     "toSurgeonDelayDaysMedian": 2.5,
+     "neverReachedSurgeon": 24
+    },
+    "noShipAlert": {
+     "events": 224,
+     "labelledShipOnADay": 0,
+     "neverLabelledPersonal": 14,
+     "toSurgeonDelayDaysMedian": 3.0,
+     "neverReachedSurgeon": 118
     }
    }
   },
@@ -287,12 +366,15 @@
     "miss_rate": 0.03,
     "event_start_rate": 0.012,
     "short_sleep_rt_penalty": 0.06,
-    "eva_rate": 0.035
+    "eva_rate": 0.035,
+    "slow_decline_rate": 0.0,
+    "slow_decline_from": 15,
+    "underreporter": false
    },
    "crewDays": 6560,
    "personDays": 25021,
-   "shipOrMeAccuracy": 0.871,
-   "accuracyJudgedAlerts": 1360,
+   "shipOrMeAccuracy": 0.868,
+   "accuracyJudgedAlerts": 1364,
    "accuracyMixedExcluded": 60,
    "ship": {
     "events": 60,
@@ -310,21 +392,189 @@
    },
    "falseAlarms": {
     "shipPerCrewDay": 0.0444,
-    "sharedPatternPerCrewDay": 0.0652,
-    "privateCardPerPersonDay": 0.1364,
-    "surgeonSummaryPerCrewDay": 0.028
+    "sharedPatternPerCrewDay": 0.0654,
+    "privateCardPerPersonDay": 0.137,
+    "surgeonSummaryPerCrewDay": 0.0299
    },
    "alertLoad": {
     "shipEvents": 60,
     "shipshape": {
-     "caseDays": 101,
-     "personSummaries": 4,
+     "caseDays": 106,
+     "personSummaries": 5,
      "shipSummaries": 97
     },
     "perPerson": {
-     "caseDays": 533,
-     "personSummaries": 74,
+     "caseDays": 538,
+     "personSummaries": 75,
      "shipSummaries": 0
+    }
+   },
+   "masking": {
+    "overlappingShipAlert": {
+     "events": 49,
+     "labelledShipOnADay": 46,
+     "neverLabelledPersonal": 19,
+     "toSurgeonDelayDaysMedian": 2.5,
+     "neverReachedSurgeon": 39
+    },
+    "noShipAlert": {
+     "events": 203,
+     "labelledShipOnADay": 0,
+     "neverLabelledPersonal": 7,
+     "toSurgeonDelayDaysMedian": 2,
+     "neverReachedSurgeon": 84
+    }
+   }
+  },
+  {
+   "name": "Slow mood decline, one person (0.1/day)",
+   "params": {
+    "headache_p_ref": 0.01,
+    "headache_ref_mmhg": 2.5,
+    "headache_odds_per_mmhg": 2.0,
+    "co2_shift_sd_per_mmhg": 0.6,
+    "co2_effect_scale": 1.0,
+    "noise_scale": 1.0,
+    "miss_rate": 0.03,
+    "event_start_rate": 0.012,
+    "short_sleep_rt_penalty": 0.06,
+    "eva_rate": 0.035,
+    "slow_decline_rate": 0.1,
+    "slow_decline_from": 15,
+    "underreporter": false
+   },
+   "crewDays": 6560,
+   "personDays": 24978,
+   "shipOrMeAccuracy": 0.964,
+   "accuracyJudgedAlerts": 2608,
+   "accuracyMixedExcluded": 261,
+   "ship": {
+    "events": 60,
+    "missedShare": 0.35,
+    "eventsRise2Plus": 20,
+    "missedShareRise2Plus": 0.05,
+    "delayDaysMedian": 1,
+    "delayDaysP90": 5
+   },
+   "individual": {
+    "events": 232,
+    "missedShare": 0.082,
+    "delayDaysMedian": 0,
+    "delayDaysP90": 2
+   },
+   "falseAlarms": {
+    "shipPerCrewDay": 0.0116,
+    "sharedPatternPerCrewDay": 0.0006,
+    "privateCardPerPersonDay": 0.0362,
+    "surgeonSummaryPerCrewDay": 0.0012
+   },
+   "alertLoad": {
+    "shipEvents": 60,
+    "shipshape": {
+     "caseDays": 210,
+     "personSummaries": 43,
+     "shipSummaries": 59
+    },
+    "perPerson": {
+     "caseDays": 507,
+     "personSummaries": 99,
+     "shipSummaries": 0
+    }
+   },
+   "masking": {
+    "overlappingShipAlert": {
+     "events": 23,
+     "labelledShipOnADay": 21,
+     "neverLabelledPersonal": 6,
+     "toSurgeonDelayDaysMedian": 2.0,
+     "neverReachedSurgeon": 17
+    },
+    "noShipAlert": {
+     "events": 179,
+     "labelledShipOnADay": 0,
+     "neverLabelledPersonal": 14,
+     "toSurgeonDelayDaysMedian": 2,
+     "neverReachedSurgeon": 74
+    }
+   },
+   "slowDecline": {
+    "events": 80,
+    "minDays": 30,
+    "flaggedShare": 0.938,
+    "flagDelayDaysMedian": 25,
+    "toSurgeonShare": 0.925,
+    "toSurgeonDelayDaysMedian": 26.0
+   }
+  },
+  {
+   "name": "One crew member under-reports",
+   "params": {
+    "headache_p_ref": 0.01,
+    "headache_ref_mmhg": 2.5,
+    "headache_odds_per_mmhg": 2.0,
+    "co2_shift_sd_per_mmhg": 0.6,
+    "co2_effect_scale": 1.0,
+    "noise_scale": 1.0,
+    "miss_rate": 0.03,
+    "event_start_rate": 0.012,
+    "short_sleep_rt_penalty": 0.06,
+    "eva_rate": 0.035,
+    "slow_decline_rate": 0.0,
+    "slow_decline_from": 15,
+    "underreporter": true
+   },
+   "crewDays": 6560,
+   "personDays": 25021,
+   "shipOrMeAccuracy": 0.896,
+   "accuracyJudgedAlerts": 1117,
+   "accuracyMixedExcluded": 59,
+   "ship": {
+    "events": 60,
+    "missedShare": 0.3,
+    "eventsRise2Plus": 20,
+    "missedShareRise2Plus": 0.1,
+    "delayDaysMedian": 0.5,
+    "delayDaysP90": 3
+   },
+   "individual": {
+    "events": 295,
+    "missedShare": 0.119,
+    "delayDaysMedian": 0.0,
+    "delayDaysP90": 2
+   },
+   "falseAlarms": {
+    "shipPerCrewDay": 0.0128,
+    "sharedPatternPerCrewDay": 0.0059,
+    "privateCardPerPersonDay": 0.0437,
+    "surgeonSummaryPerCrewDay": 0.0015
+   },
+   "alertLoad": {
+    "shipEvents": 60,
+    "shipshape": {
+     "caseDays": 104,
+     "personSummaries": 6,
+     "shipSummaries": 64
+    },
+    "perPerson": {
+     "caseDays": 331,
+     "personSummaries": 39,
+     "shipSummaries": 0
+    }
+   },
+   "masking": {
+    "overlappingShipAlert": {
+     "events": 30,
+     "labelledShipOnADay": 26,
+     "neverLabelledPersonal": 6,
+     "toSurgeonDelayDaysMedian": 2,
+     "neverReachedSurgeon": 23
+    },
+    "noShipAlert": {
+     "events": 222,
+     "labelledShipOnADay": 0,
+     "neverLabelledPersonal": 28,
+     "toSurgeonDelayDaysMedian": 2,
+     "neverReachedSurgeon": 103
     }
    }
   }

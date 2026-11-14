@@ -1,8 +1,9 @@
-// The three pages, without a router. "/" is the login; the other two need a logged-in person.
+// The four pages, without a router. "/" is the login and "/challenge" is public; the other two need a
+// logged-in person.
 
-export type Page = 'login' | 'dashboard' | 'app'
+export type Page = 'login' | 'challenge' | 'dashboard' | 'app'
 
-const PAGE_PATHS: Record<Exclude<Page, 'login'>, string> = { dashboard: '/dashboard', app: '/app' }
+const PAGE_PATHS: Record<Exclude<Page, 'login'>, string> = { challenge: '/challenge', dashboard: '/dashboard', app: '/app' }
 
 /** Path inside the app, without the deploy base and without a trailing slash ("" for the root). */
 export function appPath(pathname: string, base: string): string {
@@ -11,9 +12,8 @@ export function appPath(pathname: string, base: string): string {
 }
 
 export function pageOf(path: string): Page {
-  if (path === PAGE_PATHS.dashboard) return 'dashboard'
-  if (path === PAGE_PATHS.app) return 'app'
-  return 'login'
+  const found = (Object.keys(PAGE_PATHS) as Exclude<Page, 'login'>[]).find((p) => PAGE_PATHS[p] === path)
+  return found ?? 'login'
 }
 
 /** A URL for a page, under the deploy base. */
@@ -23,7 +23,7 @@ export function hrefOf(page: Page, base: string, search = ''): string {
 }
 
 /**
- * Where to go after login. Only our own two pages are accepted (with their query string),
+ * Where to go after login. Only our own pages are accepted (with their query string),
  * so a crafted ?next= link cannot send someone to another site.
  */
 export function safeNext(raw: string | null, base: string, origin: string): string {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { hrefOf } from '../auth/paths.ts'
 import { mayOpen, type User } from '../auth/session.ts'
 import { RULES } from '../engine/config.ts'
+import { exerciseWeek } from '../engine/gravity.ts'
 import { useStore } from '../state.tsx'
 import { delayText, symptomLabel } from '../ui/text.ts'
 import { ChartSheet, type ChartTarget } from './ChartSheet.tsx'
@@ -13,12 +14,14 @@ import { SkeletonView } from './SkeletonView.tsx'
 import './dashboard.css'
 
 // Personal dashboard of the logged-in crew member, and only theirs: nobody opens another
-// person's dashboard. In the demo crew Chen is the one to follow: caught up in the cabin CO2
-// event (day 219) and the one still off on day 3 (day 223).
+// person's dashboard. In the demo crew Chen is the one to follow: fine while the cabin CO2 is high
+// (day 213), still off once the air is back to normal (day 221), and day 3 (day 223). The same four
+// days as the crew app's golden path.
 const TREND_DAYS = 14
 const SCENES: { day: number; label: string }[] = [
-  { day: 212, label: 'Nominal' },
-  { day: 219, label: 'Cabin CO₂' },
+  { day: 212, label: 'CO₂ climbs' },
+  { day: 213, label: 'Cabin high' },
+  { day: 221, label: 'Likely you' },
   { day: 223, label: 'Day 3' },
 ]
 
@@ -93,6 +96,7 @@ function NoticeCard({ n, onOpen }: { n: Notice; onOpen?: () => void }) {
 const NOTICE_ZONE = (id: string): ZoneKey | null => {
   if (id === 'co2' || id === 'ship') return 'chest'
   if (id === 'ind-fatigue') return 'limbs'
+  if (id === 'exercise') return 'core'
   if (id.startsWith('ind-') || id === 'safety') return 'head'
   return null
 }
@@ -113,9 +117,10 @@ export function Dashboard() {
   const cabin = s.todayResult.cabin
   const cabinDay = s.data.cabin.daily.find((d) => d.day === today) ?? null
 
-  const zones = useMemo(() => zoneStates(me, cabin), [me, cabin])
-  const list = useMemo(() => notices(me, cabin, s.commDelaySec), [me, cabin, s.commDelaySec])
   const history = useMemo(() => s.checkIns.filter((c) => c.crewId === crewId), [s.checkIns, crewId])
+  const exercise = useMemo(() => exerciseWeek(history, today), [history, today])
+  const zones = useMemo(() => zoneStates(me, cabin, exercise), [me, cabin, exercise])
+  const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise), [me, cabin, s.commDelaySec, exercise])
   const tiles = useMemo(() => vitals(me, history, today, TREND_DAYS), [me, history, today])
   const hours = useMemo(() => s.data.cabin.hourly.filter((h) => h.day === today), [s.data, today])
   const overall = worst(...ZONES.map((z) => zones[z.key].level))
@@ -136,13 +141,8 @@ export function Dashboard() {
     return () => window.clearTimeout(t)
   }, [today]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ?day=223 opens the dashboard on that mission day (handy for the demo and for links).
-  const setToday = s.setToday
+  // ?day=221 opens the dashboard on that mission day: the store reads it at start-up.
   const [lo, hi] = s.dayRange
-  useEffect(() => {
-    const d = Number(new URLSearchParams(window.location.search).get('day'))
-    if (Number.isInteger(d) && d >= lo && d <= hi) setToday(d)
-  }, [setToday, lo, hi])
 
   useEffect(() => {
     document.title = `${name} · Shipshape`
@@ -179,7 +179,7 @@ export function Dashboard() {
           </span>
           <div>
             <p className="bar-name">{name}</p>
-            <p className="bar-meta">Mars transit · Personal dashboard</p>
+            <p className="bar-meta">{s.mission.label} · Personal dashboard</p>
           </div>
         </div>
 
@@ -210,6 +210,7 @@ export function Dashboard() {
             {user.role === 'medical' ? ' · medical officer' : ''}
           </span>
           <span className="acct-links">
+            <a href={hrefOf('app', import.meta.env.BASE_URL, `?screen=checkin&day=${today}`)}>Check in</a>
             {mayOpen(user, 'app') && <a href={hrefOf('app', import.meta.env.BASE_URL)}>Crew app</a>}
             <button type="button" onClick={s.logOut}>
               Log out
@@ -345,6 +346,33 @@ export function Dashboard() {
               <Co2Chart hours={hours} limit={RULES.co2LimitMmHg} usual={cabin.baseline} />
             </div>
           </div>
+
+          <div className={`panel bone bone-${exercise.lapse ? 'watch' : 'ok'}`}>
+            <h2 className="panel-title">
+              Bone &amp; muscle
+              {exercise.lapse && (
+                <span className="pill pill-watch">
+                  <LevelIcon level="watch" size={12} />
+                  {LEVEL_WORD.watch}
+                </span>
+              )}
+            </h2>
+            <p className="bone-main">
+              {exercise.logged === 0 ? (
+                'No exercise logged this week'
+              ) : (
+                <>
+                  <strong>{exercise.onTarget}</strong> of the last {exercise.logged} logged days at {RULES.exerciseTargetMin} min or more
+                </>
+              )}
+            </p>
+            <p className="bone-note">
+              {GRAVITY_NOTE[s.mission.gravity]} Shown here only, never judged or shared.{' '}
+              <a href="https://www.nasa.gov/humans-in-space/the-human-body-in-space/" target="_blank" rel="noreferrer">
+                Source: NASA
+              </a>
+            </p>
+          </div>
         </section>
       </main>
 
@@ -370,6 +398,13 @@ export function Dashboard() {
       </footer>
     </div>
   )
+}
+
+/** Why exercise matters where the crew is. The loss rate is NASA's, measured in spaceflight (docs/CITATIONS.md). */
+const GRAVITY_NOTE: Record<'none' | 'lunar' | 'earth', string> = {
+  none: 'In spaceflight, weight-bearing bones lose on average 1 to 1.5% of their mineral density a month; daily exercise is the countermeasure.',
+  lunar: "At a sixth of Earth's gravity, bones and muscles carry less load; daily exercise still counts.",
+  earth: "Earth's gravity loads bones and muscles; exercise is tracked for fitness.",
 }
 
 function heroText(overall: Level, attribution: string, tier: number, episodeDay: number, checkedIn: boolean, co2: Level): { title: string; body: string } {

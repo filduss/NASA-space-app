@@ -1,55 +1,53 @@
+import { hrefOf } from '../auth/paths.ts'
+import { viewKey, viewsFor } from '../auth/session.ts'
 import { MISSIONS, type MissionKey } from '../engine/mission.ts'
 import { useStore, type Role } from '../state.tsx'
 import { delayText } from './text.ts'
 
 // Demo control: who is looking, which mission day it is, where the crew is and how far away Earth is.
-// The golden path of the demo is four days: 212 (all OK), 213 (ship), 221 (one still off), 223 (day 3).
+// The golden path of the demo is four days, the same on the personal dashboard: 212 (crew OK, CO2
+// starting to climb), 213 (ship), 221 (air normal, one still off), 223 (day 3).
 const GOLDEN: { day: number; label: string }[] = [
-  { day: 212, label: 'All OK' },
-  { day: 213, label: 'CO₂ rises' },
-  { day: 221, label: 'Air normal' },
-  { day: 223, label: 'Day 3' },
+  { day: 212, label: 'CO₂ starts to climb' },
+  { day: 213, label: 'Likely the ship' },
+  { day: 221, label: 'Air normal, one still off' },
+  { day: 223, label: 'Day 3 to Earth' },
 ]
-
-function roleValue(r: Role): string {
-  return r.kind === 'crew' ? r.crewId : r.kind
-}
 
 export function RoleSwitcher() {
   const s = useStore()
   const [min, max] = s.dayRange
-  const setRole = (v: string) => {
-    if (v === 'cmo') s.setRole({ kind: 'cmo' })
-    else if (v === 'surgeon') s.setRole({ kind: 'surgeon' })
-    else s.setRole({ kind: 'crew', crewId: v })
-  }
+  // Only the views this login may take (viewsFor): the medical officer switches between the crew
+  // medical officer and herself, everyone else has one view. Other people's views need their login.
+  const views = s.user ? viewsFor(s.user) : [s.role]
+  const label = (r: Role) => (r.kind === 'crew' ? `Me (${s.nameOf(r.crewId)})` : r.kind === 'cmo' ? 'Crew medical officer' : 'Flight surgeon (Earth)')
   const step = (d: number) => s.setToday(Math.min(max, Math.max(min, s.today + d)))
-  // The flight surgeon's login only ever views as the flight surgeon, and cannot clear crew inputs.
+  // The flight surgeon's login cannot clear crew inputs.
   const earth = s.user?.role === 'surgeon'
   return (
     <div className="switcher" aria-label="Demo controls">
-      {earth ? (
-        <div className="field">
-          <span>Viewing as</span>
-          <output className="field-fixed">Flight surgeon (Earth)</output>
-        </div>
-      ) : (
+      {views.length > 1 ? (
         <label className="field">
           <span>Viewing as</span>
-          <select value={roleValue(s.role)} onChange={(e) => setRole(e.target.value)}>
-            <optgroup label="Crew">
-              {s.data.crew.crew.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Medical">
-              <option value="cmo">Crew medical officer</option>
-              <option value="surgeon">Flight surgeon (Earth)</option>
-            </optgroup>
+          <select
+            value={viewKey(s.role)}
+            onChange={(e) => {
+              const v = views.find((x) => viewKey(x) === e.target.value)
+              if (v) s.setRole(v)
+            }}
+          >
+            {views.map((v) => (
+              <option key={viewKey(v)} value={viewKey(v)}>
+                {label(v)}
+              </option>
+            ))}
           </select>
         </label>
+      ) : (
+        <div className="field">
+          <span>Viewing as</span>
+          <output className="field-fixed">{label(views[0])}</output>
+        </div>
       )}
       <div className="field">
         <span>Mission day</span>
@@ -106,9 +104,9 @@ export function RoleSwitcher() {
           <output>{delayText(s.commDelaySec)}</output>
         </div>
       )}
-      <button type="button" className="link" onClick={() => s.setScreen('about')}>
+      <a className="link switcher-link" href={hrefOf('challenge', import.meta.env.BASE_URL)}>
         How it answers the challenge
-      </button>
+      </a>
       {!earth && (
         <button
           type="button"

@@ -1,3 +1,4 @@
+import type { BacktestFile } from '../data/types.ts'
 import { RULES } from '../engine/config.ts'
 import { SPEC, SYMPTOMS } from '../engine/deviation.ts'
 import type { IndicatorKey, IndicatorResult, SymptomKey } from '../engine/types.ts'
@@ -37,12 +38,23 @@ export function indicatorLine(r: IndicatorResult, symptoms: string[] = []): stri
   if (r.reason === 'short_sleep') {
     return `Under ${RULES.shortSleepHours} h of sleep on ${RULES.shortSleepNights} or more of the last ${RULES.shortSleepWindow} nights`
   }
+  if (r.reason === 'below_start' && r.start && r.baseline) {
+    return `Your usual ${spec.label.toLowerCase()} has ${slowly(r.key, r.start.median, r.baseline.median)} since your first ${RULES.startNormalDays} check-ins`
+  }
   return `${spec.offText} your usual ${days(r.daysOff)}`
 }
 
+/** "slipped from 7/10 to 5/10" or "risen from 3/10 to 5/10", in the indicator's unwanted direction. */
+function slowly(key: IndicatorKey, start: number, now: number): string {
+  return `${SPEC[key].direction === 'lowBad' ? 'slipped' : 'risen'} from ${fmt(key, start)} to ${fmt(key, now)}`
+}
+
 /** The same line for someone else to read (summaries, the crew medical officer). */
-export function indicatorLineThird(r: { key: IndicatorKey; daysOff: number }): string {
+export function indicatorLineThird(r: { key: IndicatorKey; daysOff: number; start?: number | null; usual?: number | null }): string {
   if (r.key === 'symptoms') return `Symptoms reported ${r.daysOff > 1 ? `${r.daysOff} days running` : 'today'}`
+  if (r.start != null && r.usual != null) {
+    return `${SPEC[r.key].label}: own usual has ${slowly(r.key, r.start, r.usual)} since the first ${RULES.startNormalDays} check-ins`
+  }
   return `${SPEC[r.key].offText} own usual ${days(r.daysOff)}`
 }
 
@@ -76,6 +88,18 @@ export function percent(share: number): string {
 
 export function mmHg(v: number | null, digits = 1): string {
   return v === null ? 'n/a' : `${v.toFixed(digits)} mmHg`
+}
+
+/** The rule's track record in one line, for the Ship screen: the backtest's base case. Null without the file. */
+export function evidenceLine(bt: BacktestFile | null): string | null {
+  const base = bt?.scenarios[0]
+  if (!bt || !base || base.shipOrMeAccuracy === null) return null
+  const every = base.falseAlarms.shipPerCrewDay > 0 ? Math.round(1 / base.falseAlarms.shipPerCrewDay) : null
+  return (
+    `Tested on ${bt.meta.crews} simulated crews over ${Object.keys(bt.meta.traces).length} real ISS CO₂ traces: ` +
+    `the rule named the right cause in ${percent(base.shipOrMeAccuracy)} of alerts` +
+    (every ? `, and raised a ship alert with no CO₂ rise behind it about once every ${every} crew-days.` : '.')
+  )
 }
 
 export function list(xs: string[]): string {

@@ -1,75 +1,61 @@
+import { useEffect } from 'react'
+import type { TourStop } from '../auth/demo.ts'
+import { hrefOf } from '../auth/paths.ts'
+import { homePage } from '../auth/session.ts'
+import { TourLink } from '../auth/TourLink.tsx'
 import type { BacktestScenario } from '../data/types.ts'
-import { useStore, type Screen } from '../state.tsx'
+import { useStore } from '../state.tsx'
 import { Card, Origin } from './bits.tsx'
 
-// For judges and visitors: where the demo answers each of the challenge's five questions, the evidence
-// that the rule works, and how the same rule carries over to an Antarctic winter station.
+// The public page for judges and visitors, with no login: where the demo answers each of the
+// challenge's five questions, the evidence that the rule works, and how the same rule carries over to
+// an Antarctic winter station. Each button opens the demo as the person who would see that screen.
 
-type Store = ReturnType<typeof useStore>
-
-// Golden-path days (see RoleSwitcher): the ship alert opens on 213, Chen's day-3 summary goes on 223.
-const SHIP_DAY = 213
-const DAY_THREE = 223
-
-function asCrew(s: Store, screen: Screen) {
-  s.setRole({ kind: 'crew', crewId: s.data.crew.crew[0].id })
-  s.setScreen(screen)
-}
-// The flight surgeon has no Ship tab, so that view switches to a crew member first.
-const toShip = (s: Store) => (s.role.kind === 'surgeon' ? asCrew(s, 'ship') : s.setScreen('ship'))
-
-const QUESTIONS: { q: string; a: string; jump: string; go: (s: Store) => void }[] = [
+const QUESTIONS: { q: string; a: string; jump: string; stop: TourStop }[] = [
   {
     q: 'Which measurements can be performed in space?',
     a: "A morning check-in: sliders for sleep, fatigue, irritability, stress and mood, symptom ticks, and a 30-second reaction test (a short version of the ISS Reaction Self-Test). The ship's sensors add cabin CO₂.",
-    jump: 'Open the check-in',
-    go: (s) => asCrew(s, 'checkin'),
+    jump: 'Open the check-in, as Anna',
+    stop: { as: 'anna', page: 'app', search: '?screen=checkin' },
   },
   {
     q: 'Why is an exam needed?',
-    a: 'Every check-in item says why it is asked. Each reading is compared with that person\'s own normal rather than a population range, because people differ and spaceflight changes the body.',
-    jump: 'Open the check-in',
-    go: (s) => asCrew(s, 'checkin'),
+    a: "Every check-in item says why it is asked. Each reading is compared with that person's own normal rather than a population range, because people differ and spaceflight changes the body.",
+    jump: "See Chen's readings against his own normal",
+    stop: { as: 'chen', page: 'dashboard', search: '?day=212' },
   },
   {
     q: 'How do spaceflight hazards affect these indicators?',
-    a: 'Closed environment: cabin CO₂ is linked to headaches, poor sleep and fatigue. Space radiation: a dose budget against NASA\'s career limit. Distance from Earth: the mission setting sets the delay to the flight surgeon. Gravity: microgravity fluid shifts cause headaches too, so one headache never blames the air. Isolation: mood and stress are tracked privately.',
-    jump: 'Open the Ship screen',
-    go: toShip,
+    a: "Closed environment: cabin CO₂ is linked to headaches, poor sleep and fatigue. Space radiation: a dose budget against NASA's career limit. Distance from Earth: the mission setting sets the delay to the flight surgeon. Gravity: without it bones and muscles carry no load, so each check-in can log yesterday's exercise, and the dashboard flags the hip, spine and muscles when it falls short; and since microgravity fluid shifts cause headaches too, one headache never blames the air. Isolation and confinement: mood and stress are tracked privately, against the person's usual and against their starting normal, so a slow slide is caught too.",
+    jump: 'Open the Ship screen on day 213',
+    stop: { as: 'dana', page: 'app', search: '?day=213&screen=ship' },
   },
   {
     q: 'When does a result need the crew or the flight surgeon?',
     a: 'One day off your own normal: a private card (tier 1). A ship alert or a crew-wide pattern: the crew medical officer (tier 2). Still off on day 3: a summary to the flight surgeon, sent with the comm delay (tier 3). A safety answer: both, at once (tier 4).',
-    jump: `See the flight surgeon's summaries on day ${DAY_THREE}`,
-    go: (s) => {
-      s.setToday(DAY_THREE)
-      s.setRole({ kind: 'surgeon' })
-    },
+    jump: 'See what reached Earth by day 223, as the flight surgeon',
+    stop: { as: 'mira', page: 'app', search: '?day=223' },
   },
   {
     q: 'What actions can prevent a critical condition?',
     a: 'A ship alert opens the crew quest "Clear the air", and afterwards the app re-checks whether the air and the crew recovered. A private card carries a self-care idea. The radiation card says when to go to the storm shelter. Anything still off on day 3 reaches the flight surgeon.',
-    jump: `See day ${SHIP_DAY} on the Ship screen`,
-    go: (s) => {
-      s.setToday(SHIP_DAY)
-      toShip(s)
-    },
+    jump: 'See day 213 on the Ship screen',
+    stop: { as: 'dana', page: 'app', search: '?day=213&screen=ship' },
   },
 ]
 
 function ChallengeMap() {
-  const s = useStore()
   return (
-    <Card title="How Shipshape answers the challenge">
-      <p className="muted">The challenge asks five questions. Each one is answered somewhere in this demo; the button takes you there.</p>
+    <Card title="The challenge's five questions">
+      <p className="muted">Each one is answered somewhere in this demo; the button opens it, logged in as the person who would see it.</p>
       <ol className="qa">
         {QUESTIONS.map((x) => (
           <li key={x.q}>
             <p className="qa-q">{x.q}</p>
             <p>{x.a}</p>
-            <button type="button" className="btn btn-quiet" onClick={() => x.go(s)}>
+            <TourLink stop={x.stop} className="btn btn-quiet">
               {x.jump}
-            </button>
+            </TourLink>
           </li>
         ))}
       </ol>
@@ -99,6 +85,8 @@ function Evidence() {
   const s = useStore()
   const bt = s.data.backtest
   const base = bt?.scenarios[0]
+  const slow = bt?.scenarios.find((x) => x.slowDecline)?.slowDecline
+  const mask = base?.masking
   return (
     <Card title="Does the rule work? Measured on simulated crews" aside={<Origin kind="simulated">crews</Origin>}>
       {bt && base ? (
@@ -117,6 +105,21 @@ function Evidence() {
               {base.alertLoad.perPerson.personSummaries} individual summaries. Shipshape did so on{' '}
               <strong>{base.alertLoad.shipshape.caseDays}</strong> person-days and sent <strong>{base.alertLoad.shipshape.personSummaries}</strong>{' '}
               individual summaries, plus one crew-level summary for every 3 days of a ship alert ({base.alertLoad.shipshape.shipSummaries}).
+            </p>
+          )}
+          {mask && (
+            <p>
+              Its known blind spot: a personal problem that starts during a ship alert is put down to the ship until the air recovers. Of the{' '}
+              {mask.overlappingShipAlert.events} personal events that overlapped a CO₂ rise, {mask.overlappingShipAlert.neverLabelledPersonal} never got a
+              personal label and {mask.overlappingShipAlert.neverReachedSurgeon} never reached the flight surgeon ({mask.noShipAlert.neverReachedSurgeon} of{' '}
+              {mask.noShipAlert.events} with no rise). The accuracy above leaves out the {base.accuracyMixedExcluded} person-days when both happened at once.
+            </p>
+          )}
+          {slow && (
+            <p>
+              A slow decline: when one person's mood slid 0.1 points a day, the check against their starting normal flagged{' '}
+              <strong>{pct(slow.flaggedShare)}</strong> of the slides, a median of {slow.flagDelayDaysMedian} days in, and {pct(slow.toSurgeonShare)} reached the
+              flight surgeon. Without that check a slide like this becomes the person's own normal and is never flagged.
             </p>
           )}
           <div className="scroll">
@@ -172,12 +175,6 @@ function Evidence() {
 }
 
 function Antarctica() {
-  const s = useStore()
-  const run = () => {
-    s.setMission('antarctica')
-    if (s.role.kind === 'surgeon') asCrew(s, 'board')
-    else s.setScreen('board')
-  }
   return (
     <Card title="Beyond spaceflight: Antarctic stations">
       <p>
@@ -228,9 +225,9 @@ function Antarctica() {
           </tbody>
         </table>
       </div>
-      <button type="button" className="btn" onClick={run}>
+      <TourLink stop={{ as: 'anna', page: 'app', search: '?mission=antarctica&screen=board' }} className="btn">
         Run the demo as an Antarctic station
-      </button>
+      </TourLink>
       <p className="fine">
         Not built yet: the rule checks the air only, and altitude and the polar night would be further station-wide signals. The demo keeps
         replaying the ISS CO₂ trace. Australia alone keeps about 80 people through the winter at its four stations. Sources:{' '}
@@ -251,12 +248,62 @@ function Antarctica() {
   )
 }
 
-export function About() {
+export function ChallengePage() {
+  const s = useStore()
+  const base = import.meta.env.BASE_URL
+  useEffect(() => {
+    document.title = 'How it answers the challenge · Shipshape'
+  }, [])
   return (
-    <div className="stack">
-      <ChallengeMap />
-      <Evidence />
-      <Antarctica />
+    <div className="app">
+      <header className="appbar">
+        <div className="appbar-brand">
+          <span className="appicon" aria-hidden="true">
+            S
+          </span>
+          <div>
+            <p className="appbar-name">Shipshape</p>
+            <p className="appbar-meta">Is it me, or the ship?</p>
+          </div>
+        </div>
+        <span />
+        <nav className="account" aria-label="Pages">
+          <a className="link" href={hrefOf('login', base)}>
+            Judge's tour
+          </a>
+          {s.user && (
+            <a className="link" href={hrefOf(homePage(s.user), base)}>
+              Back to the demo
+            </a>
+          )}
+        </nav>
+      </header>
+
+      <section className="intro">
+        <div>
+          <p className="intro-eyebrow">NASA Space Apps Challenge 2026 · Create Health Monitoring Software for Astronauts on Space Missions</p>
+          <h1>How Shipshape answers the challenge</h1>
+        </div>
+        <span className="origins">
+          <Origin kind="simulated">crew</Origin>
+          <Origin kind="real">ISS CO₂, {s.data.cabin.meta.mission}</Origin>
+        </span>
+      </section>
+
+      <main>
+        <div className="stack">
+          <ChallengeMap />
+          <Evidence />
+          <Antarctica />
+        </div>
+      </main>
+
+      <footer className="foot">
+        <p>
+          Shipshape says "likely" and never diagnoses; it supports the flight surgeon and never replaces one. The crew is simulated; the cabin
+          CO₂ is real ISS telemetry from NASA's Open Science Data Repository.
+        </p>
+      </footer>
     </div>
   )
 }

@@ -76,6 +76,27 @@ export interface BacktestScenario {
   }
   /** During ship events: Shipshape against the same crews with one case per person. Older files lack it. */
   alertLoad?: { shipEvents: number; shipshape: AlertLoad; perPerson: AlertLoad }
+  /** Person-days with both a personal event and a CO2 rise, left out of the accuracy. */
+  accuracyMixedExcluded?: number
+  /** Personal events that overlap a ship alert, against those with no alert. Older files lack it. */
+  masking?: { overlappingShipAlert: Masking; noShipAlert: Masking }
+  /** Only in the slow-decline scenario. */
+  slowDecline?: {
+    events: number
+    minDays: number
+    flaggedShare: number | null
+    flagDelayDaysMedian: number | null
+    toSurgeonShare: number | null
+    toSurgeonDelayDaysMedian: number | null
+  }
+}
+
+export interface Masking {
+  events: number
+  labelledShipOnADay: number
+  neverLabelledPersonal: number
+  toSurgeonDelayDaysMedian: number | null
+  neverReachedSurgeon: number
 }
 
 export interface AlertLoad {

@@ -9,7 +9,7 @@ import { ShipBanner } from './CrewBoard.tsx'
 import { FollowUpCard } from './FollowUp.tsx'
 import { QuestCard } from './QuestCard.tsx'
 import { RadiationCard } from './Radiation.tsx'
-import { list, mmHg } from './text.ts'
+import { evidenceLine, list, mmHg } from './text.ts'
 
 const CHART_DAYS = 14
 
@@ -38,6 +38,7 @@ export function ShipAlert() {
   const level = cabinLevel(cabin)
   const recent = s.data.cabin.daily.filter((d) => d.day <= s.today && d.day > s.today - CHART_DAYS)
   const followUp = shipFollowUp(s.results)
+  const evidence = evidenceLine(s.data.backtest)
 
   return (
     <div className="stack">
@@ -144,6 +145,11 @@ export function ShipAlert() {
           <li>Fluid shifts in microgravity cause headaches too, so one headache is never enough: the rule needs crew-wide timing and the CO₂ rise.</li>
           <li>This is a likely cause, re-checked at every check-in. It is not a diagnosis.</li>
         </ul>
+        {evidence && (
+          <p className="fine evidence-line">
+            <Origin kind="simulated">crews</Origin> {evidence}
+          </p>
+        )}
       </Card>
 
       {decision.outcome === 'ship' && <QuestCard />}
@@ -179,6 +185,22 @@ export function ShipAlert() {
           <dd>{meta.excluded}</dd>
           <dt>Caveat</dt>
           <dd>{meta.caveat}</dd>
+          <dt>Data notes</dt>
+          <dd>
+            The rise starts as a step at exactly 00:00 UTC on 2018-08-20 (2.6 to 4.9 mmHg), steps down at 00:00 UTC the next day (4.9 to 4.3
+            mmHg), and holds at 4.94 to 4.95 mmHg for several hours at a time. These may be artifacts of how the data was recorded or
+            published, not changes in the cabin; the 1-hour peak that flags day 212 comes from them. The app replays the series as published
+            and repairs nothing.
+          </dd>
+          <dt>Context</dt>
+          <dd>
+            Context, not cause: NASA's{' '}
+            <a href="https://www.nasa.gov/blogs/stationreport/2018/08/16/iss-daily-summary-report-8-16-2018/" target="_blank" rel="noreferrer">
+              ISS Daily Summary Report of 16 Aug 2018
+            </a>
+            , four days before this rise, describes a "split atmosphere" test of the Lab CO₂ removal assembly (CDRA), planned to last at least 5
+            days. NASA's reports don't say whether the two are linked.
+          </dd>
         </dl>
       </Card>
     </div>

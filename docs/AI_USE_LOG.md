@@ -11,6 +11,8 @@
 | 14 Nov 2026 | Claude Code (Claude Opus 5.5) | Crew timeline (`ui/CrewTimeline.tsx`, `crewTimeline` in `privacy.ts`) replacing the body sketches; flight-surgeon login (Mira) with the Earth view and Houston times; tests, docs | Team review pending |
 | 14 Nov 2026 | Claude Code (Claude Opus 5.5) | Expandable dashboard charts: a chart sheet with time ranges (vitals 7D / 14D / 30D / All, cabin CO₂ 1D / 7D / 30D / All), flagged days taken from the engine's own levels, `dashboard/history.ts` and its tests | Team review pending |
 | 14 Nov 2026 | Claude Code (Claude Opus 5.5) | Merging `personal-dashboard` into `main`: conflicts resolved with the team member; comm delay in seconds on the timeline, summaries and dashboard; the crew app's header and intro use the mission setting | Team review pending |
+| 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `judge-fixes`, after an independent AI judge review and an AI agent's read of rival entries' public repos (to choose what to fix; nothing copied): judge's tour and public challenge page; crew app views per role; slow-change check against the starting normal; backtest masking, slow-decline and under-reporting scenarios (a "late in the alert" rule was tried and dropped on that evidence); one set of demo days on both pages; evidence line on the Ship screen; check-in sliders that start unset; Bone & muscle panel; CO₂ data notes; sources found by web search listed as unchecked; tests, docs, screenshots | Team review pending |
+| 15 Nov 2026 | Claude Code (Claude Opus 5.5) | After the team opened the sources: their claims on screen (CO₂ context on the Ship screen, the PVT-B lapse at 355 ms, NASA's bone-loss and daily-exercise figures), `docs/CITATIONS.md` updated, the live link in the README; merging `judge-fixes` into `main` | Team review pending |
 
 ## What AI does not do in the product
 
@@ -20,7 +22,7 @@
 
 ## To check by hand
 
-- Each source in `docs/CITATIONS.md` (none opened yet).
+- Each source in `docs/CITATIONS.md` still marked "No".
 - The readings of the plan listed in `docs/SPEC.md`.
 - The wording of cards and summaries in `src/ui/text.ts` and `src/ui/Medical.tsx`.
 - The Mars cruise dose rate in `src/engine/mission.ts`: only the abstract of Zeitlin et al. 2013 was read; the per-day figure comes from the press release (see `docs/CITATIONS.md`).

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import type { AccountRole } from '../data/types.ts'
 import { useStore } from '../state.tsx'
+import { DEMO_PINS, TOUR } from './demo.ts'
 import { appPath, hrefOf, pageOf, safeNext } from './paths.ts'
 import { isPinShaped, PIN_LENGTH } from './pin.ts'
 import { attemptsFor, homePage, mayOpen, type User } from './session.ts'
+import { TourLink } from './TourLink.tsx'
 import './login.css'
 
 const ROLE_LABEL: Record<AccountRole, string> = { astronaut: 'Astronaut', medical: 'Medical officer', surgeon: 'Flight surgeon' }
@@ -44,7 +46,7 @@ export function Login() {
   const locked = lockedUntil > now
 
   useEffect(() => {
-    document.title = 'Log in · Shipshape'
+    document.title = 'Shipshape · Is it me, or the ship?'
     document.body.classList.add('login-body')
     return () => document.body.classList.remove('login-body')
   }, [])
@@ -108,6 +110,7 @@ export function Login() {
   if (s.user) {
     return (
       <Shell>
+        <Tour />
         <section className="login-card">
           <h2>Signed in as {s.nameOf(s.user.crewId)}</h2>
           <p className="login-sub">{ROLE_LABEL[s.user.role]}</p>
@@ -137,6 +140,7 @@ export function Login() {
               </span>
               <span className="login-person-name">{c.name}</span>
               <span className={`login-role login-role-${role}`}>{ROLE_LABEL[role]}</span>
+              {DEMO_PINS[c.id] && <span className="login-pin-hint">Demo PIN {DEMO_PINS[c.id]}</span>}
             </button>
           </li>
         )
@@ -145,6 +149,7 @@ export function Login() {
   )
   return (
     <Shell>
+      {!picked && <Tour />}
       {!picked ? (
         <section className="login-card" aria-labelledby="who">
           <h2 id="who">Who is logging in?</h2>
@@ -205,6 +210,33 @@ export function Login() {
   )
 }
 
+/** For judges: the golden path in one click per step, each logging in with that person's public demo PIN. */
+function Tour() {
+  const { nameOf } = useStore()
+  return (
+    <section className="login-card login-tour" aria-labelledby="tour">
+      <h2 id="tour">Judge's tour</h2>
+      <p className="login-sub">One click each. It logs in with the public demo PIN shown on each card below.</p>
+      <ol className="login-steps">
+        {TOUR.map((t, i) => (
+          <li key={t.title}>
+            <TourLink stop={t} className="login-step">
+              <span className="login-step-n" aria-hidden="true">
+                {i + 1}
+              </span>
+              <span className="login-step-text">
+                <span className="login-step-title">{t.title}</span>
+                <span className="login-step-body">{t.body}</span>
+                <span className="login-step-as">{t.as ? `Opens as ${nameOf(t.as)}` : 'No login needed'}</span>
+              </span>
+            </TourLink>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}
+
 function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="login">
@@ -212,11 +244,14 @@ function Shell({ children }: { children: ReactNode }) {
       <header className="login-brand">
         <h1>Shipshape</h1>
         <p>Is it me, or the ship?</p>
+        <p className="login-pitch">
+          A daily crew check-in for long missions. When several people feel off at once, it checks real ISS cabin CO₂ before blaming anyone.
+        </p>
       </header>
       <main className="login-main">{children}</main>
       <footer className="login-foot">
         <p>
-          <span className="login-tag">Simulated crew</span> No real person's data. Demo PINs are listed in the README.
+          <span className="login-tag">Simulated crew</span> No real person's data. The demo PINs are on each card.
         </p>
         <p>
           Your session ends when you close this tab. Shipshape says "likely" and never diagnoses.

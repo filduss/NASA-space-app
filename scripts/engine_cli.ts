@@ -46,6 +46,8 @@ const runs = input.runs.map((run) => {
       cabinKnown: d.decision.cabinKnown,
       shipEpisodeDay: d.shipEpisodeDay,
       summaries: d.summaries.map((s) => s.kind),
+      // Who a day-3 summary about one person was sent for: the day their problem reached the flight surgeon.
+      sent: d.summaries.filter((s) => s.kind === 'person').map((s) => s.crewId),
       people: Object.fromEntries(
         Object.values(d.people).map((p) => [
           p.crewId,
@@ -56,6 +58,7 @@ const runs = input.runs.map((run) => {
             a: p.attribution,
             t: p.tier,
             e: p.episodeDay,
+            slow: p.assessment.off.filter((k) => p.assessment.indicators[k].reason === 'below_start'),
           },
         ]),
       ),
