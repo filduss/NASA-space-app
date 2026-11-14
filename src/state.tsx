@@ -1,5 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import type { BacktestFile, CabinFile, CrewFile } from './data/types.ts'
+import { hrefOf } from './auth/paths.ts'
+import { isPinShaped, verifyPin } from './auth/pin.ts'
+import { attemptsFor, clearFailures, currentUser, endSession, FREE_ATTEMPTS, mayOpen, recordFailure, startSession, type User } from './auth/session.ts'
+import type { AccountsFile, BacktestFile, CabinFile, CrewFile } from './data/types.ts'
 import { runEngine } from './engine/escalation.ts'
 import { MISSIONS, type MissionKey, type MissionSetting } from './engine/mission.ts'
 import type { Viewer } from './engine/privacy.ts'
@@ -9,6 +12,7 @@ import type { QuestLog } from './game/quests.ts'
 import { checkInEvent, totalXp, type GameEvent } from './game/xp.ts'
 
 export type Role = Viewer
+const SURGEON: Role = { kind: 'surgeon' }
 export type Screen = 'board' | 'checkin' | 'me' | 'ship' | 'inbox' | 'summary' | 'about'
 
 /** What the browser keeps between visits. Reaction-test results are never in here. */
@@ -40,11 +44,18 @@ export interface ReactionResult {
 interface Data {
   cabin: CabinFile
   crew: CrewFile
+  accounts: AccountsFile
   backtest: BacktestFile | null
 }
 
+export type LoginResult = { ok: true } | { ok: false; reason: 'wrong'; attemptsLeft: number } | { ok: false; reason: 'locked'; lockedUntil: number }
+
 interface Store {
   data: Data
+  /** The logged-in person, checked against accounts.json; null on the login page. */
+  user: User | null
+  logIn: (crewId: string, pin: string) => Promise<LoginResult>
+  logOut: () => void
   role: Role
   setRole: (r: Role) => void
   screen: Screen
@@ -102,9 +113,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     Promise.all([
       getJson<CabinFile>('cabin.json'),
       getJson<CrewFile>('crew.json'),
+      getJson<AccountsFile>('accounts.json'),
       getJson<BacktestFile>('backtest.json').catch(() => null),
     ])
-      .then(([cabin, crew, backtest]) => alive && setData({ cabin, crew, backtest }))
+      .then(([cabin, crew, accounts, backtest]) => alive && setData({ cabin, crew, accounts, backtest }))
       .catch((e: unknown) => alive && setError(String(e)))
     return () => {
       alive = false
@@ -119,8 +131,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 function Ready({ data, children }: { data: Data; children: ReactNode }) {
   const [firstDay, lastDay] = data.crew.meta.days
   const dayRange: [number, number] = [firstDay + 21, lastDay]
-  const [role, setRoleState] = useState<Role>({ kind: 'crew', crewId: data.crew.crew[0].id })
-  const [screen, setScreen] = useState<Screen>('board')
+  const [user, setUser] = useState<User | null>(() => currentUser(sessionStorage, data.accounts.accounts, Date.now()))
+  const [roleState, setRoleState] = useState<Role>({ kind: 'crew', crewId: data.crew.crew[0].id })
+  // The flight surgeon's login always views as the flight surgeon: that view is all the role may see.
+  const role: Role = user?.role === 'surgeon' ? SURGEON : roleState
+  const [screen, setScreen] = useState<Screen>(() => (user?.role === 'surgeon' ? 'summary' : 'board'))
   const [today, setToday] = useState(data.crew.meta.demoDay)
   const [missionKey, setMissionKey] = useState<MissionKey>('mars')
   const [commDelaySec, setCommDelaySec] = useState(MISSIONS.mars.defaultDelaySec)
@@ -135,9 +150,40 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
     }
   }, [local])
 
-  const setRole = useCallback((r: Role) => {
-    setRoleState(r)
-    setScreen(r.kind === 'surgeon' ? 'summary' : 'board')
+  // "Viewing as" is part of the crew app, so only someone who may open the crew app can change it.
+  const setRole = useCallback(
+    (r: Role) => {
+      if (!user || !mayOpen(user, 'app') || user.role === 'surgeon') return
+      setRoleState(r)
+      setScreen(r.kind === 'surgeon' ? 'summary' : 'board')
+    },
+    [user],
+  )
+
+  const logIn = useCallback(
+    async (crewId: string, pin: string): Promise<LoginResult> => {
+      const now = Date.now()
+      const before = attemptsFor(localStorage, crewId)
+      if (before.lockedUntil > now) return { ok: false, reason: 'locked', lockedUntil: before.lockedUntil }
+      const account = data.accounts.accounts.find((a) => a.crewId === crewId)
+      const ok = account !== undefined && isPinShaped(pin) && (await verifyPin(account, pin, data.accounts.meta.kdf))
+      if (!ok) {
+        const after = recordFailure(localStorage, crewId, Date.now())
+        if (after.lockedUntil > 0) return { ok: false, reason: 'locked', lockedUntil: after.lockedUntil }
+        return { ok: false, reason: 'wrong', attemptsLeft: FREE_ATTEMPTS - after.fails }
+      }
+      clearFailures(localStorage, crewId)
+      startSession(sessionStorage, crewId, Date.now())
+      setUser({ crewId, role: account.role })
+      return { ok: true }
+    },
+    [data],
+  )
+
+  // Ends the session and reloads the login page fresh, with no ?next= back to where the person was.
+  const logOut = useCallback(() => {
+    endSession(sessionStorage)
+    window.location.assign(hrefOf('login', import.meta.env.BASE_URL))
   }, [])
 
   // A new setting brings its own distance to Earth, so the delay resets to that setting's default.
@@ -146,7 +192,11 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
     setCommDelaySec(MISSIONS[k].defaultDelaySec)
   }, [])
 
-  const names = useMemo(() => new Map(data.crew.crew.map((c) => [c.id, c.name])), [data])
+  const names = useMemo(() => {
+    const m = new Map(data.crew.crew.map((c) => [c.id, c.name]))
+    for (const a of data.accounts.accounts) if (a.name && !m.has(a.crewId)) m.set(a.crewId, a.name)
+    return m
+  }, [data])
   const nameOf = useCallback((id: string) => names.get(id) ?? id, [names])
   const crewIds = useMemo(() => data.crew.crew.map((c) => c.id), [data])
 
@@ -229,6 +279,9 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
 
   const store: Store = {
     data,
+    user,
+    logIn,
+    logOut,
     role,
     setRole,
     screen,

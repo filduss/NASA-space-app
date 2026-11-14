@@ -91,3 +91,27 @@ export interface BacktestFile {
   scenarios: BacktestScenario[]
   limits: string[]
 }
+
+/** astronaut and medical are crew; surgeon is the flight surgeon at Mission Control on Earth. */
+export type AccountRole = 'astronaut' | 'medical' | 'surgeon'
+
+export interface Account {
+  /** The account id: a crew id from crew.json, or for Earth staff an id of its own. */
+  crewId: string
+  role: AccountRole
+  /** Display name for someone outside the crew; crew names come from crew.json. */
+  name?: string
+  /** Base64 random salt. */
+  salt: string
+  /** Base64 PBKDF2 output. The PIN itself is never stored. */
+  hash: string
+}
+
+export interface AccountsFile {
+  meta: {
+    generator: string
+    label: string
+    kdf: { name: 'PBKDF2'; hash: 'SHA-256'; iterations: number; keyBytes: number }
+  }
+  accounts: Account[]
+}

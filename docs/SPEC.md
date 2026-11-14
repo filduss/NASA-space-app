@@ -59,6 +59,19 @@ Sliders run 0-10. `symptoms` is any of `headache`, `dizziness`, `nausea`, `conge
 
 Scenarios with the four metrics, their definitions and the stated limits. See "Evidence".
 
+### `accounts.json` (demo logins)
+
+Written by `scripts/make_accounts.py` from the demo PINs listed in the README. Only salted hashes are stored.
+
+```jsonc
+{
+  "meta": { "kdf": { "name": "PBKDF2", "hash": "SHA-256", "iterations": 600000, "keyBytes": 32 } },
+  "accounts": [{ "crewId": "anna", "role": "astronaut", "salt": "<base64, 16 random bytes>", "hash": "<base64>" }]
+}
+```
+
+`role` is `astronaut`, `medical` or `surgeon`. Every crew member in `crew.json` has one account; Dana is the medical officer. People on Earth who log in but are not crew have an id outside `crew.json` and a `name` of their own: Mira is the flight surgeon at Mission Control (`{ "crewId": "mira", "role": "surgeon", "name": "Mira", … }`).
+
 ### Engine output
 
 `runEngine(input)` in `src/engine/escalation.ts` returns one `DayResult` per day: the cabin status, the ship-or-me decision, each person's status (indicators against their own normal, likely cause, day count, tier) and any flight-surgeon summaries. Types are in `src/engine/types.ts`.
@@ -130,6 +143,38 @@ The air is a suspect when it is above baseline or its 24 h mean is over 3 mmHg. 
 
 The radiation card on the Ship screen shows the dose rate, the dose so far (rate × mission day), its share of NASA's 600 mSv career limit (NASA-STD-3001 Vol 1 [V1 4030]) and the mission day the limit would be reached. It says what to do in a solar storm: go to the storm shelter until the all-clear. Every number there is labeled an estimate. Sources are in `docs/CITATIONS.md`.
 
+### Crew timeline
+
+The crew board and the flight surgeon's screen share one chart: the last 14 days of cabin CO₂ (24 h mean, with the cabin's usual level and the 3 mmHg limit), how many crew drift on CO₂-linked indicators (with the rule's threshold), and one row per person. Each cell is a symbol and a word: ● within own usual, ▲ off own usual, ◆ day 3 or later, ○ no check-in, a shield for a shielded day, ■ safety answer, – nothing received. `crewTimeline` in `privacy.ts` fills it per viewer, inside the privacy table above:
+
+| Part | Crew member | Crew medical officer | Flight surgeon |
+| --- | --- | --- | --- |
+| Cabin CO₂ | Yes | Yes | Yes (ship telemetry, not a person's data) |
+| Crew drifting, no names | Every day | Every day | Only on days a ship summary was sent, with the count it gives |
+| Ship-alert band | Every day | Every day | The days a ship summary covers ("day N of the alert") |
+| Rows | Their own only | Everyone, shared indicators only, as on the board | Only people a summary names, and only the days and indicators that summary states |
+
+A row cell shows ◆ when a shared indicator has been off 3 days **and** it is day 3 of the same likely cause, which is the day a summary goes to Earth. Safety answers never show in board rows; the flight surgeon's row shows ■ the day the immediate summary was sent.
+
+Times: on board, ship time is UTC and the check-in is at 08:00. The flight surgeon's screen gives each time also in Houston local time, where Mission Control sits, after the comm delay. The real date behind a mission day (`cabin.json` replay) decides summer or winter time.
+
+### Login
+
+`/` is the login, `/dashboard` the personal dashboard and `/app` the crew app. Both need a logged-in person; without one they send you to the login and back afterwards (only to those two pages).
+
+| | Astronaut | Medical officer | Flight surgeon (Earth) |
+| --- | --- | --- | --- |
+| Own dashboard (`/dashboard`) | Yes | Yes | None: not crew, sent to the crew app |
+| Anyone else's dashboard | No | No | No |
+| Crew app (`/app`) | No: sent to their own dashboard | Yes, with its **Viewing as** control | Yes, always viewing as the flight surgeon |
+
+The crew app is the only thing the medical role adds. The flight surgeon's login opens the crew app fixed to the flight surgeon's view: summaries and the timeline of what reached Earth; the challenge page opens from the demo controls as for everyone. **Viewing as** and "Reset my inputs" are not offered; the mission day, mission setting and comm delay controls stay for the demo. Inside the app, the screens and the privacy table work as before.
+
+- The PIN is checked in the browser with Web Crypto: PBKDF2-SHA256 against the salted hash in `accounts.json`, compared over every byte. The PIN is never stored, logged or kept in state after the check.
+- The session is in `sessionStorage` (`shipshape.session.v1`): the crew id and an expiry 8 hours on, nothing else. The role is read from `accounts.json` on every load, never from the session. Closing the tab logs out; each tab logs in on its own.
+- Five wrong PINs in a row lock that person out for 30 s, doubling with each further wrong PIN up to 15 min. The count is in `localStorage` (`shipshape.lockout.v1`) so closing the tab does not reset it, and a correct PIN clears it.
+- **Limit:** with no server this is a privacy gate, not security. Anyone can download `accounts.json` and try all 10 000 four-digit PINs offline, or edit browser storage.
+
 ## Readings of the plan
 
 These are the places where the plan could be read two ways, or where the build goes beyond it.
@@ -144,6 +189,9 @@ These are the places where the plan could be read two ways, or where the build g
 - **Did the fix work?** For 7 days after a ship alert ends, the board and the Ship screen say whether the air is back to its usual level and how many of the crew it touched are back to theirs. Counts only, judged on shared indicators as the board does (`shipFollowUp` in `src/engine/privacy.ts`). Anyone still off is already "likely you" with a new 3-day count. This is the re-check the quest's last step asks for; it does not claim the fix caused the recovery.
 - **The limit check uses the 24 h mean.** NASA writes the limit as a 1-hour average, but a single 1-hour peak would make the air a suspect on many quiet days. In the backtest the 24 h mean raised fewer false ship alarms (table under "Evidence"). The highest 1-hour average is still shown on the Ship screen and in summaries.
 - **Radiation is shown, not judged.** It has no tier, no card per person and no part in ship or me: the whole crew gets about the same dose and nobody can feel it at everyday levels. A solar-storm warning would be a second "ship" cause; that is not built.
+- **The flight surgeon has a login.** The plan names the flight surgeon as a reader of summaries; the build gives the role a login (Mira, on Earth) so the Earth view can be shown on its own. It adds no access: the login sees what the "Flight surgeon" column of the privacy table allows.
+- **The flight surgeon's timeline is rebuilt from summaries.** Nothing reaches Earth between summaries, so a row's cells come only from what a summary states: a day-3 summary covers the days each listed indicator has been off; a ship summary names who had CO₂-linked changes that day and how long the alert has run.
+- **The medical officer is one of the crew.** The plan's crew medical officer is a role, not a person; the build gives it to Dana. Her login opens her own dashboard like anyone's, plus the crew app. The crew app keeps its demo **Viewing as** control, so as the medical officer she can still show every screen of the demo.
 
 ## Game
 

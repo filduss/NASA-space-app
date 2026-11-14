@@ -1,3 +1,4 @@
+import { indicatorLevel } from '../dashboard/model.ts'
 import { RULES } from '../engine/config.ts'
 import { INDICATORS } from '../engine/deviation.ts'
 import type { IndicatorKey, PersonStatus } from '../engine/types.ts'
@@ -46,10 +47,16 @@ function StatusCard({ me }: { me: PersonStatus }) {
     )
   }
   const lines = a.off.map((k) => indicatorLine(a.indicators[k], a.symptoms))
+  // Red from day 3 on, as on the personal dashboard.
+  const tone = me.tier >= 3 ? 'alert' : 'watch'
   return (
     <Card
-      tone="watch"
-      title={<Mark tone="watch">{me.attribution === 'ship' ? 'Likely the ship, not you' : 'Watch: something is off your usual'}</Mark>}
+      tone={tone}
+      title={
+        <Mark tone={tone}>
+          {me.attribution === 'ship' ? 'Likely the ship, not you' : me.tier >= 3 ? `Still off your usual, day ${me.episodeDay}` : 'Watch: something is off your usual'}
+        </Mark>
+      }
       aside={<span className="fine">🔒 Only you see this card</span>}
     >
       <ul className="lines">
@@ -149,10 +156,11 @@ export function MeView({ crewId }: { crewId: string }) {
               return ind.off && ind.value !== null ? [{ x: r.day, y: chartValue(spec.key, ind.value) }] : []
             })
             const today = me.assessment.indicators[spec.key]
+            const level = indicatorLevel(me, spec.key)
             const isMs = spec.key === 'reaction'
             const domain: [number, number] | undefined = isMs ? undefined : spec.key === 'sleepHours' ? [3, 10] : [0, 10]
             return (
-              <figure className="trend" key={spec.key}>
+              <figure className={`trend trend-${level}`} key={spec.key}>
                 <figcaption>
                   <span>
                     {spec.label}

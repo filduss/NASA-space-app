@@ -40,9 +40,9 @@ export function Card({ title, aside, tone, children, id }: { title?: ReactNode; 
   )
 }
 
-export function Stat({ label, value, note }: { label: string; value: ReactNode; note?: ReactNode }) {
+export function Stat({ label, value, note, tone }: { label: string; value: ReactNode; note?: ReactNode; tone?: Tone }) {
   return (
-    <div className="stat">
+    <div className={`stat${tone ? ` stat-${tone}` : ''}`}>
       <div className="stat-label">{label}</div>
       <div className="stat-value">{value}</div>
       {note && <div className="stat-note">{note}</div>}

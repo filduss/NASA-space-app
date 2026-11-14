@@ -1,3 +1,7 @@
+import { useEffect } from 'react'
+import { hrefOf } from './auth/paths.ts'
+import { mayOpen } from './auth/session.ts'
+import { cabinLevel } from './dashboard/model.ts'
 import { useStore, type Screen } from './state.tsx'
 import { About } from './ui/About.tsx'
 import { Origin } from './ui/bits.tsx'
@@ -24,39 +28,75 @@ export function App() {
   // The challenge page is for judges and visitors: it opens from the demo controls, not from a tab.
   const screen = s.screen === 'about' || tabs.includes(s.screen) ? s.screen : tabs[0]
   const crewId = s.role.kind === 'crew' ? s.role.crewId : null
-  const shipOn = s.todayResult.decision.outcome === 'ship'
-  const who = s.role.kind === 'crew' ? s.nameOf(s.role.crewId) : s.role.kind === 'cmo' ? 'Crew medical officer' : 'Flight surgeon'
+  // The Ship tab carries the same orange / red as the cabin air on the dashboard.
+  const shipLevel = s.todayResult.decision.outcome === 'ship' ? (cabinLevel(s.todayResult.cabin) === 'alert' ? 'alert' : 'watch') : null
+  const who = s.role.kind === 'crew' ? s.nameOf(s.role.crewId) : s.role.kind === 'cmo' ? 'Crew medical officer' : 'Flight surgeon, Mission Control (Earth)'
+  const me = s.user ? s.nameOf(s.user.crewId) : ''
+  const myRole = s.user?.role === 'surgeon' ? 'flight surgeon, Earth' : 'medical officer'
+
+  useEffect(() => {
+    document.title = `${LABELS[screen]} · Shipshape`
+  }, [screen])
 
   return (
     <div className="app">
-      <header className="top">
-        <div className="brand">
-          <h1>Shipshape</h1>
-          <p>Is it me, or the ship?</p>
-        </div>
-        <div className="context">
-          <span>
-            {s.mission.label} · mission day {s.today} · {who}
+      <header className="appbar">
+        <div className="appbar-brand">
+          <span className="appicon" aria-hidden="true">
+            S
           </span>
-          <span className="origins">
-            <Origin kind="simulated">crew</Origin>
-            <Origin kind="real">ISS CO₂, {s.data.cabin.meta.mission}</Origin>
-          </span>
+          <div>
+            <p className="appbar-name">Shipshape</p>
+            <p className="appbar-meta">Is it me, or the ship?</p>
+          </div>
         </div>
-        <details className="controls" open>
-          <summary>Demo controls</summary>
-          <RoleSwitcher />
-        </details>
+
+        <nav className="tabs" aria-label="Screens">
+          {tabs.map((t) => (
+            <button key={t} type="button" className={t === screen ? 'tab tab-on' : 'tab'} aria-current={t === screen ? 'page' : undefined} onClick={() => s.setScreen(t)}>
+              {LABELS[t]}
+              {t === 'ship' && shipLevel && (
+                <span className={`tab-flag tab-flag-${shipLevel}`} role="img" aria-label="ship alert active">
+                  {shipLevel === 'alert' ? '◆' : '▲'}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        <nav className="account" aria-label="Account">
+          <span className="account-who">
+            <span className="avatar-sm" aria-hidden="true">
+              {me.slice(0, 1)}
+            </span>
+            <span>
+              {me} <span className="account-role">· {myRole}</span>
+            </span>
+          </span>
+          {s.user && mayOpen(s.user, 'dashboard') && <a href={hrefOf('dashboard', import.meta.env.BASE_URL)}>My dashboard</a>}
+          <button type="button" className="link" onClick={s.logOut}>
+            Log out
+          </button>
+        </nav>
       </header>
 
-      <nav className="tabs" aria-label="Screens">
-        {tabs.map((t) => (
-          <button key={t} type="button" className={t === screen ? 'tab tab-on' : 'tab'} aria-current={t === screen ? 'page' : undefined} onClick={() => s.setScreen(t)}>
-            {LABELS[t]}
-            {t === 'ship' && shipOn && <span className="tab-flag" aria-label="alert active"> ▲</span>}
-          </button>
-        ))}
-      </nav>
+      <section className="intro">
+        <div>
+          <p className="intro-eyebrow">
+            {s.mission.label} · mission day {s.today} · {who}
+          </p>
+          <h1>{LABELS[screen]}</h1>
+        </div>
+        <span className="origins">
+          <Origin kind="simulated">crew</Origin>
+          <Origin kind="real">ISS CO₂, {s.data.cabin.meta.mission}</Origin>
+        </span>
+      </section>
+
+      <details className="controls" open>
+        <summary>Demo controls</summary>
+        <RoleSwitcher />
+      </details>
 
       {/* Keyed by person and day so forms start fresh when either changes. */}
       <main key={`${crewId ?? s.role.kind}-${s.today}`}>

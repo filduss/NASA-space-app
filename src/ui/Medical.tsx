@@ -1,9 +1,12 @@
+import { cabinLevel } from '../dashboard/model.ts'
 import { cmoInbox, type CmoItem } from '../engine/privacy.ts'
 import { SPEC } from '../engine/deviation.ts'
 import type { SurgeonSummary } from '../engine/types.ts'
 import { clearTheAirQuest, questProgress } from '../game/quests.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
+import { checkInAt, houstonTime, shipTime } from './clock.ts'
+import { CrewTimeline } from './CrewTimeline.tsx'
 import { delayText, fmt, indicatorLineThird, list, mmHg, symptomLabel } from './text.ts'
 
 function CmoLine({ item }: { item: CmoItem }) {
@@ -12,7 +15,7 @@ function CmoLine({ item }: { item: CmoItem }) {
   switch (item.kind) {
     case 'safety':
       return (
-        <li>
+        <li className="inbox-alert">
           <Mark tone="alert">
             {s.nameOf(item.crewId as string)} asked to talk to someone now. Reach them privately. The flight surgeon has been sent a message.
           </Mark>
@@ -20,7 +23,7 @@ function CmoLine({ item }: { item: CmoItem }) {
       )
     case 'ship':
       return (
-        <li>
+        <li className="inbox-watch">
           <Mark tone="watch">
             Ship alert: {item.count} of {item.of} crew show CO₂-linked changes{labels ? ` (${labels})` : ''}.
           </Mark>
@@ -28,16 +31,17 @@ function CmoLine({ item }: { item: CmoItem }) {
       )
     case 'shared_pattern':
       return (
-        <li>
+        <li className="inbox-watch">
           <Mark tone="watch">
             A shared pattern that is not the air: {item.count} of {item.of} crew are off their usual ({labels}). No names are given.
           </Mark>
         </li>
       )
     case 'persistent':
+      // Day 3 or later is red, as on the personal dashboard.
       return (
-        <li>
-          <Mark tone="watch">
+        <li className="inbox-alert">
+          <Mark tone="alert">
             {s.nameOf(item.crewId as string)}: still off their usual on day 3 or later ({labels}). A summary has gone to the flight surgeon.
           </Mark>
         </li>
@@ -88,7 +92,7 @@ export function CmoInbox() {
                 const a = p.assessment
                 const shared = s.local.shareWatch[c.id] === true
                 return (
-                  <tr key={c.id}>
+                  <tr key={c.id} className={a.checkedIn && !a.safety && a.symptoms.length ? 'row-watch' : undefined}>
                     <th scope="row">{c.name}</th>
                     {a.checkedIn ? (
                       <>
@@ -119,6 +123,8 @@ export function CmoInbox() {
 function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
   const s = useStore()
   const name = sum.crewId ? s.nameOf(sum.crewId) : ''
+  const sent = checkInAt(sum.day, s.data.cabin.meta.replay)
+  const received = checkInAt(sum.day, s.data.cabin.meta.replay, s.commDelaySec)
   const cabinLine = sum.cabin.hasData
     ? `Cabin CO₂ ${mmHg(sum.cabin.co2Mean)} over 24 h${sum.cabin.overLimit ? ', above the 3 mmHg limit' : ''} (usual ${mmHg(sum.cabin.baseline)}), highest 1-hour average ${mmHg(sum.cabin.co2Max1h)}${sum.cabin.aboveLimit && !sum.cabin.overLimit ? ', above the 3 mmHg limit' : ''}.`
     : 'No usable cabin CO₂ data for this day.'
@@ -134,12 +140,12 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
     quest = `Crew quest "Clear the air": ${p.done} of ${p.total} steps done.`
   }
   return (
-    <article className="doc">
+    <article className={`doc doc-${sum.kind === 'ship' && cabinLevel(sum.cabin) !== 'alert' ? 'watch' : 'alert'}`}>
       <header>
         <h3>{title}</h3>
         <p className="fine">
-          Sent mission day {sum.day} at check-in · {sum.immediate ? 'sent immediately' : 'day-3 summary'} · received on Earth{' '}
-          {delayText(s.commDelaySec)} later
+          {sum.immediate ? 'Sent immediately' : 'Day-3 summary'}, sent mission day {sum.day} at {shipTime(sent)} ship time · received{' '}
+          {delayText(s.commDelaySec)} later, <strong>{houstonTime(received)}</strong> ({shipTime(received)})
         </p>
       </header>
       {sum.kind === 'ship' && (
@@ -187,6 +193,9 @@ export function SurgeonView() {
   const s = useStore()
   return (
     <div className="stack">
+      <Card title="What Earth has received, last 14 days" aside={<Origin kind="simulated">crew</Origin>}>
+        <CrewTimeline viewer={{ kind: 'surgeon' }} />
+      </Card>
       <Card title="Flight-surgeon summaries" aside={<Origin kind="simulated">crew</Origin>}>
         <p className="muted">
           One page per event, written from fixed templates by the rules engine; no AI wording. It supports your judgement and does not

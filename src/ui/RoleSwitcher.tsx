@@ -24,24 +24,33 @@ export function RoleSwitcher() {
     else s.setRole({ kind: 'crew', crewId: v })
   }
   const step = (d: number) => s.setToday(Math.min(max, Math.max(min, s.today + d)))
+  // The flight surgeon's login only ever views as the flight surgeon, and cannot clear crew inputs.
+  const earth = s.user?.role === 'surgeon'
   return (
     <div className="switcher" aria-label="Demo controls">
-      <label className="field">
-        <span>Viewing as</span>
-        <select value={roleValue(s.role)} onChange={(e) => setRole(e.target.value)}>
-          <optgroup label="Crew">
-            {s.data.crew.crew.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </optgroup>
-          <optgroup label="Medical">
-            <option value="cmo">Crew medical officer</option>
-            <option value="surgeon">Flight surgeon (Earth)</option>
-          </optgroup>
-        </select>
-      </label>
+      {earth ? (
+        <div className="field">
+          <span>Viewing as</span>
+          <output className="field-fixed">Flight surgeon (Earth)</output>
+        </div>
+      ) : (
+        <label className="field">
+          <span>Viewing as</span>
+          <select value={roleValue(s.role)} onChange={(e) => setRole(e.target.value)}>
+            <optgroup label="Crew">
+              {s.data.crew.crew.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Medical">
+              <option value="cmo">Crew medical officer</option>
+              <option value="surgeon">Flight surgeon (Earth)</option>
+            </optgroup>
+          </select>
+        </label>
+      )}
       <div className="field">
         <span>Mission day</span>
         <div className="stepper">
@@ -100,15 +109,17 @@ export function RoleSwitcher() {
       <button type="button" className="link" onClick={() => s.setScreen('about')}>
         How it answers the challenge
       </button>
-      <button
-        type="button"
-        className="link"
-        onClick={() => {
-          if (window.confirm('Clear the live check-ins, quest ticks and XP you added in this browser?')) s.reset()
-        }}
-      >
-        Reset my inputs
-      </button>
+      {!earth && (
+        <button
+          type="button"
+          className="link"
+          onClick={() => {
+            if (window.confirm('Clear the live check-ins, quest ticks and XP you added in this browser?')) s.reset()
+          }}
+        >
+          Reset my inputs
+        </button>
+      )}
     </div>
   )
 }

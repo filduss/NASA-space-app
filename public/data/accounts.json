@@ -1,0 +1,45 @@
+{
+ "meta": {
+  "generator": "scripts/make_accounts.py",
+  "label": "Demo accounts. PINs are listed in the README; only salted hashes are stored here.",
+  "kdf": {
+   "name": "PBKDF2",
+   "hash": "SHA-256",
+   "iterations": 600000,
+   "keyBytes": 32
+  }
+ },
+ "accounts": [
+  {
+   "crewId": "anna",
+   "role": "astronaut",
+   "salt": "5+wcGKVZaIiT5LkLyKgsgg==",
+   "hash": "22xNQroi7h3K+CQneOdk+qpvzbsqIfcLXvyIamWB1A8="
+  },
+  {
+   "crewId": "ben",
+   "role": "astronaut",
+   "salt": "7MerObyE0G3zRtvhKMQO0A==",
+   "hash": "Iije6D+jbmgbdRqrw1Pb2TDVsXEVJlGi12UE5p0O0gc="
+  },
+  {
+   "crewId": "chen",
+   "role": "astronaut",
+   "salt": "zfX9l2mOG8k9c0B4LrBVlQ==",
+   "hash": "+T1vwWG8MRDwACX7X5o3ALbn/nlPIhWWl2TcWTrEVv4="
+  },
+  {
+   "crewId": "dana",
+   "role": "medical",
+   "salt": "ZIFZmYk4sL7PzkokUknmLQ==",
+   "hash": "mjjMZBqVijHh0d3+ltery/91UM4mA6WKIA0EkLabhX8="
+  },
+  {
+   "crewId": "mira",
+   "role": "surgeon",
+   "name": "Mira",
+   "salt": "fkgiRPJo6xe12/PUEQvwXw==",
+   "hash": "u+Vbn03LRTYv+LEVCumFXiKczG8UwbZ/cSj9IVJWcjY="
+  }
+ ]
+}
