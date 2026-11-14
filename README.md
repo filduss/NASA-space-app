@@ -1,13 +1,31 @@
 # Shipshape
 
-A crew check-in game for long missions. It rewards honest reporting and tells the crew whether a bad day is likely them or the ship.
+**Is it me, or the ship?** A daily check-in for a crew on a long mission. When several people feel off at once, Shipshape checks real ISS cabin CO₂ before blaming anyone, and tells each astronaut whether a bad day is likely them or the ship. It rewards honest reporting, never the reading.
 
-Built for the NASA International Space Apps Challenge. It grew from the team's [plan v0.1](docs/plan-v0.1.md), now superseded by [docs/SPEC.md](docs/SPEC.md).
+Built for the NASA Space Apps Challenge 2026, "Create Health Monitoring Software for Astronauts on Space Missions". It grew from the team's [plan v0.1](docs/plan-v0.1.md), now superseded by [docs/SPEC.md](docs/SPEC.md).
 
-- **Real:** ISS cabin CO₂, temperature and humidity from NASA's Open Science Data Repository (mission RR-7), and the thresholds.
-- **Simulated:** the four-person crew, seeded and labeled as simulated on every screen.
-- **Estimated:** radiation dose for the chosen setting (ISS, lunar surface or Mars transit), from published measurements, against NASA's 600 mSv career limit.
-- **Not in it:** an AI model, a diagnosis, a leaderboard or a backend. The PIN login runs in the browser only (see below).
+## For judges
+
+- **The start page is a judge's tour.** One click per step, no PIN to type: day 213 "likely the ship" (as Dana, the medical officer), day 221 "likely you" (Chen's own dashboard), day 223 "day 3 reaches Earth" (Mira, the flight surgeon).
+- **How it answers the challenge:** the `/challenge` page, no login: the five questions, the evidence and the limits.
+
+| Real | Simulated | Estimated |
+| --- | --- | --- |
+| ISS cabin CO₂, temperature and humidity from NASA's Open Science Data Repository (mission RR-7; source, API URL and SHA-256 on screen), and the NASA-STD-3001 3 mmHg limit | The four-person crew, seeded and labelled as simulated on every screen | Radiation dose for the mission setting, from published measurements, against NASA's 600 mSv career limit |
+
+**Evidence**: 200 simulated crews over 10 real ISS CO₂ traces, run through the app's own rules ([SPEC, "Evidence"](docs/SPEC.md#evidence)):
+
+- The rule names the right cause, ship or not, in 90% of the alerts raised during an event.
+- During CO₂ rises it opens 72% fewer personal cases than an app with one alert per person, and sends 87% fewer individual summaries to the flight surgeon.
+- A slow mood decline that never jumps on any one day: 94% are flagged against the person's starting normal, and 93% reach the flight surgeon (9% without that check).
+- The known blind spot, stated on the challenge page: a personal problem that starts during a ship alert is put down to the ship until the air recovers (8 of 32 such events never got a personal label).
+
+| | |
+| --- | --- |
+| ![The judge's tour on the start page](docs/screenshots/tour.png) | ![Day 213: likely the ship, with the real ISS CO₂ trace](docs/screenshots/ship-day-213.png) |
+| ![Day 221: Chen's dashboard, likely him](docs/screenshots/dashboard-day-221.png) | ![Day 223: what reached the flight surgeon on Earth](docs/screenshots/earth-day-223.png) |
+
+Not a medical device: it says "likely", never diagnoses, and supports the flight surgeon rather than replacing one. No AI model runs in the product, there is no leaderboard and no backend; the PIN login runs in the browser only (see below). AI use during development is in [docs/AI_USE_LOG.md](docs/AI_USE_LOG.md).
 
 ## Run it
 
@@ -71,6 +89,7 @@ docs/         SPEC.md  CITATIONS.md  AI_USE_LOG.md
 ## Team
 
 - Filip Kolar
+- Frantisek Kares
 
 ## License
 

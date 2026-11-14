@@ -179,7 +179,7 @@ export function Dashboard() {
           </span>
           <div>
             <p className="bar-name">{name}</p>
-            <p className="bar-meta">Mars transit · Personal dashboard</p>
+            <p className="bar-meta">{s.mission.label} · Personal dashboard</p>
           </div>
         </div>
 
