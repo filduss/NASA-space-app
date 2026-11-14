@@ -5,12 +5,13 @@ import { useStore, type Role } from '../state.tsx'
 import { delayText } from './text.ts'
 
 // Demo control: who is looking, which mission day it is, where the crew is and how far away Earth is.
-// The golden path of the demo is four days: 212 (all OK), 213 (ship), 221 (one still off), 223 (day 3).
+// The golden path of the demo is four days, the same on the personal dashboard: 212 (crew OK, CO2
+// starting to climb), 213 (ship), 221 (air normal, one still off), 223 (day 3).
 const GOLDEN: { day: number; label: string }[] = [
-  { day: 212, label: 'All OK' },
-  { day: 213, label: 'CO₂ rises' },
-  { day: 221, label: 'Air normal' },
-  { day: 223, label: 'Day 3' },
+  { day: 212, label: 'CO₂ starts to climb' },
+  { day: 213, label: 'Likely the ship' },
+  { day: 221, label: 'Air normal, one still off' },
+  { day: 223, label: 'Day 3 to Earth' },
 ]
 
 export function RoleSwitcher() {

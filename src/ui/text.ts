@@ -1,3 +1,4 @@
+import type { BacktestFile } from '../data/types.ts'
 import { RULES } from '../engine/config.ts'
 import { SPEC, SYMPTOMS } from '../engine/deviation.ts'
 import type { IndicatorKey, IndicatorResult, SymptomKey } from '../engine/types.ts'
@@ -87,6 +88,18 @@ export function percent(share: number): string {
 
 export function mmHg(v: number | null, digits = 1): string {
   return v === null ? 'n/a' : `${v.toFixed(digits)} mmHg`
+}
+
+/** The rule's track record in one line, for the Ship screen: the backtest's base case. Null without the file. */
+export function evidenceLine(bt: BacktestFile | null): string | null {
+  const base = bt?.scenarios[0]
+  if (!bt || !base || base.shipOrMeAccuracy === null) return null
+  const every = base.falseAlarms.shipPerCrewDay > 0 ? Math.round(1 / base.falseAlarms.shipPerCrewDay) : null
+  return (
+    `Tested on ${bt.meta.crews} simulated crews over ${Object.keys(bt.meta.traces).length} real ISS CO₂ traces: ` +
+    `the rule named the right cause in ${percent(base.shipOrMeAccuracy)} of alerts` +
+    (every ? `, and raised a ship alert with no CO₂ rise behind it about once every ${every} crew-days.` : '.')
+  )
 }
 
 export function list(xs: string[]): string {

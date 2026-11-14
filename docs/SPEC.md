@@ -190,6 +190,7 @@ These are the places where the plan could be read two ways, or where the build g
 - **Day 3 counts per likely cause.** When a ship alert ends and someone is still off, their count restarts at day 1 as "me". This is what makes the golden path's "day 3" land two days after the air clears.
 - **One person drifting under high CO₂ is "me".** The card says the cabin is above its usual level and that the rule does not blame the air yet.
 - **Headache is the only symptom that counts toward a ship alert.** It is the one with a published dose-response. Other ticks open a private Watch.
+- **Check-in sliders start unset.** A slider that starts at the person's usual lets a rushed check-in report "as usual" without anyone choosing it, which is the under-reporting the game is meant to counter. Built: each slider starts unset and is rated before the usual is shown, or set to the usual with one explicit tap ("Set them to my usual"). Submit waits until every slider is set.
 - **The live reaction test is shown, not compared.** The presenter has no baseline, and the result is never stored, so it does not feed the rules.
 - **Quest steps are illustrative,** not a flight procedure, and say so.
 - **Did the fix work?** For 7 days after a ship alert ends, the board and the Ship screen say whether the air is back to its usual level and how many of the crew it touched are back to theirs. Counts only, judged on shared indicators as the board does (`shipFollowUp` in `src/engine/privacy.ts`). Anyone still off is already "likely you" with a new 3-day count. This is the re-check the quest's last step asks for; it does not claim the fix caused the recovery.
@@ -215,7 +216,7 @@ Rules are in `src/game/`. Nothing there can read a check-in's values: `checkInEv
 
 ## Golden path
 
-The "Golden path" control jumps between the four days of the demo. The crew is seed 402 of the simulator.
+The "Golden path" control jumps between the four days of the demo, and the personal dashboard's day chips use the same four days. The crew is seed 402 of the simulator; `tests/golden.test.ts` checks these days on the committed data.
 
 | Mission day | Real date | What the app shows |
 | --- | --- | --- |
@@ -230,7 +231,7 @@ Chen's sleep loss starts on day 219, while the ship alert is still on, so the ap
 
 ## Evidence
 
-`scripts/backtest.py` runs 200 simulated crews over 10 real ISS CO₂ traces through the app's own engine (`scripts/engine_cli.ts`), with seven scenarios. The numbers are in `public/data/backtest.json` and on the challenge page (Demo controls → How it answers the challenge).
+`scripts/backtest.py` runs 200 simulated crews over 10 real ISS CO₂ traces through the app's own engine (`scripts/engine_cli.ts`), with seven scenarios. The numbers are in `public/data/backtest.json` and on the challenge page (`/challenge`); the Ship screen quotes the base case in one line, read from the same file.
 
 - A ship event is a run of days at least 1 mmHg above that trace's median. An individual event is an injected 4-7 day sleep loss, run of headaches or stress dip.
 - Thresholds were set on seeds 5000-5199; the reported seeds are 1000-1199.

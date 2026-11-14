@@ -9,7 +9,7 @@ import { ShipBanner } from './CrewBoard.tsx'
 import { FollowUpCard } from './FollowUp.tsx'
 import { QuestCard } from './QuestCard.tsx'
 import { RadiationCard } from './Radiation.tsx'
-import { list, mmHg } from './text.ts'
+import { evidenceLine, list, mmHg } from './text.ts'
 
 const CHART_DAYS = 14
 
@@ -38,6 +38,7 @@ export function ShipAlert() {
   const level = cabinLevel(cabin)
   const recent = s.data.cabin.daily.filter((d) => d.day <= s.today && d.day > s.today - CHART_DAYS)
   const followUp = shipFollowUp(s.results)
+  const evidence = evidenceLine(s.data.backtest)
 
   return (
     <div className="stack">
@@ -144,6 +145,11 @@ export function ShipAlert() {
           <li>Fluid shifts in microgravity cause headaches too, so one headache is never enough: the rule needs crew-wide timing and the CO₂ rise.</li>
           <li>This is a likely cause, re-checked at every check-in. It is not a diagnosis.</li>
         </ul>
+        {evidence && (
+          <p className="fine evidence-line">
+            <Origin kind="simulated">crews</Origin> {evidence}
+          </p>
+        )}
       </Card>
 
       {decision.outcome === 'ship' && <QuestCard />}

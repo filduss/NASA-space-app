@@ -26,7 +26,7 @@ const QUESTIONS: { q: string; a: string; jump: string; stop: TourStop }[] = [
   },
   {
     q: 'How do spaceflight hazards affect these indicators?',
-    a: "Closed environment: cabin CO₂ is linked to headaches, poor sleep and fatigue. Space radiation: a dose budget against NASA's career limit. Distance from Earth: the mission setting sets the delay to the flight surgeon. Gravity: microgravity fluid shifts cause headaches too, so one headache never blames the air. Isolation: mood and stress are tracked privately.",
+    a: "Closed environment: cabin CO₂ is linked to headaches, poor sleep and fatigue. Space radiation: a dose budget against NASA's career limit. Distance from Earth: the mission setting sets the delay to the flight surgeon. Gravity: microgravity fluid shifts cause headaches too, so one headache never blames the air. Isolation and confinement: mood and stress are tracked privately, against the person's usual and against their starting normal, so a slow slide is caught too.",
     jump: 'Open the Ship screen on day 213',
     stop: { as: 'dana', page: 'app', search: '?day=213&screen=ship' },
   },
@@ -85,6 +85,8 @@ function Evidence() {
   const s = useStore()
   const bt = s.data.backtest
   const base = bt?.scenarios[0]
+  const slow = bt?.scenarios.find((x) => x.slowDecline)?.slowDecline
+  const mask = base?.masking
   return (
     <Card title="Does the rule work? Measured on simulated crews" aside={<Origin kind="simulated">crews</Origin>}>
       {bt && base ? (
@@ -103,6 +105,21 @@ function Evidence() {
               {base.alertLoad.perPerson.personSummaries} individual summaries. Shipshape did so on{' '}
               <strong>{base.alertLoad.shipshape.caseDays}</strong> person-days and sent <strong>{base.alertLoad.shipshape.personSummaries}</strong>{' '}
               individual summaries, plus one crew-level summary for every 3 days of a ship alert ({base.alertLoad.shipshape.shipSummaries}).
+            </p>
+          )}
+          {mask && (
+            <p>
+              Its known blind spot: a personal problem that starts during a ship alert is put down to the ship until the air recovers. Of the{' '}
+              {mask.overlappingShipAlert.events} personal events that overlapped a CO₂ rise, {mask.overlappingShipAlert.neverLabelledPersonal} never got a
+              personal label and {mask.overlappingShipAlert.neverReachedSurgeon} never reached the flight surgeon ({mask.noShipAlert.neverReachedSurgeon} of{' '}
+              {mask.noShipAlert.events} with no rise). The accuracy above leaves out the {base.accuracyMixedExcluded} person-days when both happened at once.
+            </p>
+          )}
+          {slow && (
+            <p>
+              A slow decline: when one person's mood slid 0.1 points a day, the check against their starting normal flagged{' '}
+              <strong>{pct(slow.flaggedShare)}</strong> of the slides, a median of {slow.flagDelayDaysMedian} days in, and {pct(slow.toSurgeonShare)} reached the
+              flight surgeon. Without that check a slide like this becomes the person's own normal and is never flagged.
             </p>
           )}
           <div className="scroll">

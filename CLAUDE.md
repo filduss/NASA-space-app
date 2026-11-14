@@ -72,7 +72,7 @@ XP, weekly streak with shield days, quests. Game functions cannot read check-in 
 - `/dashboard` → `src/dashboard/`: the logged-in person's own dashboard with a three.js skeleton point cloud (`public/models/skeleton.glb`), lazy-loaded. `dashboard/model.ts` maps engine output to body-zone levels and notices; it must not introduce rules of its own. The crew app reuses its `cabinLevel` / `indicatorLevel`, so orange (watch) and red (alert) mean the same on both pages.
 - `/app` → `App.tsx` + `src/ui/`: the crew app, for everyone. Six screens, with tabs depending on the view: `viewsFor` in `auth/session.ts` gives astronauts their own crew view, the medical officer the crew medical officer or herself, the flight surgeon only the flight surgeon. Nobody views as another crew member. `?day=`, `?screen=` and `?mission=` are read once in `state.tsx`. The crew board and the surgeon's screen share `ui/CrewTimeline.tsx`, filled per viewer by `crewTimeline` in `privacy.ts`; times on the Earth side use `ui/clock.ts` (ship time UTC, Houston).
 
-The golden path the demo depends on is mission days 212 → 213 → 221 → 223 (table in `docs/SPEC.md`). The crew is seed 402 with scripted events recorded in `crew.json`.
+The golden path the demo depends on is mission days 212 → 213 → 221 → 223, the same on both pages (table in `docs/SPEC.md`; `tests/golden.test.ts` pins it on the committed data). The crew is seed 402 with scripted events recorded in `crew.json`.
 
 ### Login (`src/auth/`)
 

@@ -13,12 +13,14 @@ import { SkeletonView } from './SkeletonView.tsx'
 import './dashboard.css'
 
 // Personal dashboard of the logged-in crew member, and only theirs: nobody opens another
-// person's dashboard. In the demo crew Chen is the one to follow: caught up in the cabin CO2
-// event (day 219) and the one still off on day 3 (day 223).
+// person's dashboard. In the demo crew Chen is the one to follow: fine while the cabin CO2 is high
+// (day 213), still off once the air is back to normal (day 221), and day 3 (day 223). The same four
+// days as the crew app's golden path.
 const TREND_DAYS = 14
 const SCENES: { day: number; label: string }[] = [
-  { day: 212, label: 'Nominal' },
-  { day: 219, label: 'Cabin CO₂' },
+  { day: 212, label: 'CO₂ climbs' },
+  { day: 213, label: 'Cabin high' },
+  { day: 221, label: 'Likely you' },
   { day: 223, label: 'Day 3' },
 ]
 
@@ -136,7 +138,7 @@ export function Dashboard() {
     return () => window.clearTimeout(t)
   }, [today]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ?day=219 opens the dashboard on that mission day: the store reads it at start-up.
+  // ?day=221 opens the dashboard on that mission day: the store reads it at start-up.
   const [lo, hi] = s.dayRange
 
   useEffect(() => {
