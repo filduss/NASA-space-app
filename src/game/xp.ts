@@ -1,13 +1,13 @@
 // XP rewards measuring and acting, never the reading itself.
 // The functions here cannot see a reading: they take the event type and who did it, nothing else.
 
-export type GameEventType = 'checkin' | 'action' | 'learn' | 'kudos'
+export type GameEventType = 'checkin' | 'action' | 'kudos'
 
 export interface GameEvent {
   type: GameEventType
   crewId: string
   day: number
-  /** What it was for: a quest step id, a learn card id, or the action being thanked. */
+  /** What it was for: a quest step id, or the action being thanked. */
   ref?: string
 }
 
@@ -15,12 +15,12 @@ export interface GameEvent {
 export const XP: Record<GameEventType, number> = {
   checkin: 10,
   action: 15,
-  learn: 5,
   kudos: 3,
 }
 
 export function xpFor(event: GameEvent): number {
-  return XP[event.type]
+  // A browser may still hold events saved by an older version (learn cards); they earn nothing.
+  return XP[event.type] ?? 0
 }
 
 /**
@@ -32,12 +32,10 @@ export function checkInEvent(who: { crewId: string; day: number }): GameEvent {
 }
 
 function eventKey(e: GameEvent): string {
-  // One check-in per day, one read per learn card, one credit per quest step, one kudos per action.
+  // One check-in per day, one credit per quest step, one kudos per action.
   switch (e.type) {
     case 'checkin':
       return `checkin|${e.crewId}|${e.day}`
-    case 'learn':
-      return `learn|${e.crewId}|${e.ref ?? ''}`
     default:
       return `${e.type}|${e.crewId}|${e.ref ?? e.day}`
   }

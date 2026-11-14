@@ -97,6 +97,9 @@ export function RoleSwitcher() {
           <output>{delayText(s.commDelaySec)}</output>
         </div>
       )}
+      <button type="button" className="link" onClick={() => s.setScreen('about')}>
+        How it answers the challenge
+      </button>
       <button
         type="button"
         className="link"

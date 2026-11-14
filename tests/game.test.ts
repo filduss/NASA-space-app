@@ -27,19 +27,23 @@ describe('XP never depends on a reading', () => {
     expect(Object.keys(e).sort()).toEqual(['crewId', 'day', 'type'])
   })
   it('there is no XP for green readings, improving numbers or good-day streaks', () => {
-    expect(Object.keys(XP).sort()).toEqual(['action', 'checkin', 'kudos', 'learn'])
+    expect(Object.keys(XP).sort()).toEqual(['action', 'checkin', 'kudos'])
   })
-  it('repeats earn nothing: one check-in per day, one read per card, one kudos per action', () => {
+  it('repeats earn nothing: one check-in per day, one credit per quest step, one kudos per action', () => {
     const events: GameEvent[] = [
       { type: 'checkin', crewId: 'a', day: 1 },
       { type: 'checkin', crewId: 'a', day: 1 },
-      { type: 'learn', crewId: 'a', day: 1, ref: 'co2' },
-      { type: 'learn', crewId: 'a', day: 2, ref: 'co2' },
+      { type: 'action', crewId: 'a', day: 1, ref: 'q|scrubber' },
+      { type: 'action', crewId: 'a', day: 2, ref: 'q|scrubber' },
       { type: 'kudos', crewId: 'a', day: 2, ref: 'q|scrubber' },
       { type: 'kudos', crewId: 'a', day: 3, ref: 'q|scrubber' },
     ]
     expect(dedupeEvents(events)).toHaveLength(3)
-    expect(totalXp(events, 'a')).toBe(XP.checkin + XP.learn + XP.kudos)
+    expect(totalXp(events, 'a')).toBe(XP.checkin + XP.action + XP.kudos)
+  })
+  it('an event saved by an older version with a type that no longer exists earns nothing', () => {
+    const old = { type: 'learn', crewId: 'a', day: 1, ref: 'co2' } as unknown as GameEvent
+    expect(totalXp([{ type: 'checkin', crewId: 'a', day: 1 }, old], 'a')).toBe(XP.checkin)
   })
   it('the game is paused on a safety day: nothing is earned', () => {
     const events: GameEvent[] = [

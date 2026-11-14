@@ -9,11 +9,23 @@ import { mSv, percent } from './text.ts'
 export function RadiationCard() {
   const s = useStore()
   const m = s.mission
-  const b = doseBudget(m, s.today)
+  const r = m.radiation
+  if (!r) {
+    return (
+      <Card title="Radiation">
+        <p>
+          On Earth the atmosphere and the magnetic field shield the {m.label.toLowerCase()} from space radiation, so there is no dose
+          budget to track here. Switch the mission to the ISS, the Moon or Mars in the demo controls to see one.
+        </p>
+      </Card>
+    )
+  }
+  const b = doseBudget(r, s.today)
+  const space = Object.values(MISSIONS).flatMap((x) => (x.radiation ? [{ x, rad: x.radiation }] : []))
   return (
     <Card title="Radiation" aside={<Origin kind="estimate">published rate, {m.label}</Origin>}>
       <div className="stats">
-        <Stat label="Dose rate here" value={`${m.doseMSvPerDay} mSv a day`} note={m.doseNote} />
+        <Stat label="Dose rate here" value={`${r.doseMSvPerDay} mSv a day`} note={r.note} />
         <Stat label="This mission so far" value={mSv(b.missionMSv)} note={`by mission day ${s.today}, without solar storms`} />
         <Stat label="Career limit used" value={percent(b.careerShare)} note={`of NASA's ${CAREER_LIMIT_MSV} mSv, this mission only`} />
         <Stat label="Career limit reached" value={`Day ${b.limitDay.toLocaleString('en-US')}`} note="at this rate, with no earlier missions" />
@@ -34,7 +46,7 @@ export function RadiationCard() {
         </li>
       </ul>
       <details>
-        <summary>Compare the three settings</summary>
+        <summary>Compare the space settings</summary>
         <div className="scroll">
           <table className="table">
             <thead>
@@ -47,18 +59,18 @@ export function RadiationCard() {
               </tr>
             </thead>
             <tbody>
-              {Object.values(MISSIONS).map((x) => (
+              {space.map(({ x, rad }) => (
                 <tr key={x.key}>
                   <th scope="row">
                     {x.label}
                     {x.key === m.key ? ' (now)' : ''}
                   </th>
-                  <td>{x.doseMSvPerDay} mSv</td>
-                  <td>{x.doseQuantity}</td>
-                  <td>day {doseBudget(x, s.today).limitDay.toLocaleString('en-US')}</td>
+                  <td>{rad.doseMSvPerDay} mSv</td>
+                  <td>{rad.quantity}</td>
+                  <td>day {doseBudget(rad, s.today).limitDay.toLocaleString('en-US')}</td>
                   <td>
-                    <a href={x.doseSource.url} target="_blank" rel="noreferrer">
-                      {x.doseSource.label}
+                    <a href={rad.source.url} target="_blank" rel="noreferrer">
+                      {rad.source.label}
                     </a>
                   </td>
                 </tr>
@@ -71,8 +83,8 @@ export function RadiationCard() {
         The rate is a published average for the place, not this crew's dosimeters. It moves with the 11-year solar cycle, and solar storms
         come on top. The Moon and Mars figures are dose equivalent measured by detectors, while NASA's limit is effective dose, so the
         percentages are estimates. Rate:{' '}
-        <a href={m.doseSource.url} target="_blank" rel="noreferrer">
-          {m.doseSource.label}
+        <a href={r.source.url} target="_blank" rel="noreferrer">
+          {r.source.label}
         </a>
         . Limit and storm shelter:{' '}
         <a href={RADIATION_LIMITS_SOURCE.url} target="_blank" rel="noreferrer">

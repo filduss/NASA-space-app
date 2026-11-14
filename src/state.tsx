@@ -9,7 +9,7 @@ import type { QuestLog } from './game/quests.ts'
 import { checkInEvent, totalXp, type GameEvent } from './game/xp.ts'
 
 export type Role = Viewer
-export type Screen = 'board' | 'checkin' | 'me' | 'ship' | 'learn' | 'inbox' | 'summary'
+export type Screen = 'board' | 'checkin' | 'me' | 'ship' | 'inbox' | 'summary' | 'about'
 
 /** What the browser keeps between visits. Reaction-test results are never in here. */
 interface Local {

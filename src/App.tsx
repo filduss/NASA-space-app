@@ -1,8 +1,8 @@
 import { useStore, type Screen } from './state.tsx'
+import { About } from './ui/About.tsx'
 import { Origin } from './ui/bits.tsx'
 import { CheckInScreen } from './ui/CheckInScreen.tsx'
 import { CrewBoard } from './ui/CrewBoard.tsx'
-import { LearnCards } from './ui/LearnCards.tsx'
 import { CmoInbox, SurgeonView } from './ui/Medical.tsx'
 import { MeView } from './ui/MeView.tsx'
 import { RoleSwitcher } from './ui/RoleSwitcher.tsx'
@@ -13,16 +13,16 @@ const LABELS: Record<Screen, string> = {
   checkin: 'Check-in',
   me: 'Me',
   ship: 'Ship',
-  learn: 'Learn',
   inbox: 'Inbox',
   summary: 'Summaries',
+  about: 'How it answers the challenge',
 }
 
 export function App() {
   const s = useStore()
-  const tabs: Screen[] =
-    s.role.kind === 'crew' ? ['board', 'checkin', 'me', 'ship', 'learn'] : s.role.kind === 'cmo' ? ['board', 'inbox', 'ship', 'learn'] : ['summary', 'learn']
-  const screen = tabs.includes(s.screen) ? s.screen : tabs[0]
+  const tabs: Screen[] = s.role.kind === 'crew' ? ['board', 'checkin', 'me', 'ship'] : s.role.kind === 'cmo' ? ['board', 'inbox', 'ship'] : ['summary']
+  // The challenge page is for judges and visitors: it opens from the demo controls, not from a tab.
+  const screen = s.screen === 'about' || tabs.includes(s.screen) ? s.screen : tabs[0]
   const crewId = s.role.kind === 'crew' ? s.role.crewId : null
   const shipOn = s.todayResult.decision.outcome === 'ship'
   const who = s.role.kind === 'crew' ? s.nameOf(s.role.crewId) : s.role.kind === 'cmo' ? 'Crew medical officer' : 'Flight surgeon'
@@ -64,7 +64,7 @@ export function App() {
         {screen === 'checkin' && crewId && <CheckInScreen crewId={crewId} />}
         {screen === 'me' && crewId && <MeView crewId={crewId} />}
         {screen === 'ship' && <ShipAlert />}
-        {screen === 'learn' && <LearnCards />}
+        {screen === 'about' && <About />}
         {screen === 'inbox' && <CmoInbox />}
         {screen === 'summary' && <SurgeonView />}
       </main>

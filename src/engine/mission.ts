@@ -2,11 +2,20 @@
 // takes to reach Earth, and how fast radiation dose builds up. It never changes the ship-or-me rule,
 // and the cabin CO2 is the same real ISS telemetry in every setting.
 
-export type MissionKey = 'iss' | 'moon' | 'mars'
+export type MissionKey = 'iss' | 'moon' | 'mars' | 'antarctica'
 
 export interface Source {
   label: string
   url: string
+}
+
+/** Radiation dose per day: a published average for the place, not this crew's dosimeters. */
+export interface Radiation {
+  doseMSvPerDay: number
+  /** What the source measured. NASA's limit is effective dose; dose equivalent is close but not the same. */
+  quantity: 'effective dose' | 'dose equivalent'
+  note: string
+  source: Source
 }
 
 export interface MissionSetting {
@@ -17,12 +26,8 @@ export interface MissionSetting {
   /** One-way signal delay to Earth, in seconds: the choices the demo offers, and the default. */
   delaysSec: number[]
   defaultDelaySec: number
-  /** Radiation dose per day, mSv: a published average for this place, not this crew's dosimeters. */
-  doseMSvPerDay: number
-  /** What the source measured. NASA's limit is effective dose; dose equivalent is close but not the same. */
-  doseQuantity: 'effective dose' | 'dose equivalent'
-  doseNote: string
-  doseSource: Source
+  /** Null on Earth, where the atmosphere and the magnetic field shield the crew from space radiation. */
+  radiation: Radiation | null
 }
 
 export const MISSIONS: Record<MissionKey, MissionSetting> = {
@@ -34,10 +39,12 @@ export const MISSIONS: Record<MissionKey, MissionSetting> = {
     delaysSec: [0.5],
     defaultDelaySec: 0.5,
     // NASA gives 0.2 to 0.5 mSv a day of effective dose on the ISS; the dose budget uses the high end.
-    doseMSvPerDay: 0.5,
-    doseQuantity: 'effective dose',
-    doseNote: "high end of NASA's 0.2 to 0.5 range",
-    doseSource: { label: 'Simonsen, Zawaski and Weeks, NASA (2025)', url: 'https://ntrs.nasa.gov/citations/20250006168' },
+    radiation: {
+      doseMSvPerDay: 0.5,
+      quantity: 'effective dose',
+      note: "high end of NASA's 0.2 to 0.5 range",
+      source: { label: 'Simonsen, Zawaski and Weeks, NASA (2025)', url: 'https://ntrs.nasa.gov/citations/20250006168' },
+    },
   },
   moon: {
     key: 'moon',
@@ -47,10 +54,12 @@ export const MISSIONS: Record<MissionKey, MissionSetting> = {
     delaysSec: [1.3],
     defaultDelaySec: 1.3,
     // 1,369 µSv a day, measured on the far side by the Chang'E-4 lander in 2019.
-    doseMSvPerDay: 1.37,
-    doseQuantity: 'dose equivalent',
-    doseNote: "measured on the surface by Chang'E-4",
-    doseSource: { label: 'Zhang et al. 2020, Science Advances', url: 'https://doi.org/10.1126/sciadv.aaz1334' },
+    radiation: {
+      doseMSvPerDay: 1.37,
+      quantity: 'dose equivalent',
+      note: "measured on the surface by Chang'E-4",
+      source: { label: 'Zhang et al. 2020, Science Advances', url: 'https://doi.org/10.1126/sciadv.aaz1334' },
+    },
   },
   mars: {
     key: 'mars',
@@ -60,10 +69,21 @@ export const MISSIONS: Record<MissionKey, MissionSetting> = {
     delaysSec: [4 * 60, 12 * 60, 22 * 60],
     defaultDelaySec: 12 * 60,
     // About 1.8 mSv a day, measured inside Curiosity's cruise stage on the way to Mars (2011-2012).
-    doseMSvPerDay: 1.8,
-    doseQuantity: 'dose equivalent',
-    doseNote: "measured in cruise by Curiosity's RAD",
-    doseSource: { label: 'Zeitlin et al. 2013, Science', url: 'https://doi.org/10.1126/science.1235989' },
+    radiation: {
+      doseMSvPerDay: 1.8,
+      quantity: 'dose equivalent',
+      note: "measured in cruise by Curiosity's RAD",
+      source: { label: 'Zeitlin et al. 2013, Science', url: 'https://doi.org/10.1126/science.1235989' },
+    },
+  },
+  antarctica: {
+    key: 'antarctica',
+    label: 'Antarctic station',
+    place: 'A research station through the polar winter',
+    // A satellite link: well under a second each way. What is far away is help: no flights in winter.
+    delaysSec: [0.5],
+    defaultDelaySec: 0.5,
+    radiation: null,
   },
 }
 
@@ -83,7 +103,7 @@ export interface DoseBudget {
   limitDay: number
 }
 
-export function doseBudget(m: MissionSetting, day: number): DoseBudget {
-  const missionMSv = m.doseMSvPerDay * day
-  return { missionMSv, careerShare: missionMSv / CAREER_LIMIT_MSV, limitDay: Math.ceil(CAREER_LIMIT_MSV / m.doseMSvPerDay) }
+export function doseBudget(r: Radiation, day: number): DoseBudget {
+  const missionMSv = r.doseMSvPerDay * day
+  return { missionMSv, careerShare: missionMSv / CAREER_LIMIT_MSV, limitDay: Math.ceil(CAREER_LIMIT_MSV / r.doseMSvPerDay) }
 }

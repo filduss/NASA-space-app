@@ -351,6 +351,31 @@ input {
 .origin-estimate {
   border-color: var(--accent);
 }
+/* The challenge map: one question per row, its answer, and a button to the screen that shows it. */
+.qa {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.qa li {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.qa li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.qa-q {
+  font-weight: 700;
+}
+.qa .btn {
+  justify-self: start;
+}
 /* A short list of status lines, each already marked with a shape. */
 .checks {
   display: flex;

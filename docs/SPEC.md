@@ -11,13 +11,13 @@ This file describes what the code on this branch does. Where the plan left room,
 | 1 | Name | Shipshape |
 | 2 | Hooks | Both: "Is it me, or the ship?" in the header, "rewards honesty, not perfection" in the footer and on check-in |
 | 3 | Game depth | Full rules as tested functions; UI shows XP, weekly streak and one quest card |
-| 4 | Mission setting | ISS, lunar surface or Mars transit (default), chosen in the demo controls. It changes the comm delay and the radiation card only. The CO₂ source (ISS) is stated on every screen |
+| 4 | Mission setting | ISS, lunar surface, Mars transit (default) or an Antarctic station, chosen in the demo controls. It changes the comm delay and the radiation card only. The CO₂ source (ISS) is stated on every screen |
 | 5 | Board default | Sleep and symptoms shared; mood and stress private, shown as a count with no names |
 | 6 | Live input | Live 30-second reaction test, kept in memory only |
 | 7 | Wearable | None |
 | 8 | AI | None. Summaries come from fixed templates |
 | 9 | Demo format | Not built here: the app has a "Golden path" control with the four days a 30-second video needs |
-| 10 | Earth use | Open: needs one use case with a sourced number |
+| 10 | Earth use | Antarctic winter stations: Concordia's winter crew runs the base alone for three-quarters of a year (ESA). On the challenge page and as Mission → Antarctic station |
 
 ## Data files
 
@@ -126,6 +126,7 @@ The air is a suspect when it is above baseline or its 24 h mean is over 3 mmHg. 
 | ISS | Less than a second | 0.5 mSv, the high end of NASA's 0.2 to 0.5 (effective dose) | Simonsen, Zawaski and Weeks, NASA (2025) |
 | Lunar surface | 1.3 s | 1.37 mSv (dose equivalent, Chang'E-4) | Zhang et al. 2020 |
 | Mars transit (default) | 4, 12 or 22 min; 12 by default | 1.8 mSv (dose equivalent, Curiosity's RAD in cruise) | Zeitlin et al. 2013 |
+| Antarctic station | Less than a second | None: on Earth the atmosphere and magnetic field shield the station | - |
 
 The radiation card on the Ship screen shows the dose rate, the dose so far (rate × mission day), its share of NASA's 600 mSv career limit (NASA-STD-3001 Vol 1 [V1 4030]) and the mission day the limit would be reached. It says what to do in a solar storm: go to the storm shelter until the all-clear. Every number there is labeled an estimate. Sources are in `docs/CITATIONS.md`.
 
@@ -150,7 +151,7 @@ Rules are in `src/game/`. Nothing there can read a check-in's values: `checkInEv
 
 | Mechanic | Rule |
 | --- | --- |
-| XP | Check-in 10, quest step 15, learn card 5, kudos 3. Repeats earn nothing |
+| XP | Check-in 10, quest step 15, kudos 3. Repeats earn nothing. The Learn tab and its cards were removed |
 | Streak | Weekly, 5 of 7 days. Spacewalk, comm-blackout and heavy-workload days are shielded |
 | Quests | "Clear the air" opens with a ship alert; otherwise "Everyone logs sleep 5 nights" |
 | Kudos | Thank a crewmate for a quest step they did |
@@ -172,7 +173,7 @@ The real rise lasts from day 213 to day 220; the quest cannot shorten a recordin
 
 ## Evidence
 
-`scripts/backtest.py` runs 200 simulated crews over 10 real ISS CO₂ traces through the app's own engine (`scripts/engine_cli.ts`), with five scenarios. The numbers are in `public/data/backtest.json` and on the Learn screen.
+`scripts/backtest.py` runs 200 simulated crews over 10 real ISS CO₂ traces through the app's own engine (`scripts/engine_cli.ts`), with five scenarios. The numbers are in `public/data/backtest.json` and on the challenge page (Demo controls → How it answers the challenge).
 
 - A ship event is a run of days at least 1 mmHg above that trace's median. An individual event is an injected 4-7 day sleep loss, run of headaches or stress dip.
 - Thresholds were set on seeds 5000-5199; the reported seeds are 1000-1199.
@@ -216,7 +217,6 @@ The scorer counts a ship event only as a rise of 1 mmHg above the trace's median
 ## Open items
 
 - A deploy to Vercel and the `v1.0-submission` tag.
-- One Earth use with a sourced number (decision 10).
-- The table mapping the challenge's five questions to screens: the questions are not in the plan.
+- README sections for the challenge map and the Antarctic case (both are in the app: Demo controls → How it answers the challenge), and the Antarctic sources in `docs/CITATIONS.md`.
 - The 30-second video.
 - Opening each source in `docs/CITATIONS.md` before quoting it on the project page.
