@@ -5,6 +5,7 @@
 | 14 Nov 2026 | Claude (plan v0.1) | Drafting the overall plan and finding sources by web search | Team review pending |
 | 14 Nov 2026 | Claude Code (Claude Fable 5.2) | Building the MVP on branch `mvp`: rules engine, game rules, unit tests, data scripts, the seven screens, docs | Team review pending |
 | 14 Nov 2026 | Claude Code (Claude Opus 5.5) | Mission setting (ISS, lunar surface, Mars transit) and the radiation card, branch `mission-setting-radiation`: `src/engine/mission.ts`, `src/ui/Radiation.tsx`, tests, docs. Radiation sources found by web search; the NASA brief and NTRS paper were read | Team review pending |
+| 14 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `ship-limit-followups`: the 3 mmHg limit in the ship-or-me rule (chosen by backtest), the alert-load comparison with one alert per person, the "Did the fix work?" follow-up, and checking the lunar and Mars dose papers | Team review pending |
 
 ## What AI does not do in the product
 
