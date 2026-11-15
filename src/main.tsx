@@ -8,8 +8,9 @@ import { StoreProvider } from './state.tsx'
 import { ChallengePage } from './ui/Challenge.tsx'
 import './styles.css'
 
-// Four pages, no router: "/" is the login with the judge's tour, /challenge the public challenge page,
-// /dashboard the personal dashboard and /app the crew app. The last two need a logged-in person.
+// Five pages, no router: "/" is the login with the judge's tour, /challenge the public challenge page,
+// /dashboard the personal dashboard, /checkin the crew member's own check-in and /app the crew app
+// (the medical console). The last three need a logged-in person who may open them.
 // The dashboard (and three.js with it) loads only when that page is opened.
 const Dashboard = lazy(() => import('./dashboard/Dashboard.tsx').then((m) => ({ default: m.Dashboard })))
 const page = pageOf(appPath(window.location.pathname, import.meta.env.BASE_URL))
@@ -23,7 +24,7 @@ createRoot(document.getElementById('root') as HTMLElement).render(
         ) : page === 'challenge' ? (
           <ChallengePage />
         ) : (
-          <RequireUser page={page}>{page === 'dashboard' ? <Dashboard /> : <App />}</RequireUser>
+          <RequireUser page={page}>{page === 'dashboard' ? <Dashboard /> : <App page={page} />}</RequireUser>
         )}
       </Suspense>
     </StoreProvider>

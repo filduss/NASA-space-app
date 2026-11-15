@@ -1,5 +1,5 @@
 import { hrefOf } from '../auth/paths.ts'
-import { viewKey, viewsFor } from '../auth/session.ts'
+import { viewKey } from '../auth/session.ts'
 import { MISSIONS, type MissionKey } from '../engine/mission.ts'
 import { useStore, type Role } from '../state.tsx'
 import { delayText } from './text.ts'
@@ -17,9 +17,8 @@ const GOLDEN: { day: number; label: string }[] = [
 export function RoleSwitcher() {
   const s = useStore()
   const [min, max] = s.dayRange
-  // Only the views this login may take (viewsFor): the medical officer switches between the crew
-  // medical officer and herself, everyone else has one view. Other people's views need their login.
-  const views = s.user ? viewsFor(s.user) : [s.role]
+  // Only the views this login may take on this page (viewsFor). Other people's views need their login.
+  const views = s.views.length > 0 ? s.views : [s.role]
   const label = (r: Role) => (r.kind === 'crew' ? `Me (${s.nameOf(r.crewId)})` : r.kind === 'cmo' ? 'Crew medical officer' : 'Flight surgeon (Earth)')
   const step = (d: number) => s.setToday(Math.min(max, Math.max(min, s.today + d)))
   // The flight surgeon's login cannot clear crew inputs.

@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
-import { hrefOf } from './auth/paths.ts'
+import { hrefOf, type Page } from './auth/paths.ts'
 import { mayOpen } from './auth/session.ts'
 import type { AccountRole } from './data/types.ts'
 import { cabinLevel } from './dashboard/model.ts'
-import { useStore, type Screen } from './state.tsx'
+import { useStore, type Role, type Screen } from './state.tsx'
 import { Origin } from './ui/bits.tsx'
 import { CheckInScreen } from './ui/CheckInScreen.tsx'
 import { CrewBoard } from './ui/CrewBoard.tsx'
@@ -23,9 +23,24 @@ const LABELS: Record<Screen, string> = {
 
 const ROLE_WORD: Record<AccountRole, string> = { astronaut: 'astronaut', medical: 'medical officer', surgeon: 'flight surgeon, Earth' }
 
-export function App() {
+// The tabs of each view. A crew member's own view is the check-in page; the crew app is the medical
+// console, where the flight surgeon sees everything the crew medical officer sees, plus the summaries.
+const TABS: Record<Role['kind'], Screen[]> = {
+  crew: ['checkin', 'me'],
+  cmo: ['board', 'inbox', 'ship'],
+  surgeon: ['board', 'inbox', 'ship', 'summary'],
+}
+
+/** Links to the other pages this person may open. */
+const OTHER_PAGES: { page: Page; label: string }[] = [
+  { page: 'dashboard', label: 'My dashboard' },
+  { page: 'checkin', label: 'Check in' },
+  { page: 'app', label: 'Crew app' },
+]
+
+export function App({ page }: { page: 'checkin' | 'app' }) {
   const s = useStore()
-  const tabs: Screen[] = s.role.kind === 'crew' ? ['board', 'checkin', 'me', 'ship'] : s.role.kind === 'cmo' ? ['board', 'inbox', 'ship'] : ['summary']
+  const tabs = TABS[s.role.kind]
   const screen = tabs.includes(s.screen) ? s.screen : tabs[0]
   const crewId = s.role.kind === 'crew' ? s.role.crewId : null
   // The Ship tab carries the same orange / red as the cabin air on the dashboard.
@@ -73,7 +88,11 @@ export function App() {
               {me} <span className="account-role">· {myRole}</span>
             </span>
           </span>
-          {s.user && mayOpen(s.user, 'dashboard') && <a href={hrefOf('dashboard', import.meta.env.BASE_URL)}>My dashboard</a>}
+          {OTHER_PAGES.filter((o) => o.page !== page && s.user && mayOpen(s.user, o.page)).map((o) => (
+            <a key={o.page} href={hrefOf(o.page, import.meta.env.BASE_URL, `?day=${s.today}`)}>
+              {o.label}
+            </a>
+          ))}
           <button type="button" className="link" onClick={s.logOut}>
             Log out
           </button>

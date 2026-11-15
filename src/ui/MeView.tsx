@@ -4,6 +4,8 @@ import { INDICATORS } from '../engine/deviation.ts'
 import type { IndicatorKey, PersonStatus } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
+import { QuestCard } from './QuestCard.tsx'
+import { hrefOf } from '../auth/paths.ts'
 import { LineChart } from './charts.tsx'
 import { delayText, fmt, indicatorLine } from './text.ts'
 import { XpStrip } from './XpStrip.tsx'
@@ -67,9 +69,9 @@ function StatusCard({ me }: { me: PersonStatus }) {
       {me.attribution === 'ship' && (
         <p>
           Most of the crew show the same kind of change while cabin CO₂ is above its usual level.{' '}
-          <button type="button" className="link" onClick={() => s.setScreen('ship')}>
-            See the ship alert
-          </button>
+          <a className="link" href={hrefOf('dashboard', import.meta.env.BASE_URL, `?day=${s.today}`)}>
+            See the cabin air on my dashboard
+          </a>
         </p>
       )}
       {me.attribution === 'me' && (
@@ -124,6 +126,7 @@ export function MeView({ crewId }: { crewId: string }) {
     <div className="stack">
       <StatusCard me={me} />
       <XpStrip crewId={crewId} />
+      <QuestCard />
       <Card
         title="My trends against my own normal"
         aside={

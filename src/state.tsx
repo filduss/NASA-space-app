@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { hrefOf } from './auth/paths.ts'
+import { appPath, hrefOf, pageOf } from './auth/paths.ts'
 import { isPinShaped, verifyPin } from './auth/pin.ts'
 import { attemptsFor, clearFailures, currentUser, endSession, FREE_ATTEMPTS, recordFailure, startSession, viewKey, viewsFor, type User } from './auth/session.ts'
 import type { AccountsFile, BacktestFile, CabinFile, CrewFile } from './data/types.ts'
@@ -14,8 +14,6 @@ import { checkInEvent, totalXp, type GameEvent } from './game/xp.ts'
 export type Role = Viewer
 export type Screen = 'board' | 'checkin' | 'me' | 'ship' | 'inbox' | 'summary'
 const SCREENS: Screen[] = ['board', 'checkin', 'me', 'ship', 'inbox', 'summary']
-/** Screens only a crew member's own view has: a link to one opens that view. */
-const OWN_SCREENS: Screen[] = ['checkin', 'me']
 
 /** ?day=, ?screen= and ?mission= open a page on a given day, screen and setting (links and the judge's tour). */
 function fromUrl(): { day: number; screen: Screen | null; mission: MissionKey | null } {
@@ -27,6 +25,11 @@ function fromUrl(): { day: number; screen: Screen | null; mission: MissionKey | 
     screen: screen && SCREENS.includes(screen) ? screen : null,
     mission: mission && mission in MISSIONS ? mission : null,
   }
+}
+
+/** Where a view opens: a crew member on their check-in, the flight surgeon on the summaries. */
+function firstScreen(r: Role): Screen {
+  return r.kind === 'crew' ? 'checkin' : r.kind === 'surgeon' ? 'summary' : 'board'
 }
 
 /** What the browser keeps between visits. Reaction-test results are never in here. */
@@ -70,6 +73,8 @@ interface Store {
   user: User | null
   logIn: (crewId: string, pin: string) => Promise<LoginResult>
   logOut: () => void
+  /** The views this person may take on this page (viewsFor). */
+  views: Role[]
   role: Role
   setRole: (r: Role) => void
   screen: Screen
@@ -147,14 +152,11 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
   const dayRange: [number, number] = [firstDay + 21, lastDay]
   const [url] = useState(fromUrl)
   const [user, setUser] = useState<User | null>(() => currentUser(sessionStorage, data.accounts.accounts, Date.now()))
-  // A person only ever takes the views their role allows (viewsFor): never another crew member's.
-  const [role, setRoleState] = useState<Role>(() => {
-    if (!user) return { kind: 'crew', crewId: data.crew.crew[0].id }
-    const views = viewsFor(user)
-    const own = views.find((v) => v.kind === 'crew')
-    return url.screen && OWN_SCREENS.includes(url.screen) && own ? own : views[0]
-  })
-  const [screen, setScreen] = useState<Screen>(() => url.screen ?? (role.kind === 'surgeon' ? 'summary' : 'board'))
+  // A person only ever takes the views their role allows on this page (viewsFor): never another
+  // crew member's. Pages without views (the dashboard) never read the role.
+  const [views] = useState<Role[]>(() => (user ? viewsFor(user, pageOf(appPath(window.location.pathname, import.meta.env.BASE_URL))) : []))
+  const [role, setRoleState] = useState<Role>(() => views[0] ?? { kind: 'crew', crewId: user?.crewId ?? data.crew.crew[0].id })
+  const [screen, setScreen] = useState<Screen>(() => url.screen ?? firstScreen(role))
   const [today, setToday] = useState(() => (Number.isInteger(url.day) && url.day >= dayRange[0] && url.day <= dayRange[1] ? url.day : data.crew.meta.demoDay))
   const [missionKey, setMissionKey] = useState<MissionKey>(url.mission ?? 'mars')
   const [commDelaySec, setCommDelaySec] = useState(MISSIONS[url.mission ?? 'mars'].defaultDelaySec)
@@ -172,11 +174,11 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
   // "Viewing as" offers only the views this person's role allows.
   const setRole = useCallback(
     (r: Role) => {
-      if (!user || !viewsFor(user).some((v) => viewKey(v) === viewKey(r))) return
+      if (!views.some((v) => viewKey(v) === viewKey(r))) return
       setRoleState(r)
-      setScreen(r.kind === 'surgeon' ? 'summary' : 'board')
+      setScreen(firstScreen(r))
     },
-    [user],
+    [views],
   )
 
   const logIn = useCallback(
@@ -301,6 +303,7 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
     user,
     logIn,
     logOut,
+    views,
     role,
     setRole,
     screen,

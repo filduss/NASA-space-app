@@ -1,18 +1,16 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { RULES } from '../engine/config.ts'
 import { SPEC } from '../engine/deviation.ts'
 import type { IndicatorKey } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
 import { TrendChart, type XTick } from './charts.tsx'
-import { co2Series, CO2_RANGES, niceTicks, RANGE_LABEL, RANGE_NAME, rangeStart, stats, VITAL_RANGES, vitalSeries, type RangeKey, type Series } from './history.ts'
+import { niceTicks, RANGE_LABEL, RANGE_NAME, rangeStart, stats, VITAL_RANGES, vitalSeries, type RangeKey, type Series } from './history.ts'
 import { LEVEL_WORD, LevelIcon } from './LevelIcon.tsx'
-import { cabinLevel, type Vital } from './model.ts'
+import type { Vital } from './model.ts'
 
-// The expanded view of one dashboard chart: a vital of the logged-in person, or the cabin CO2.
-// Opened from a tile or the cabin panel; a native modal <dialog>, so Esc, focus trapping and the
-// inert page behind it come from the browser.
+// The expanded view of one vital of the logged-in person, opened from its tile. A native modal
+// <dialog>, so Esc, focus trapping and the inert page behind it come from the browser.
 
-export type ChartTarget = { kind: 'vital'; key: IndicatorKey } | { kind: 'co2' }
+export type ChartTarget = { kind: 'vital'; key: IndicatorKey }
 
 export function ChartSheet({
   target,
@@ -23,7 +21,7 @@ export function ChartSheet({
 }: {
   target: ChartTarget
   /** The tile's own numbers, so the sheet and the tile always agree. */
-  vital?: Vital
+  vital: Vital
   range: RangeKey
   onRange: (r: RangeKey) => void
   onClose: () => void
@@ -53,18 +51,14 @@ export function ChartSheet({
   }, [])
 
   const series: Series = useMemo(
-    () => (target.kind === 'co2' ? co2Series(s.data.cabin.hourly, s.results, from, today) : vitalSeries(target.key, crewId, s.checkIns, s.results, from, today)),
+    () => vitalSeries(target.key, crewId, s.checkIns, s.results, from, today),
     [target, s.data, s.results, s.checkIns, crewId, from, today],
   )
   const st = stats(series.points)
-  const ranges = target.kind === 'co2' ? CO2_RANGES : VITAL_RANGES
   const days = today - from + 1
 
-  const body =
-    target.kind === 'co2'
-      ? co2Body(series, st, from, today, s.todayResult.cabin.baseline, range)
-      : vitalBody(target.key, vital!, series, st, from, today, days)
-  const level = target.kind === 'co2' ? cabinLevel(s.todayResult.cabin) : vital!.level
+  const body = vitalBody(target.key, vital, series, st, from, today, days)
+  const level = vital.level
   const titleId = 'sheet-title'
 
   return (
@@ -80,15 +74,7 @@ export function ChartSheet({
         <header className="sheet-head">
           <div>
             <p className="sheet-eyebrow">
-              {target.kind === 'co2' ? (
-                <>
-                  Cabin air <span className="tag tag-real">Real ISS CO₂</span>
-                </>
-              ) : (
-                <>
-                  Vitals <span className="tag">Simulated crew</span>
-                </>
-              )}
+              Vitals <span className="tag">Simulated crew</span>
             </p>
             <h2 id={titleId} className="sheet-title">
               {body.title}
@@ -109,7 +95,7 @@ export function ChartSheet({
         </header>
 
         <div className="seg sheet-seg" role="group" aria-label="Time range">
-          {ranges.map((r) => (
+          {VITAL_RANGES.map((r) => (
             <button key={r} type="button" className={range === r ? 'seg-on' : ''} aria-pressed={range === r} aria-label={RANGE_NAME[r]} title={RANGE_NAME[r]} onClick={() => onRange(r)}>
               {RANGE_LABEL[r]}
             </button>
@@ -117,19 +103,18 @@ export function ChartSheet({
         </div>
 
         <TrendChart
-          key={`${target.kind}-${range}`}
+          key={`${target.key}-${range}`}
           series={series}
           domain={body.domain}
           yDomain={body.yDomain}
-          area={target.kind === 'co2'}
           usual={body.usual}
           usualText={body.usualText}
-          limit={target.kind === 'co2' ? RULES.co2LimitMmHg : null}
+          limit={null}
           format={body.format}
           tick={body.tick}
           xTicks={body.xTicks}
-          gap={target.kind === 'co2' ? 1.5 : 1}
-          dots={target.kind === 'vital' && days <= 31}
+          gap={1}
+          dots={days <= 31}
           idle={body.idle}
           ariaLabel={body.aria}
         />
@@ -198,44 +183,5 @@ function vitalBody(key: IndicatorKey, v: Vital, series: Series, st: ReturnType<t
       SPEC[key].privacy === 'private'
         ? 'Only you see this. It is compared with your own normal and never used in the ship rule.'
         : 'Compared with your own normal. Shaded days were off your usual that day. Shipshape says "likely" and never diagnoses.',
-  }
-}
-
-function co2Body(series: Series, st: ReturnType<typeof stats>, from: number, to: number, baseline: number | null, range: RangeKey): Body {
-  const limit = RULES.co2LimitMmHg
-  const pts = series.points
-  const max = Math.max(limit + 1, ...pts.map((p) => p.v ?? 0)) * 1.08
-  const domain: [number, number] = pts.length ? [pts[0].x, pts[pts.length - 1].x] : [0, 1]
-  const over = pts.filter((p) => p.v !== null && p.v > limit).length
-  const peak = pts.reduce<(typeof pts)[number] | null>((a, p) => (p.v !== null && (a === null || p.v > a.v!) ? p : a), null)
-  const xTicks = (n: number): XTick[] => {
-    if (range === '1d') {
-      const hour = (x: number) => ((Math.round(x) % 24) + 24) % 24
-      return pts.filter((p) => hour(p.x) % 6 === 0).map((p) => ({ x: p.x, label: `${String(hour(p.x)).padStart(2, '0')}:00` }))
-    }
-    return dayTicks(from, to)(n).flatMap((t) => {
-      const first = pts.find((p) => p.day === t.x)
-      return first ? [{ x: first.x, label: t.label }] : []
-    })
-  }
-  return {
-    title: 'Cabin CO₂',
-    now: `${range === '1d' ? '24 h before the check-in' : RANGE_NAME[range]} · hourly averages · usual ${baseline?.toFixed(1) ?? '–'} mmHg`,
-    domain,
-    yDomain: [0, max],
-    usual: baseline,
-    usualText: baseline === null ? undefined : `${baseline.toFixed(1)} mmHg`,
-    format: (x) => `${x.toFixed(2)} mmHg`,
-    tick: (x) => `${Math.round(x * 10) / 10}`,
-    xTicks,
-    idle: `Hourly average · limit ${limit} mmHg for any 1 hour · tap or hover for an hour`,
-    aria: `Cabin CO2, days ${from} to ${to}${st.n ? `, average ${st.mean!.toFixed(2)} mmHg, peak ${st.max!.toFixed(2)} mmHg` : ', no readings'}, limit ${limit} mmHg, ${over} hours above it`,
-    stats: [
-      ['Average', st.mean === null ? '–' : `${st.mean.toFixed(2)} mmHg`],
-      ['Peak hour', peak ? `${peak.v!.toFixed(2)} · day ${peak.day}` : '–'],
-      ['Hours over limit', `${over} of ${st.n}`],
-      ['Flagged days', `${series.flags.length}`],
-    ],
-    note: 'Real ISS telemetry (NASA OSDR, RR-7), replayed on the mission calendar. Hours with no valid samples are left as gaps, not filled in.',
   }
 }

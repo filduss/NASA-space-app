@@ -110,23 +110,27 @@ export function clearFailures(store: Storage, crewId: string): void {
 // ---- What a role may open -----------------------------------------------------------------
 
 /**
- * Every crew member gets their own dashboard. Everyone gets the crew app (/app), in the views
- * `viewsFor` allows. The flight surgeon is not crew, so has no dashboard.
+ * Crew (astronauts and the medical officer) get their own dashboard and their own check-in. The crew
+ * app (/app) is the medical console: the medical officer and the flight surgeon only. The flight
+ * surgeon is not crew, so has no dashboard and no check-in.
  */
 export function mayOpen(user: User, page: Page): boolean {
-  if (page === 'dashboard') return user.role !== 'surgeon'
+  if (page === 'dashboard' || page === 'checkin') return user.role !== 'surgeon'
+  if (page === 'app') return user.role !== 'astronaut'
   return true
 }
 
 /**
- * The views of the crew app a person may take. Crew check in as themselves; the medical officer can
- * also view as the crew medical officer, who sees the rest of the crew through the privacy table;
- * the flight surgeon sees only what the summaries sent to Earth contain. Never another crew member.
+ * The views a person takes on a page. On the check-in page a crew member is always themselves. In the
+ * crew app the medical officer is the crew medical officer and the flight surgeon is the flight
+ * surgeon, who sees everything the crew medical officer sees, plus the summaries sent to Earth.
+ * Never another crew member.
  */
-export function viewsFor(user: User): Viewer[] {
-  if (user.role === 'surgeon') return [{ kind: 'surgeon' }]
-  const own: Viewer = { kind: 'crew', crewId: user.crewId }
-  return user.role === 'medical' ? [{ kind: 'cmo' }, own] : [own]
+export function viewsFor(user: User, page: Page): Viewer[] {
+  if (!mayOpen(user, page)) return []
+  if (page === 'checkin') return [{ kind: 'crew', crewId: user.crewId }]
+  if (page === 'app') return [user.role === 'surgeon' ? { kind: 'surgeon' } : { kind: 'cmo' }]
+  return []
 }
 
 /** One string per view, for comparing views and for form values. */

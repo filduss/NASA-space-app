@@ -177,7 +177,11 @@ body.dash-body {
 
 .grid {
   display: grid;
-  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) minmax(360px, 420px);
+  /* The stage stops at 660px: the frame hugs the body instead of filling wide screens. At its
+     860px max height that keeps width / height >= 0.75, so SkeletonView keeps its 30° view and
+     the skeleton its size. The spare width goes either side of the three columns. */
+  grid-template-columns: minmax(300px, 340px) minmax(0, 660px) minmax(360px, 420px);
+  justify-content: center;
   gap: 20px;
   align-items: start;
 }
@@ -773,143 +777,6 @@ body.dash-body {
   vector-effect: non-scaling-stroke;
 }
 
-/* ---------- cabin ---------- */
-
-.cabin .panel-title .pill {
-  margin-left: auto;
-}
-.cabin-watch {
-  border-color: rgba(255, 159, 10, 0.3);
-}
-.cabin-alert {
-  border-color: rgba(255, 69, 58, 0.4);
-  background: linear-gradient(170deg, rgba(255, 69, 58, 0.12), transparent 50%), var(--d-surface);
-}
-/* Bone & muscle: exercise against its daily target; orange (watch) when it lapses, never red. */
-.bone-watch {
-  border-color: rgba(255, 159, 10, 0.3);
-}
-.bone-main {
-  font-size: 15px;
-  color: var(--d-ink-2);
-}
-.bone-main strong {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--d-ink);
-}
-.bone-note {
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--d-ink-3);
-}
-.bone-note a {
-  color: var(--d-blue);
-  text-decoration: none;
-}
-.cabin-stats {
-  display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr 1fr;
-  gap: 8px;
-  align-items: end;
-  margin-bottom: 12px;
-}
-.cabin-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--d-ink-3);
-  white-space: nowrap;
-}
-.cabin-value {
-  font-size: 34px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.1;
-}
-.cabin-small {
-  font-size: 19px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.co2 {
-  color: var(--d-blue);
-}
-.cabin-watch .co2 {
-  color: var(--d-orange);
-}
-.cabin-alert .co2 {
-  color: var(--d-red);
-}
-.co2-readout {
-  min-height: 20px;
-  font-size: 12px;
-  color: var(--d-ink-3);
-  font-variant-numeric: tabular-nums;
-}
-.co2-readout strong {
-  color: var(--d-ink);
-  font-weight: 600;
-}
-.co2-svg {
-  display: block;
-  width: 100%;
-  height: auto;
-  cursor: crosshair;
-  overflow: visible;
-}
-.co2-area {
-  fill: url(#co2-fill);
-}
-.co2-line {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linejoin: round;
-}
-.co2-base {
-  stroke: var(--d-stroke-2);
-}
-.co2-limit {
-  stroke: var(--d-red);
-  stroke-width: 1;
-  stroke-dasharray: 4 4;
-  opacity: 0.8;
-}
-.co2-usual {
-  stroke: var(--d-ink-3);
-  stroke-width: 1;
-  stroke-dasharray: 2 4;
-}
-.co2-tag {
-  fill: var(--d-ink-2);
-  font-size: 10px;
-  font-weight: 600;
-}
-.co2-tag-limit {
-  fill: #ff6961;
-}
-.co2-axis {
-  fill: var(--d-ink-3);
-  font-size: 10px;
-}
-.co2-cross {
-  stroke: var(--d-ink-3);
-}
-.co2-dot {
-  fill: currentColor;
-  stroke: #1c1c1e;
-  stroke-width: 2;
-}
-.dash-muted {
-  color: var(--d-ink-3);
-  font-size: 13px;
-}
-
 /* ---------- expandable charts ---------- */
 
 .expand {
@@ -946,9 +813,6 @@ body.dash-body {
   background: none;
   color: var(--d-ink-3);
 }
-.cabin .panel-title .pill + .expand {
-  margin-left: 0;
-}
 .tile-open {
   cursor: pointer;
 }
@@ -964,9 +828,6 @@ body.dash-body {
 .tile-open:hover .expand {
   color: var(--d-ink);
   background: none;
-}
-.co2-open {
-  cursor: pointer;
 }
 .dash .expand:focus-visible,
 .dash .sheet-close:focus-visible,
@@ -1334,6 +1195,118 @@ body.dash-body {
   font-size: 11px;
 }
 
+/* ---------- one screen on desktop ---------- */
+/* With three columns the page fits the window and never scrolls: the stage takes the height
+   left under the bar, and the credits sit under the notifications instead of below the page.
+   The stage is about 5% shorter than the old min(100dvh - 112px, 860px), so --sk-zoom puts the
+   skeleton back at its old size on screen. A column that still runs long scrolls on its own. */
+
+.dash-foot-side {
+  display: none;
+}
+
+@media (min-width: 1241px) {
+  .dash {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .bar {
+    flex: none;
+  }
+  .grid {
+    flex: 1;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .col-left,
+  .col-right {
+    max-height: 100%;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .col-right {
+    align-content: start;
+  }
+  .col-left {
+    display: flex;
+    flex-direction: column;
+  }
+  .col-left > * {
+    flex-shrink: 0;
+  }
+  /* The notifications take what the hero and credits leave; on a short window with many of
+     them, only this list scrolls (most urgent first, so the top one is always in view). */
+  .col-left > .panel {
+    flex-shrink: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 170px;
+  }
+  .col-left .notices {
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .col-stage {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .stage {
+    --sk-zoom: 1.05;
+    flex: 1 1 auto;
+    height: auto;
+    max-height: 820px;
+    min-height: 0;
+  }
+  .dash-foot-end {
+    display: none;
+  }
+  .dash-foot-side {
+    display: grid;
+    margin-top: auto;
+    padding-top: 14px;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Short desktop windows (a 1366 x 768 laptop): a tighter hero card and slimmer vitals tiles,
+   so both side columns still fit. */
+@media (min-width: 1241px) and (max-height: 860px) {
+  .hero {
+    padding: 18px;
+  }
+  .hero-top {
+    margin-bottom: 10px;
+  }
+  .hero h1 {
+    font-size: 24px;
+  }
+  .hero-facts {
+    margin-top: 14px;
+    padding-top: 12px;
+  }
+  .col-left > .panel {
+    min-height: 140px;
+  }
+  .dash-foot-side {
+    font-size: 10px;
+  }
+  .tile-value {
+    font-size: 26px;
+  }
+  .spark {
+    height: 26px;
+    margin-top: 4px;
+  }
+}
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 1240px) {
@@ -1381,12 +1354,6 @@ body.dash-body {
   }
   .hero h1 {
     font-size: 24px;
-  }
-  .cabin-stats {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-  .cabin-main {
-    grid-column: 1 / -1;
   }
 }
 
@@ -1451,7 +1418,7 @@ body.dash-body {
   }
 }
 
-/* ---------- account row (who is logged in, crew app link for the medical officer) ---------- */
+/* ---------- account row (check in, crew app, log out) ---------- */
 
 .acct {
   grid-column: 1 / -1;

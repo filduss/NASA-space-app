@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { hrefOf } from '../auth/paths.ts'
 import { SPEC, SYMPTOMS } from '../engine/deviation.ts'
 import type { CheckIn, SymptomKey } from '../engine/types.ts'
 import { XP } from '../game/xp.ts'
@@ -74,9 +75,9 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
               <button type="button" className="btn" onClick={() => s.setScreen('me')}>
                 See my day
               </button>
-              <button type="button" className="btn btn-quiet" onClick={() => s.setScreen('board')}>
-                Crew board
-              </button>
+              <a className="btn btn-quiet" href={hrefOf('dashboard', import.meta.env.BASE_URL, `?day=${s.today}`)}>
+                My dashboard
+              </a>
             </div>
           </Card>
         )}

@@ -175,6 +175,9 @@ export function SkeletonView({ zones, focus, onFocus }: Props) {
       composer.setSize(w, h)
       uniforms.uSize.value = POINT_PX * ratio
       camera.aspect = w / h
+      // The stylesheet can zoom in when it gives the stage less height than usual (the
+      // one-screen desktop layout), so the body keeps its size on screen.
+      camera.zoom = parseFloat(getComputedStyle(el).getPropertyValue('--sk-zoom')) || 1
       // Keep the whole body in frame on tall, narrow screens.
       camera.fov = w / h < 0.75 ? 38 : 30
       // On phones the zone chips take two rows at the bottom; lift the body clear of them.

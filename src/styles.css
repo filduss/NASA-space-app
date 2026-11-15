@@ -786,19 +786,13 @@ input {
 .tl-bar-over {
   fill: var(--watch);
 }
-.tl-empty {
-  fill: var(--ink-3);
-  font-size: 12px;
-  font-style: italic;
-}
 .tl-sym-ok {
   fill: var(--ink-3);
 }
 .tl-sym-off {
   fill: var(--watch);
 }
-.tl-sym-persist,
-.tl-sym-safety {
+.tl-sym-persist {
   fill: var(--alert);
 }
 .tl-sym-absent,
@@ -806,11 +800,6 @@ input {
   fill: none;
   stroke: var(--ink-3);
   stroke-width: 1.4;
-}
-.tl-sym-unknown {
-  stroke: var(--line-2);
-  stroke-width: 1.4;
-  stroke-linecap: round;
 }
 .tl-legend {
   display: flex;
@@ -859,13 +848,11 @@ input {
   font-size: 13px;
   color: var(--ink-2);
 }
-.tl-people,
-.today ul {
+.tl-people {
   display: flex;
   flex-direction: column;
 }
-.tl-people li,
-.today li {
+.tl-people li {
   display: grid;
   grid-template-columns: 64px 1fr;
   gap: 10px;
@@ -876,25 +863,6 @@ input {
 }
 .tl-person {
   font-weight: 600;
-}
-.today h3 {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-3);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 4px;
-}
-.today .today-watch .today-words {
-  color: var(--watch-ink);
-}
-.today-words .origin {
-  margin-left: 6px;
-}
-.you {
-  font-weight: 400;
-  color: var(--ink-3);
-  font-size: 13px;
 }
 .private-count {
   padding: 12px 14px;

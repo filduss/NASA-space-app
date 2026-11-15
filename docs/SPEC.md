@@ -127,10 +127,12 @@ The air is a suspect when it is above baseline or its 24 h mean is over 3 mmHg. 
 
 | Data | You | Crew board | Crew medical officer | Flight surgeon |
 | --- | --- | --- | --- | --- |
-| Mood and stress | Everything | Count only, no names | Only if you share | In tier 3 summaries |
-| Sleep and symptoms | Everything | Yes | Yes | In tier 3 summaries |
-| Ship alerts and quests | Yes | Yes | Yes | In summaries |
+| Mood and stress | Everything | Count only, no names | Only if you share | Only if you share, and in tier 3 summaries |
+| Sleep and symptoms | Everything | Yes | Yes | Yes |
+| Ship alerts and quests | Yes | Yes | Yes | Yes |
 | Safety answer | Yes | Never | Immediately | Immediately |
+
+The flight surgeon sees everything the crew medical officer sees (crew board, inbox, Ship screen), plus the summaries sent to Earth. The crew board is seen only by those two: astronauts do not open the crew app.
 
 ## Mission setting and radiation
 
@@ -143,39 +145,42 @@ The air is a suspect when it is above baseline or its 24 h mean is over 3 mmHg. 
 | Mars transit (default) | 4, 12 or 22 min; 12 by default | 1.8 mSv (dose equivalent, Curiosity's RAD in cruise) | Zeitlin et al. 2013 |
 | Antarctic station | Less than a second | None: on Earth the atmosphere and magnetic field shield the station | - |
 
-The setting also says how much gravity loads the bones: none in orbit and in cruise, a sixth of Earth's on the Moon, Earth's in Antarctica. That changes only the wording of the dashboard's Bone & muscle panel.
+The setting also says how much gravity loads the bones: none in orbit and in cruise, a sixth of Earth's on the Moon, Earth's in Antarctica. No screen shows it at present; the dashboard's Bone & muscle panel that worded itself by it was removed.
 
 The radiation card on the Ship screen shows the dose rate, the dose so far (rate × mission day), its share of NASA's 600 mSv career limit (NASA-STD-3001 Vol 1 [V1 4030]) and the mission day the limit would be reached. It says what to do in a solar storm: go to the storm shelter until the all-clear. Every number there is labeled an estimate. Sources are in `docs/CITATIONS.md`.
 
 ### Crew timeline
 
-The crew board and the flight surgeon's screen share one chart: the last 14 days of cabin CO₂ (24 h mean, with the cabin's usual level and the 3 mmHg limit), how many crew drift on CO₂-linked indicators (with the rule's threshold), and one row per person. Each cell is a symbol and a word: ● within own usual, ▲ off own usual, ◆ day 3 or later, ○ no check-in, a shield for a shielded day, ■ safety answer, – nothing received. `crewTimeline` in `privacy.ts` fills it per viewer, inside the privacy table above:
+The crew board shows one chart: the last 14 days of cabin CO₂ (24 h mean, with the cabin's usual level and the 3 mmHg limit), how many crew drift on CO₂-linked indicators (with the rule's threshold), and one row per person. Each cell is a symbol and a word: ● within own usual, ▲ off own usual, ◆ day 3 or later, ○ no check-in, a shield for a shielded day. `crewTimeline` in `privacy.ts` fills it per viewer, inside the privacy table above:
 
-| Part | Crew member | Crew medical officer | Flight surgeon |
-| --- | --- | --- | --- |
-| Cabin CO₂ | Yes | Yes | Yes (ship telemetry, not a person's data) |
-| Crew drifting, no names | Every day | Every day | Only on days a ship summary was sent, with the count it gives |
-| Ship-alert band | Every day | Every day | The days a ship summary covers ("day N of the alert") |
-| Rows | Their own only | Everyone, shared indicators only, as on the board | Only people a summary names, and only the days and indicators that summary states |
+| Part | Crew member | Crew medical officer and flight surgeon |
+| --- | --- | --- |
+| Cabin CO₂ | Yes | Yes |
+| Crew drifting, no names | Every day | Every day |
+| Ship-alert band | Every day | Every day |
+| Rows | Their own only | Everyone, shared indicators only |
 
-A row cell shows ◆ when a shared indicator has been off 3 days **and** it is day 3 of the same likely cause, which is the day a summary goes to Earth. Safety answers never show in board rows; the flight surgeon's row shows ■ the day the immediate summary was sent.
+The crew member's column is kept in `crewTimeline` for completeness; no page shows it at present, since astronauts do not open the crew board.
+
+A row cell shows ◆ when a shared indicator has been off 3 days **and** it is day 3 of the same likely cause, which is the day a summary goes to Earth. Safety answers never show in board rows.
 
 Times: on board, ship time is UTC and the check-in is at 08:00. The flight surgeon's screen gives each time also in Houston local time, where Mission Control sits, after the comm delay. The real date behind a mission day (`cabin.json` replay) decides summer or winter time.
 
 ### Login
 
-`/` is the login with the judge's tour, `/challenge` the challenge page, `/dashboard` the personal dashboard and `/app` the crew app. The challenge page needs no login. The last two need a logged-in person; without one they send you to the login and back afterwards (only to our own pages).
+`/` is the login with the judge's tour, `/challenge` the challenge page, `/dashboard` the personal dashboard, `/checkin` the person's own check-in and `/app` the crew app (the medical console). The challenge page needs no login. The last three need a logged-in person; without one they send you to the login and back afterwards (only to our own pages). A logged-in person who may not open a page is sent to their own home page.
 
 | | Astronaut | Medical officer | Flight surgeon (Earth) |
 | --- | --- | --- | --- |
 | Own dashboard (`/dashboard`) | Yes | Yes | None: not crew, sent to the crew app |
 | Anyone else's dashboard | No | No | No |
-| Crew app (`/app`) | Yes, as themselves: check-in, Me, crew board, Ship | Yes, as the crew medical officer or as herself | Yes, always viewing as the flight surgeon |
+| Own check-in (`/checkin`): check-in, Me (XP, streak, quest) | Yes | Yes | None: not crew |
+| Crew app (`/app`): crew board, inbox, Ship | No, sent to their dashboard | Yes, as the crew medical officer | Yes, the same as the crew medical officer, plus Summaries |
 | Challenge page (`/challenge`) | Yes | Yes | Yes, and with no login |
 
-`viewsFor` in `src/auth/session.ts` lists the views a login may take; **Viewing as** offers only those. Nobody can view as another crew member: their screens are reached with their own login. The crew medical officer's view is the only thing the medical role adds. The flight surgeon's login is fixed to the flight surgeon's view: summaries and the timeline of what reached Earth. "Reset my inputs" is not offered to the flight surgeon. The mission day, mission setting and comm delay controls stay for the demo. The personal dashboard links to the person's own check-in.
+`viewsFor(user, page)` in `src/auth/session.ts` gives the one view a login takes on a page: on `/checkin` the person themselves, in `/app` the crew medical officer or the flight surgeon. Nobody can view as another crew member. "Reset my inputs" is not offered to the flight surgeon. The mission day, mission setting and comm delay controls stay for the demo. The personal dashboard links to the person's own check-in.
 
-**Judge's tour.** The login page opens with four links that walk the golden path: day 213 as Dana (Ship screen), day 221 as Chen (dashboard), day 223 as Mira (what reached Earth), and the challenge page. Each link logs in with that person's demo PIN through the same check as typing it, then opens the page. The demo PINs are printed on each person's card; they are public on purpose (`src/auth/demo.ts`, the README and `scripts/make_accounts.py` list the same PINs). `?day=`, `?screen=` and `?mission=` open a page on a given mission day, screen and setting.
+**Judge's tour.** The login page opens with four links that walk the golden path: day 213 as Dana (Ship screen), day 221 as Chen (dashboard), day 223 as Mira (the summaries sent to Earth), and the challenge page. Each link logs in with that person's demo PIN through the same check as typing it, then opens the page. The demo PINs are printed on each person's card; they are public on purpose (`src/auth/demo.ts`, the README and `scripts/make_accounts.py` list the same PINs). `?day=`, `?screen=` and `?mission=` open a page on a given mission day, screen and setting.
 
 - The PIN is checked in the browser with Web Crypto: PBKDF2-SHA256 against the salted hash in `accounts.json`, compared over every byte. The PIN is never stored, logged or kept in state after the check.
 - The session is in `sessionStorage` (`shipshape.session.v1`): the crew id and an expiry 8 hours on, nothing else. The role is read from `accounts.json` on every load, never from the session. Closing the tab logs out; each tab logs in on its own.
@@ -198,12 +203,11 @@ These are the places where the plan could be read two ways, or where the build g
 - **Quest steps are illustrative,** not a flight procedure, and say so.
 - **Did the fix work?** For 7 days after a ship alert ends, the board and the Ship screen say whether the air is back to its usual level and how many of the crew it touched are back to theirs. Counts only, judged on shared indicators as the board does (`shipFollowUp` in `src/engine/privacy.ts`). Anyone still off is already "likely you" with a new 3-day count. This is the re-check the quest's last step asks for; it does not claim the fix caused the recovery.
 - **The limit check uses the 24 h mean.** NASA writes the limit as a 1-hour average, but a single 1-hour peak would make the air a suspect on many quiet days. In the backtest the 24 h mean raised fewer false ship alarms (table under "Evidence"). The highest 1-hour average is still shown on the Ship screen and in summaries.
-- **Bone and muscle are shown, not judged.** The gravity hazard is covered through its countermeasure, exercise: a check-in can log the day before's exercise, and the personal dashboard shows how many of the last 7 logged days reached 120 minutes. Below target on 3 of them turns the core (hip and spine) and limbs zones orange, never red. Like radiation it has no tier, no card on the crew board, nothing for the crew medical officer and no part in ship or me. The 120-minute target follows NASA's figure of about two hours of exercise a day on the ISS; the 3-of-7 count is a demo parameter. The panel quotes NASA's average bone loss in spaceflight, 1 to 1.5% of mineral density a month in weight-bearing bones (`docs/CITATIONS.md`).
+- **Bone and muscle are shown, not judged.** The gravity hazard is covered through its countermeasure, exercise: a check-in can log the day before's exercise, and the engine counts how many of the last 7 logged days reached 120 minutes. Below target on 3 of them turns the core (hip and spine) and limbs zones of the personal dashboard orange, never red, with a notification that names the count. Like radiation it has no tier, no card on the crew board, nothing for the crew medical officer and no part in ship or me. The 120-minute target follows NASA's figure of about two hours of exercise a day on the ISS; the 3-of-7 count is a demo parameter. The check-in's "why we ask" quotes NASA's average bone loss in spaceflight, 1 to 1.5% of mineral density a month in weight-bearing bones (`docs/CITATIONS.md`).
 - **Radiation is shown, not judged.** It has no tier, no card per person and no part in ship or me: the whole crew gets about the same dose and nobody can feel it at everyday levels. A solar-storm warning would be a second "ship" cause; that is not built.
-- **The flight surgeon has a login.** The plan names the flight surgeon as a reader of summaries; the build gives the role a login (Mira, on Earth) so the Earth view can be shown on its own. It adds no access: the login sees what the "Flight surgeon" column of the privacy table allows.
-- **The flight surgeon's timeline is rebuilt from summaries.** Nothing reaches Earth between summaries, so a row's cells come only from what a summary states: a day-3 summary covers the days each listed indicator has been off; a ship summary names who had CO₂-linked changes that day and how long the alert has run.
-- **The medical officer is one of the crew.** The plan's crew medical officer is a role, not a person; the build gives it to Dana. Her login opens her own dashboard like anyone's, plus the crew app as the crew medical officer or as herself. She cannot view as another crew member, because that would show their private mood and stress; the judge's tour opens the other people's screens with their own logins.
-- **Astronauts use the crew app too.** The check-in, the reaction test, the quest steps, the share toggle and the safety question live in the crew app, so every crew member opens it, in their own view only.
+- **The flight surgeon sees what the crew medical officer sees.** The plan names the flight surgeon as a reader of summaries; the build gives the role a login (Mira, on Earth) with the crew medical officer's access (crew board, inbox, Ship screen) plus the summaries. This goes beyond the plan, which sends only summaries to Earth.
+- **The medical officer is one of the crew.** The plan's crew medical officer is a role, not a person; the build gives it to Dana. Her login opens her own dashboard and check-in like anyone's, plus the crew app as the crew medical officer. She cannot view as another crew member, because that would show their private mood and stress; the judge's tour opens the other people's screens with their own logins.
+- **Astronauts do not open the crew app.** The check-in, the reaction test, the quest steps, the share toggle and the safety question live on `/checkin`, in the person's own view. The crew board and the Ship screen are for the crew medical officer and the flight surgeon; an astronaut sees the cabin air and a likely-ship result on their own dashboard.
 
 ## Game
 

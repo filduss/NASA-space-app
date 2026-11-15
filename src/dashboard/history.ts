@@ -1,10 +1,9 @@
-// Data behind the expanded charts on the personal dashboard: one person's check-ins or the
-// cabin CO2 over a chosen range, with the days the engine flagged. Like model.ts it adds no
-// rules: every level comes from indicatorLevel / cabinLevel on that day's engine result.
+// Data behind the expanded charts on the personal dashboard: one person's check-ins over a
+// chosen range, with the days the engine flagged. Like model.ts it adds no rules: every level
+// comes from indicatorLevel on that day's engine result.
 
-import type { CabinHour } from '../data/types.ts'
 import type { CheckIn, DayResult, IndicatorKey } from '../engine/types.ts'
-import { cabinLevel, indicatorLevel, type Level } from './model.ts'
+import { indicatorLevel, type Level } from './model.ts'
 
 export type RangeKey = '1d' | '7d' | '14d' | '30d' | 'all'
 
@@ -20,8 +19,6 @@ const RANGE_DAYS: Record<Exclude<RangeKey, 'all'>, number> = { '1d': 1, '7d': 7,
 
 /** Check-ins come once a day, so a one-day chart would be a single dot: vitals start at 7 days. */
 export const VITAL_RANGES: RangeKey[] = ['7d', '14d', '30d', 'all']
-/** Cabin CO2 is hourly, so it also has a one-day view (the 24 h before the check-in). */
-export const CO2_RANGES: RangeKey[] = ['1d', '7d', '30d', 'all']
 
 /** First mission day inside the range, never before the first day with data. */
 export function rangeStart(range: RangeKey, today: number, firstDay: number): number {
@@ -76,26 +73,6 @@ export function vitalSeries(key: IndicatorKey, crewId: string, history: CheckIn[
     if (!me) continue
     const level = indicatorLevel(me, key)
     if (level !== 'ok') flags.push({ day: d, x0: d - 0.5, x1: d + 0.5, level })
-  }
-  return { points, flags }
-}
-
-export const hourX = (t: string) => Date.parse(t) / 3_600_000
-
-/** Hourly cabin CO2 for mission days `from`..`to`, with the days the cabin was flagged. */
-export function co2Series(hourly: CabinHour[], results: DayResult[], from: number, to: number): Series {
-  const hours = hourly.filter((h) => h.day >= from && h.day <= to)
-  const points: Point[] = hours.map((h) => ({ x: hourX(h.t), v: h.co2, day: h.day, when: `Day ${h.day} · ${h.t.slice(11, 16)} UTC` }))
-  const res = byDay(results)
-  const flags: Flag[] = []
-  for (let d = from; d <= to; d++) {
-    const r = res.get(d)
-    if (!r) continue
-    const level = cabinLevel(r.cabin)
-    if (level === 'ok') continue
-    const xs = points.filter((p) => p.day === d).map((p) => p.x)
-    if (xs.length === 0) continue
-    flags.push({ day: d, x0: Math.min(...xs) - 0.5, x1: Math.max(...xs) + 0.5, level })
   }
   return { points, flags }
 }

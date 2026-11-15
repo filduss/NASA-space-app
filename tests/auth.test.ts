@@ -126,23 +126,28 @@ describe('roles', () => {
   const astronaut: User = { crewId: 'anna', role: 'astronaut' }
   const medical: User = { crewId: 'dana', role: 'medical' }
   const surgeon: User = { crewId: 'mira', role: 'surgeon' }
-  it('an astronaut gets their own dashboard, and the crew app only as themselves, so they can check in', () => {
+  it('an astronaut gets their own dashboard and check-in, and no crew app', () => {
     expect(mayOpen(astronaut, 'dashboard')).toBe(true)
-    expect(mayOpen(astronaut, 'app')).toBe(true)
-    expect(viewsFor(astronaut)).toEqual([{ kind: 'crew', crewId: 'anna' }])
+    expect(mayOpen(astronaut, 'checkin')).toBe(true)
+    expect(mayOpen(astronaut, 'app')).toBe(false)
+    expect(viewsFor(astronaut, 'checkin')).toEqual([{ kind: 'crew', crewId: 'anna' }])
+    expect(viewsFor(astronaut, 'app')).toEqual([])
     expect(homePage(astronaut)).toBe('dashboard')
   })
-  it('the medical officer views the crew app as the crew medical officer or as herself, never as a crewmate', () => {
+  it('the medical officer checks in as herself and opens the crew app as the crew medical officer, never as a crewmate', () => {
     expect(mayOpen(medical, 'dashboard')).toBe(true)
+    expect(mayOpen(medical, 'checkin')).toBe(true)
     expect(mayOpen(medical, 'app')).toBe(true)
-    expect(viewsFor(medical)).toEqual([{ kind: 'cmo' }, { kind: 'crew', crewId: 'dana' }])
-    expect(viewsFor(medical).some((v) => v.kind === 'surgeon' || (v.kind === 'crew' && v.crewId !== 'dana'))).toBe(false)
+    expect(viewsFor(medical, 'checkin')).toEqual([{ kind: 'crew', crewId: 'dana' }])
+    expect(viewsFor(medical, 'app')).toEqual([{ kind: 'cmo' }])
   })
-  it('the flight surgeon on Earth gets the crew app and no dashboard, lands there, and only views as the flight surgeon', () => {
+  it('the flight surgeon on Earth gets the crew app, no dashboard and no check-in, and lands in the crew app', () => {
     expect(mayOpen(surgeon, 'app')).toBe(true)
     expect(mayOpen(surgeon, 'dashboard')).toBe(false)
+    expect(mayOpen(surgeon, 'checkin')).toBe(false)
     expect(homePage(surgeon)).toBe('app')
-    expect(viewsFor(surgeon)).toEqual([{ kind: 'surgeon' }])
+    expect(viewsFor(surgeon, 'app')).toEqual([{ kind: 'surgeon' }])
+    expect(viewsFor(surgeon, 'checkin')).toEqual([])
   })
   it('everyone may open the challenge page', () => {
     for (const u of [astronaut, medical, surgeon]) expect(mayOpen(u, 'challenge')).toBe(true)
@@ -175,6 +180,7 @@ describe('pages', () => {
     expect(pageOf(appPath('/', base))).toBe('login')
     expect(pageOf(appPath('/dashboard/', base))).toBe('dashboard')
     expect(pageOf(appPath('/app', base))).toBe('app')
+    expect(pageOf(appPath('/checkin', base))).toBe('checkin')
     expect(pageOf(appPath('/challenge', base))).toBe('challenge')
     expect(pageOf(appPath('/anything', base))).toBe('login')
     expect(pageOf(appPath('/sub/dashboard', '/sub/'))).toBe('dashboard')

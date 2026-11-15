@@ -39,7 +39,7 @@ export const TOUR: TourStep[] = [
     body: 'Chen is still off on day 3, so a summary goes to the flight surgeon, minutes away.',
     as: 'mira',
     page: 'app',
-    search: '?day=223',
+    search: '?day=223&screen=summary',
   },
   {
     title: 'How it answers the challenge',
