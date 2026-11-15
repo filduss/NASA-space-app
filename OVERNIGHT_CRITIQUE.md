@@ -11,7 +11,7 @@ Written on 15 Nov 2026 from 04:30 CET, on branch `fable`, by an AI reviewer acti
 **Three things before you submit**
 
 1. **Choose a license and fix the Team list in the README.** Space Apps expects open-source work; "License: To be decided" means it is not. The Team list names two people while commits come from more.
-2. **Deploy this branch and open the live site twice** (the service worker swaps to the new build on the second load). Then click the four tour stops on the live URL, once on a phone, in a private window.
+2. **Merge or deploy this branch and open the live site twice** (the service worker swaps to the new build on the second load). Then click the four tour stops on the live URL, once on a phone, in a private window.
 3. **Read the three text changes that speak for you** and revert any you disagree with: the check-in's privacy line (8ba912a), the "What to do now" card on the Ship screen (last commit, our wording, labelled as not a NASA procedure), and the "stress test, not a validation" sentence on the challenge page (2962faa).
 
 **A 60-second demo script**
@@ -22,7 +22,9 @@ Written on 15 Nov 2026 from 04:30 CET, on branch `fable`, by an AI reviewer acti
 - 40-50 s, click Next, Summaries, day 223: "Still off on day 3: a summary reaches the flight surgeon on Earth, twelve minutes away."
 - 50-60 s, click Next, challenge page: "Tested on 200 simulated crews over 10 real ISS traces, with the blind spots stated. No AI in the product, works offline."
 
-**Also added, beyond the issue list:** a strip on every tour stop with one click to the next (2901bae), and the "What to do now" card. **Not finished when the session ended:** a sweep of every mission day on every screen for errors (the four golden days, all tour stops, the check-in flow and offline use were verified); no pull request was opened.
+**Also added, beyond the issue list:** a strip on every tour stop with one click to the next (2901bae), the "What to do now" card (46a962d, moved below the CO₂ chart in 91854b0), retaken README screenshots and a link-preview image (073a3bf), and "Checking…" while a typed PIN is verified (2e5b428).
+
+**Verified at the end, on the production build:** every mission day from 189 to 235 on every screen for every person (568 page loads at phone width): no errors, no sideways scroll, no empty page. The four tour stops work with the network off after one visit. Login by keypad, a wrong PIN, a full check-in, an urgent conference request reaching the medical officer's inbox, and log out all work. The pull request is https://github.com/filduss/NASA-space-app/pull/1.
 
 ## Decisions taken without asking
 
@@ -54,11 +56,11 @@ Severity is how much it can cost with a judge. Status is one of Fixed (commit), 
 | 8 | Medium | Data-load failure tells a judge to run `npm run data` | Fixed (9c52efa) |
 | 9 | Medium | Duplicate React key on the PIN keypad (console error on every login) | Fixed (5d436c2) |
 | 10 | Medium | Ship summaries on day 6 are labelled "Day-3 summary" | Fixed (e7f621e) |
-| 11 | Medium | Link previews: no Open Graph tags, no `<noscript>` | Partly fixed (72c7096): no og:image, it needs a hosted PNG at the final URL |
+| 11 | Medium | Link previews: no Open Graph tags, no `<noscript>` | Fixed (72c7096, 073a3bf): og:image points at shipshape-rho.vercel.app/og.png; change it if the demo moves |
 | 12 | Medium | README: stale layout, license "To be decided", team list | Partly fixed (c92a0e0): layout corrected; license and team list are the team's to decide |
 | 13 | Medium | The 90% accuracy is measured on a simulator built on the rule's own assumption | Fixed (2962faa): caveat beside the headline figure |
 | 14 | Low | Low-contrast small text on the login | Fixed (19f508c) |
-| 15 | Low | Body-zone chips truncate on desktop ("Head & s…") | Fixed (2ef070f) |
+| 15 | Low | Body-zone chips truncate on desktop ("Head & s…") | Fixed (2ef070f, 69d2d1b): two rows of chips on a narrow stage |
 | 16 | Low | 325 kB entry bundle; 728 kB dashboard chunk | Not done: loads in about a second and is cached; not worth the risk today |
 | 17 | Low | Radiation card reads alarming (64% of career limit) for a side feature | Not done: already caveated on the card; keep the number out of the video |
 | 18 | Low | Citations still marked unchecked | Not done: a human must open the sources |
@@ -122,7 +124,7 @@ Severity is how much it can cost with a judge. Status is one of Fixed (commit), 
 
 - **Evidence:** `index.html` has a description but no `og:` tags; with JavaScript off the page is empty.
 - **Why a judge cares:** the project link gets pasted into chats and the submission form; a bare URL preview undersells it.
-- **Fix:** add `og:title`, `og:description`, a `<noscript>` line. An `og:image` needs a hosted PNG and the final URL: left to the team.
+- **Fix:** add `og:title`, `og:description`, an `og:image` (`public/og.png`, addressed at the live demo's URL from the README) and a `<noscript>` line.
 
 ### 12. README (Medium)
 
