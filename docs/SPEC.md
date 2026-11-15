@@ -387,4 +387,4 @@ One crew member never ticks a symptom and reports every slider one point better 
 - A deploy to Vercel and the `v1.0-submission` tag.
 - README sections for the challenge map and the Antarctic case (both are in the app: Demo controls → How it answers the challenge), and the Antarctic sources in `docs/CITATIONS.md`.
 - The 30-second video.
-- Opening each source in `docs/CITATIONS.md` before quoting it on the project page; the ones under "Added with the cabin factors and NASA risks" were read by an AI agent only and are on screen in this branch.
+- Opening each source in `docs/CITATIONS.md` that is still marked "No" before quoting it on the project page.
