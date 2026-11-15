@@ -5,6 +5,8 @@ import { vitalLines, type WearableReading } from '../data/wearable.ts'
 import { hrefOf } from '../auth/paths.ts'
 import { useStore, type ReactionResult } from '../state.tsx'
 import { INDICATOR_RISKS, SYMPTOM_RISKS, type HrpRiskKey } from '../data/hrp.ts'
+import { ENTRY_FOR, entryById } from '../guide/entries.ts'
+import { GuideLink, guideHref } from '../guide/Guide.tsx'
 import { Card, Mark, Origin, RiskLinks } from './bits.tsx'
 import {
   formFrom,
@@ -67,7 +69,13 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
         </button>
       </div>
 
-      <Card title="Last night" aside={<Origin kind="simulated">from your wearable</Origin>}>
+      <Card
+        title={
+          <>
+            Last night <GuideLink id={ENTRY_FOR.sleepHours} label="Sleep" />
+          </>
+        }
+        aside={<Origin kind="simulated">from your wearable</Origin>}>
         <WearableLine wearable={wearable} />
         <RiskLinks risks={INDICATOR_RISKS.sleepHours} />
       </Card>
@@ -82,10 +90,25 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
 
       <Card title="Symptoms since yesterday">
         <SymptomTiles value={form.symptoms} onToggle={(k) => setForm((f) => toggleSymptom(f, k))} onNone={() => setForm(noSymptoms)} />
+        <p className="guide-about">
+          In the Guide:{' '}
+          {[...new Set(SYMPTOMS.map((sym) => ENTRY_FOR[sym.key]))].map((id, i) => (
+            <span key={id}>
+              {i > 0 && ' · '}
+              <a href={guideHref(id)}>{entryById(id)?.title}</a>
+            </span>
+          ))}
+        </p>
         <RiskLinks risks={[...new Set(SYMPTOMS.flatMap((sym) => SYMPTOM_RISKS[sym.key]))] as HrpRiskKey[]} />
       </Card>
 
-      <Card title="Reaction test" aside={<Origin kind="live" />}>
+      <Card
+        title={
+          <>
+            Reaction test <GuideLink id={ENTRY_FOR.reaction} label="Reaction test" />
+          </>
+        }
+        aside={<Origin kind="live" />}>
         <p className="muted ci-optional">Optional.</p>
         <ReactionTest result={reaction} onResult={setReaction} />
         <RiskLinks risks={INDICATOR_RISKS.reaction} />
@@ -171,6 +194,7 @@ function RatingRow({ rating, value, onChange }: { rating: Rating; value: number 
         <span id={`${id}-q`} className="ci-question">
           {rating.question}
         </span>
+        <GuideLink id={ENTRY_FOR[rating.key]} label={rating.question} />
       </div>
       <div ref={group} className="ci-scale" role="radiogroup" aria-labelledby={`${id}-q`} aria-describedby={`${id}-ends`} onKeyDown={onKey}>
         {SCALE.map((v) => (

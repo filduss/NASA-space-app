@@ -3,6 +3,7 @@ import { hrefOf, type Page } from './auth/paths.ts'
 import { mayOpen } from './auth/session.ts'
 import type { AccountRole } from './data/types.ts'
 import { cabinLevel } from './dashboard/model.ts'
+import { Guide } from './guide/Guide.tsx'
 import { useStore, type Role, type Screen } from './state.tsx'
 import { Origin } from './ui/bits.tsx'
 import { CheckInScreen } from './ui/CheckInScreen.tsx'
@@ -33,10 +34,11 @@ const TABS: Record<Role['kind'], Screen[]> = {
 const OTHER_PAGES: { page: Page; label: string }[] = [
   { page: 'dashboard', label: 'My dashboard' },
   { page: 'checkin', label: 'Check in' },
+  { page: 'guide', label: 'Guide' },
   { page: 'app', label: 'Crew app' },
 ]
 
-export function App({ page }: { page: 'checkin' | 'app' }) {
+export function App({ page }: { page: 'checkin' | 'guide' | 'app' }) {
   const s = useStore()
   const tabs = TABS[s.role.kind]
   const screen = tabs.includes(s.screen) ? s.screen : tabs[0]
@@ -47,12 +49,15 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
   const me = s.user ? s.nameOf(s.user.crewId) : ''
   const myRole = s.user ? ROLE_WORD[s.user.role] : ''
 
+  const guide = page === 'guide'
+  const heading = guide ? 'Guide' : LABELS[screen]
+
   useEffect(() => {
-    document.title = `${LABELS[screen]} · Shipshape`
-  }, [screen])
+    document.title = `${heading} · Shipshape`
+  }, [heading])
 
   return (
-    <div className={page === 'checkin' ? 'app app-narrow' : 'app'}>
+    <div className={page === 'app' ? 'app' : 'app app-narrow'}>
       <header className="appbar">
         <div className="appbar-brand">
           <span className="appicon" aria-hidden="true">
@@ -64,7 +69,7 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
           </div>
         </div>
 
-        {tabs.length > 1 && (
+        {!guide && tabs.length > 1 && (
           <nav className="tabs" aria-label="Screens">
             {tabs.map((t) => (
               <button key={t} type="button" className={t === screen ? 'tab tab-on' : 'tab'} aria-current={t === screen ? 'page' : undefined} onClick={() => s.setScreen(t)}>
@@ -101,30 +106,38 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
 
       <section className="intro">
         <div>
-          <p className="intro-eyebrow">
-            {s.mission.label} · mission day {s.today} · {who}
-          </p>
-          <h1>{LABELS[screen]}</h1>
+          <p className="intro-eyebrow">{guide ? 'What your readings mean, and why they matter in space' : `${s.mission.label} · mission day ${s.today} · ${who}`}</p>
+          <h1>{heading}</h1>
         </div>
-        <span className="origins">
-          <Origin kind="simulated">crew</Origin>
-          <Origin kind="real">ISS cabin air, {s.data.cabin.meta.mission}</Origin>
-        </span>
+        {!guide && (
+          <span className="origins">
+            <Origin kind="simulated">crew</Origin>
+            <Origin kind="real">ISS cabin air, {s.data.cabin.meta.mission}</Origin>
+          </span>
+        )}
       </section>
 
-      <details className="controls">
-        <summary>Demo controls</summary>
-        <RoleSwitcher />
-      </details>
+      {!guide && (
+        <details className="controls">
+          <summary>Demo controls</summary>
+          <RoleSwitcher />
+        </details>
+      )}
 
-      {/* Keyed by person and day so forms start fresh when either changes. */}
-      <main key={`${crewId ?? s.role.kind}-${s.today}`}>
-        {screen === 'board' && <CrewBoard />}
-        {screen === 'checkin' && crewId && <CheckInScreen crewId={crewId} />}
-        {screen === 'ship' && <ShipAlert />}
-        {screen === 'inbox' && <CmoInbox />}
-        {screen === 'summary' && <SurgeonView />}
-      </main>
+      {guide ? (
+        <main>
+          <Guide />
+        </main>
+      ) : (
+        // Keyed by person and day so forms start fresh when either changes.
+        <main key={`${crewId ?? s.role.kind}-${s.today}`}>
+          {screen === 'board' && <CrewBoard />}
+          {screen === 'checkin' && crewId && <CheckInScreen crewId={crewId} />}
+          {screen === 'ship' && <ShipAlert />}
+          {screen === 'inbox' && <CmoInbox />}
+          {screen === 'summary' && <SurgeonView />}
+        </main>
+      )}
 
       <footer className="foot">
         <p>

@@ -42,6 +42,12 @@ export const TOUR: TourStep[] = [
     search: '?day=223&screen=summary',
   },
   {
+    title: 'The Guide · What it means',
+    body: 'Plain words on every reading: why it matters in space and what NASA sets as the limit. Search it the way you would say it: “head hurts”.',
+    as: 'chen',
+    page: 'guide',
+  },
+  {
     title: 'How it answers the challenge',
     body: 'The five questions, the evidence that the rule works, and its limits.',
     page: 'challenge',

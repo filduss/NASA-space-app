@@ -19,13 +19,18 @@ import './dashboard.css'
 const TREND_DAYS = 14
 
 /** Toolbar glyphs, drawn in the spirit of SF Symbols: one stroke weight, rounded ends. */
-function NavIcon({ kind }: { kind: 'checkin' | 'app' | 'logout' }) {
+function NavIcon({ kind }: { kind: 'checkin' | 'guide' | 'app' | 'logout' }) {
   return (
     <svg className="tbtn-icon" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
       {kind === 'checkin' && (
         <>
           <rect x="3.25" y="2.75" width="11.5" height="13" rx="2.5" />
           <path d="M6.5 2.75v-.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v.5M6.25 9.4l1.8 1.8 3.7-3.9" />
+        </>
+      )}
+      {kind === 'guide' && (
+        <>
+          <path d="M9 4.6C7.6 3.5 5.6 3 2.75 3v10.5c2.85 0 4.85.5 6.25 1.6 1.4-1.1 3.4-1.6 6.25-1.6V3C12.4 3 10.4 3.5 9 4.6zM9 4.6v10.5" />
         </>
       )}
       {kind === 'app' && (
@@ -202,6 +207,10 @@ export function Dashboard() {
           <a className="tbtn tbtn-tint" href={hrefOf('checkin', import.meta.env.BASE_URL, `?day=${today}`)} title="Check in">
             <NavIcon kind="checkin" />
             <span className="tbtn-label">Check in</span>
+          </a>
+          <a className="tbtn" href={hrefOf('guide', import.meta.env.BASE_URL)} title="Guide">
+            <NavIcon kind="guide" />
+            <span className="tbtn-label">Guide</span>
           </a>
           {mayOpen(user, 'app') && (
             <a className="tbtn" href={hrefOf('app', import.meta.env.BASE_URL, `?day=${today}`)} title="Crew app">

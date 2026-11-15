@@ -10,9 +10,9 @@ import { ChallengePage } from './ui/Challenge.tsx'
 import { ErrorBoundary } from './ui/ErrorBoundary.tsx'
 import './styles.css'
 
-// Five pages, no router: "/" is the login with the judge's tour, /challenge the public challenge page,
-// /dashboard the personal dashboard, /checkin the crew member's own check-in and /app the crew app
-// (the medical console). The last three need a logged-in person who may open them.
+// Six pages, no router: "/" is the login with the judge's tour, /challenge the public challenge page,
+// /dashboard the personal dashboard, /checkin the crew member's own check-in, /guide the crew's Guide and
+// /app the crew app (the medical console). The last four need a logged-in person who may open them.
 // The dashboard (and three.js with it) loads only when that page is opened.
 const Dashboard = lazy(() => import('./dashboard/Dashboard.tsx').then((m) => ({ default: m.Dashboard })))
 const page = pageOf(appPath(window.location.pathname, import.meta.env.BASE_URL))

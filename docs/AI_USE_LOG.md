@@ -40,3 +40,4 @@
 - The readings of the plan listed in `docs/SPEC.md`.
 - The wording of cards and summaries in `src/ui/text.ts` and `src/ui/Medical.tsx`.
 - The Mars cruise dose rate in `src/engine/mission.ts`: only the abstract of Zeitlin et al. 2013 was read; the per-day figure comes from the press release (see `docs/CITATIONS.md`).
+| 15 Nov 2026 | Claude Code (Claude Opus 5.5) | The crew's Guide (`/guide`, `src/guide/`): content written from sources in `docs/CITATIONS.md`, BM25 search with a synonym list (no model, ADR 0001), Guide button on the dashboard, "?" links on the check-in, a tour stop; headache unlinked from the SANS risk (no SANS source names it). New sources found and read by an AI agent (`docs/research/guidebook-sources.md`), added to CITATIONS.md as unchecked; the Guide hides their sentences until a person opens them | Team review pending; new sources not yet opened |

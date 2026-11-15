@@ -149,6 +149,11 @@ describe('roles', () => {
     expect(viewsFor(surgeon, 'app')).toEqual([{ kind: 'surgeon' }])
     expect(viewsFor(surgeon, 'checkin')).toEqual([])
   })
+  it('the crew open the Guide; the flight surgeon on Earth does not', () => {
+    expect(mayOpen(astronaut, 'guide')).toBe(true)
+    expect(mayOpen(medical, 'guide')).toBe(true)
+    expect(mayOpen(surgeon, 'guide')).toBe(false)
+  })
   it('everyone may open the challenge page', () => {
     for (const u of [astronaut, medical, surgeon]) expect(mayOpen(u, 'challenge')).toBe(true)
   })
