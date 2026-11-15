@@ -68,7 +68,7 @@ XP, weekly streak with shield days, quests. Game functions cannot read check-in 
 
 `src/main.tsx` picks one of five pages by pathname (`src/auth/paths.ts`), without a router:
 
-- `/` → `src/auth/Login.tsx`: the judge's tour (`TOUR` in `src/auth/demo.ts`: one-click links that log in with a public demo PIN, via `auth/TourLink.tsx`), then pick a crew member and type a 4-digit PIN.
+- `/` → `src/auth/Login.tsx`: the judge's tour (`TOUR` in `src/auth/demo.ts`: one-click links that log in with a public demo PIN, via `auth/TourLink.tsx`), then pick a crew member and enter a 4-digit PIN on the on-screen keypad or a keyboard; the fourth digit submits.
 - `/challenge` → `src/ui/Challenge.tsx`: the public challenge page (five questions, backtest evidence, Antarctic case). No login; its buttons are tour links.
 - `/dashboard` → `src/dashboard/`: the logged-in person's own dashboard with a three.js skeleton point cloud (`public/models/skeleton.glb`), lazy-loaded. `dashboard/model.ts` maps engine output to body-zone levels and notices; it must not introduce rules of its own. The crew app reuses its `cabinLevel` / `indicatorLevel`, so orange (watch) and red (alert) mean the same on both pages.
 - `/checkin` → `App.tsx` + `src/ui/`: a crew member's own check-in and Me (XP, streak, quest), for astronauts and the medical officer, always as themselves.

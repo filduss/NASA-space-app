@@ -236,6 +236,47 @@ body.login-body {
   border-radius: 8px;
 }
 
+/* The on-screen keypad: 3 by 4, phone order, round keys. */
+.login-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  gap: 14px 22px;
+  justify-content: center;
+}
+.login-key {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 1px solid var(--l-stroke);
+  background: var(--l-surface-2);
+  color: var(--l-ink);
+  font: inherit;
+  font-size: 28px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.08s;
+}
+.login-key:active:not(:disabled) {
+  background: var(--l-stroke-2);
+}
+.login-key-back {
+  border-color: transparent;
+  background: none;
+  font-size: 24px;
+  color: var(--l-ink-2);
+}
+.login-key:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.login-key:focus-visible {
+  outline: 2px solid var(--l-blue);
+  outline-offset: 2px;
+}
+
 .login-msg {
   min-height: 1.4em;
   text-align: center;

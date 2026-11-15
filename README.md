@@ -39,7 +39,7 @@ npm run build      # production build, installable and offline-capable
 
 ### Log in
 
-The start page opens with a **judge's tour**: four links that walk the demo (day 213 as Dana, day 221 as Chen, day 223 as Mira on Earth, and the challenge page). Each logs in with that person's demo PIN for you. To log in by hand, pick a person and type their PIN; it is printed on their card. These are demo PINs:
+The start page opens with a **judge's tour**: four links that walk the demo (day 213 as Dana, day 221 as Chen, day 223 as Mira on Earth, and the challenge page). Each logs in with that person's demo PIN for you. To log in by hand, pick a person and enter their PIN on the on-screen keypad (or type it); it is printed on their card. These are demo PINs:
 
 | Person | Role | PIN |
 | --- | --- | --- |

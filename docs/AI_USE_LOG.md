@@ -16,6 +16,7 @@
 | 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `dashboard-trim`: Cabin air and Bone & muscle panels removed from `/dashboard` (with the CO₂ chart sheet only they opened); body stage capped at 660px wide, skeleton size unchanged; docs | Team review pending |
 | 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Access: "Logged in as" label removed from `/dashboard`; new `/checkin` page (check-in and Me) for crew; `/app` closed to astronauts; the flight surgeon given the crew medical officer's access plus summaries (summaries-only timeline removed); tests, SPEC, README. Review pass: Me-screen ship link now points to the dashboard, crew-only board code removed, `docs/screenshots/earth-day-223.png` retaken | Team review pending |
 | 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `wearable`: a simulated wrist wearable at check-in (sleep, sleep quality and exercise filled in), simulated vitals in the demo crew (resting heart rate, HRV, blood oxygen, breathing, skin temperature), shown for information on the check-in and in a "From your watch" dashboard panel with 14-day trends, never read by the rules; tests, docs | Team review pending |
+| 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `pin-keypad`: on-screen number keypad for the PIN on the login page (system keyboard suppressed on phones, physical keyboard still works); docs | Team review pending |
 
 ## What AI does not do in the product
 
