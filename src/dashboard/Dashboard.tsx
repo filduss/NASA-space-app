@@ -119,6 +119,8 @@ export function Dashboard() {
 
   const history = useMemo(() => s.checkIns.filter((c) => c.crewId === crewId), [s.checkIns, crewId])
   const exercise = useMemo(() => exerciseWeek(history, today), [history, today])
+  // From the (simulated) wrist wearable; shown, never judged.
+  const spo2 = history.find((c) => c.day === today)?.spo2 ?? null
   const zones = useMemo(() => zoneStates(me, cabin, exercise), [me, cabin, exercise])
   const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise), [me, cabin, s.commDelaySec, exercise])
   const tiles = useMemo(() => vitals(me, history, today, TREND_DAYS), [me, history, today])
@@ -294,7 +296,7 @@ export function Dashboard() {
         <section className="col col-right">
           <div className="panel">
             <h2 className="panel-title">
-              Vitals <span className="panel-note">vs. your own normal · {TREND_DAYS} days</span>
+              Vitals <span className="panel-note">vs. your own normal · {TREND_DAYS} days · sleep from your watch</span>
             </h2>
             <div className="tiles">
               {tiles.map((v) => (
@@ -306,6 +308,16 @@ export function Dashboard() {
                 </header>
                 <p className="tile-value tile-value-sm">{me.assessment.symptoms.length ? me.assessment.symptoms.length : 'None'}</p>
                 <p className="tile-sub">{me.assessment.symptoms.length ? me.assessment.symptoms.map(symptomLabel).join(', ') : 'Nothing reported today'}</p>
+              </article>
+              <article className="tile tile-ok">
+                <header className="tile-head">
+                  <h3>Blood oxygen</h3>
+                </header>
+                <p className="tile-value">
+                  {spo2 ?? '–'}
+                  {spo2 !== null && <span className="tile-unit"> %</span>}
+                </p>
+                <p className="tile-sub">From your watch · shown, not judged</p>
               </article>
             </div>
           </div>

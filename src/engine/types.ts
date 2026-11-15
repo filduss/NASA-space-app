@@ -28,6 +28,8 @@ export interface CheckIn {
   reactionMs: number | null
   /** Minutes of exercise the day before; missing or null when not logged. Shown, never judged (engine/gravity.ts). */
   exerciseMin?: number | null
+  /** Blood oxygen saturation from the wrist wearable, %; missing or null without one. Shown, never judged. */
+  spo2?: number | null
   /** The safety answer: "I need to talk to someone now". */
   safetyFlag?: boolean
   /** True for generated check-ins, false for ones entered live in the app. */
