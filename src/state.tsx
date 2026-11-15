@@ -77,7 +77,12 @@ interface Store {
   data: Data
   /** The logged-in person, checked against accounts.json; null on the login page. */
   user: User | null
-  logIn: (crewId: string, pin: string) => Promise<LoginResult>
+  /**
+   * Checks the PIN and starts the session. With `goTo`, a correct PIN loads that URL straight away
+   * and the logged-in person on this page is left as they were: a tour link on a page the new
+   * person may not open would otherwise be overtaken by RequireUser sending them home.
+   */
+  logIn: (crewId: string, pin: string, goTo?: string) => Promise<LoginResult>
   logOut: () => void
   /** The views this person may take on this page (viewsFor). */
   views: Role[]
@@ -199,7 +204,7 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
   )
 
   const logIn = useCallback(
-    async (crewId: string, pin: string): Promise<LoginResult> => {
+    async (crewId: string, pin: string, goTo?: string): Promise<LoginResult> => {
       const now = Date.now()
       const before = attemptsFor(localStorage, crewId)
       if (before.lockedUntil > now) return { ok: false, reason: 'locked', lockedUntil: before.lockedUntil }
@@ -212,7 +217,8 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
       }
       clearFailures(localStorage, crewId)
       startSession(sessionStorage, crewId, Date.now())
-      setUser({ crewId, role: account.role })
+      if (goTo) window.location.assign(goTo)
+      else setUser({ crewId, role: account.role })
       return { ok: true }
     },
     [data],

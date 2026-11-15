@@ -4,6 +4,7 @@ import { App } from './App.tsx'
 import { Login } from './auth/Login.tsx'
 import { appPath, pageOf } from './auth/paths.ts'
 import { RequireUser } from './auth/RequireUser.tsx'
+import { TourBar } from './auth/TourBar.tsx'
 import { StoreProvider } from './state.tsx'
 import { ChallengePage } from './ui/Challenge.tsx'
 import { ErrorBoundary } from './ui/ErrorBoundary.tsx'
@@ -20,6 +21,7 @@ createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>
     <ErrorBoundary>
       <StoreProvider>
+        {page !== 'login' && <TourBar />}
         <Suspense fallback={<p className="boot">Loading…</p>}>
           {page === 'login' ? (
             <Login />
