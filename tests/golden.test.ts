@@ -48,12 +48,12 @@ describe('golden path on the demo data', () => {
 
   it("Chen's dashboard box on the four days says what its colour says", () => {
     const chen = (d: number) => verdict(day(d).people.chen, day(d).cabin)
-    expect(chen(212)).toMatchObject({ tint: 'ok', title: "You're fine. The air isn't.", ship: { level: 'watch' } })
-    expect(chen(213)).toMatchObject({ tint: 'ok', title: "You're fine. The air isn't.", ship: { level: 'alert' } })
-    expect(chen(221)).toMatchObject({ tint: 'alert', title: 'Likely you', ship: { level: 'ok' } })
-    expect(chen(223)).toMatchObject({ tint: 'alert', title: 'Likely you · day 3' })
+    expect(chen(212)).toMatchObject({ tint: 'ok', title: "You're within your normal", ship: { level: 'watch' } })
+    expect(chen(213)).toMatchObject({ tint: 'ok', title: "You're within your normal", ship: { level: 'alert' } })
+    expect(chen(221)).toMatchObject({ tint: 'alert', title: 'Likely not the ship', ship: { level: 'ok' } })
+    expect(chen(223)).toMatchObject({ tint: 'alert', title: 'Likely not the ship' })
     for (const d of [212, 213, 221, 223]) {
-      if (/fine|all good/i.test(chen(d).title)) expect(chen(d).tint).toBe('ok')
+      if (/normal|all good/i.test(chen(d).title)) expect(chen(d).tint).toBe('ok')
     }
   })
 

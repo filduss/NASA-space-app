@@ -3,13 +3,13 @@ import { useStore } from '../state.tsx'
 
 // The demo's own controls, kept apart from the dashboard itself: a floating dock at the bottom
 // of the screen, styled as help like the judge's tour beside the login. It moves the simulated
-// mission calendar; nothing in it is part of Shipshape. The golden path: the cabin CO2 climbs
+// mission calendar; nothing in it is part of Ship Or Me? The golden path: the cabin CO2 climbs
 // (212), Chen is fine while the cabin is high (213), still off once the air is back to normal
 // (221), and day 3 (223). The same four days as the crew app's golden path.
 const SCENES: { day: number; label: string }[] = [
   { day: 212, label: 'CO₂ climbs' },
   { day: 213, label: 'Cabin high' },
-  { day: 221, label: 'Likely you' },
+  { day: 221, label: 'Likely not the ship' },
   { day: 223, label: 'Day 3' },
 ]
 
@@ -54,7 +54,7 @@ export function DemoDock() {
   }
 
   return (
-    <aside className="demo" aria-label="Demo controls, not part of Shipshape">
+    <aside className="demo" aria-label="Demo controls, not part of Ship Or Me?">
       <div className="demo-head">
         <span className="demo-mark" aria-hidden="true">
           ?
@@ -107,7 +107,7 @@ export function DemoDock() {
           <p>
             <span className="tag tag-real">Real ISS cabin air</span> CO₂, temperature and humidity, NASA OSDR, {s.data.cabin.meta.mission}, replayed on the mission calendar.
           </p>
-          <p>Shipshape says "likely" and never diagnoses.</p>
+          <p>Ship Or Me? says "likely" and never diagnoses.</p>
           <p className="demo-credit">
             Anatomy: BodyParts3D © The Database Center for Life Science (CC BY 4.0). Modified by open-anatomy-3d (https://github.com/MervinR07/open-anatomy-3d), CC BY 4.0. Skeleton extracted and
             re-exported. For visualisation only.

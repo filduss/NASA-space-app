@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Shipshape is a NASA Space Apps Challenge entry: a crew check-in for long missions that says whether a bad day is "likely you" or "likely the ship". It is a static Vite + React + TypeScript web app, installable and offline-capable, with no backend and no AI model in the product. A PIN login runs entirely in the browser.
+Ship Or Me? is a NASA Space Apps Challenge entry: a crew check-in for long missions that says whether a bad day is "likely you" or "likely the ship". It is a static Vite + React + TypeScript web app, installable and offline-capable, with no backend and no AI model in the product. A PIN login runs entirely in the browser.
 
 `docs/SPEC.md` is the source of truth for the rules, the JSON shapes, and the "Readings of the plan" (places where the build chose one interpretation of the plan). Read it before changing engine behavior, and update it in the same change.
 

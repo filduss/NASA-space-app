@@ -153,7 +153,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   if (error)
     return (
       <div className="boot" role="alert">
-        <h1 className="boot-title">Shipshape could not load its data</h1>
+        <h1 className="boot-title">Ship Or Me? could not load its data</h1>
         <p>The connection may have dropped while the page was loading.</p>
         <p className="boot-actions">
           <button type="button" className="btn btn-primary" onClick={() => window.location.reload()}>

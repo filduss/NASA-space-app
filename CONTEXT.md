@@ -1,4 +1,4 @@
-# Shipshape
+# Ship Or Me?
 
 A crew check-in for long missions that says whether a bad day is "likely you" or "likely the ship". This file fixes the words the team uses for its parts.
 

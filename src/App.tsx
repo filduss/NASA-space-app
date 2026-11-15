@@ -48,7 +48,7 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
   const myRole = s.user ? ROLE_WORD[s.user.role] : ''
 
   useEffect(() => {
-    document.title = `${LABELS[screen]} · Shipshape`
+    document.title = `${LABELS[screen]} · Ship Or Me?`
   }, [screen])
 
   return (
@@ -59,7 +59,7 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
             S
           </span>
           <div>
-            <p className="appbar-name">Shipshape</p>
+            <p className="appbar-name">Ship Or Me?</p>
             <p className="appbar-meta">Is it me, or the ship?</p>
           </div>
         </div>
@@ -128,7 +128,7 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
 
       <footer className="foot">
         <p>
-          Shipshape says "likely" and never diagnoses; it supports the flight surgeon and never replaces one. The crew is simulated; the
+          Ship Or Me? says "likely" and never diagnoses; it supports the flight surgeon and never replaces one. The crew is simulated; the
           cabin CO₂, temperature and humidity are real ISS telemetry from NASA's Open Science Data Repository, replayed on the mission
           calendar in every setting. Radiation figures are published averages for the chosen setting, not dosimeter readings.
         </p>

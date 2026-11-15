@@ -105,7 +105,18 @@ function VitalTile({ v, onOpen, reference }: { v: Vital; onOpen: () => void; ref
 }
 
 /** One side of the answer: a level by shape, colour and word. The detail is a tooltip. */
-function HeroChip({ label, side }: { label: string; side: VerdictSide }) {
+function HeroChip({ label, side, known = true }: { label: string; side: VerdictSide; known?: boolean }) {
+  if (!known) {
+    return (
+      <li className="hero-chip hero-chip-idle" title={side.detail}>
+        <svg className="lvl" width={14} height={14} viewBox="0 0 20 20" aria-hidden="true">
+          <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="3 3" />
+        </svg>
+        <span className="hero-chip-label">{label}</span>
+        <span className="hero-chip-word">No data</span>
+      </li>
+    )
+  }
   return (
     <li className={`hero-chip hero-chip-${side.level}`} title={side.detail}>
       <LevelIcon level={side.level} size={14} />
@@ -157,7 +168,7 @@ export function Dashboard() {
   }, [today]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    document.title = `${name} · Shipshape`
+    document.title = `${name} · Ship Or Me?`
     document.body.classList.add('dash-body')
     return () => document.body.classList.remove('dash-body')
   }, [name])
@@ -174,7 +185,7 @@ export function Dashboard() {
           </span>
           <div>
             <p className="toast-meta">
-              Shipshape · Day {today}
+              Ship Or Me? · Day {today}
             </p>
             <p className="toast-title">{banner.title}</p>
             <p className="toast-body">{banner.body}</p>
@@ -220,11 +231,11 @@ export function Dashboard() {
       <main className="grid">
         <section className="col col-left">
           <div className={`hero hero-${v.tint}`}>
+            <p className="hero-kicker">Ship check</p>
             <h1>{v.title}</h1>
-            {v.note && <p>{v.note}</p>}
             <ul className="hero-chips">
               <HeroChip label="You" side={v.you} />
-              <HeroChip label="Cabin air" side={v.ship} />
+              <HeroChip label="CO₂" side={v.co2} known={v.co2.known} />
             </ul>
           </div>
 
@@ -243,7 +254,7 @@ export function Dashboard() {
             ) : (
               <p className="watch-note">No wearable reading today</p>
             )}
-            <p className="watch-note">Shipshape's rules don't use these yet. Next, each will be compared with your own normal once a real device feeds them.</p>
+            <p className="watch-note">The app's rules don't use these yet. Next, each will be compared with your own normal once a real device feeds them.</p>
           </div>
 
         </section>

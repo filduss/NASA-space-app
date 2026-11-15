@@ -49,7 +49,7 @@ export function Login() {
   const locked = lockedUntil > now
 
   useEffect(() => {
-    document.title = 'Shipshape · Is it me, or the ship?'
+    document.title = 'Ship Or Me? · Is it me, or the ship?'
     document.body.classList.add('login-body')
     return () => document.body.classList.remove('login-body')
   }, [])
@@ -290,8 +290,7 @@ function Shell({ children }: { children: ReactNode }) {
     <div className="login">
       <div className="login-aurora" aria-hidden="true" />
       <header className="login-brand">
-        <h1>Shipshape</h1>
-        <p>Is it me, or the ship?</p>
+        <h1>Ship Or Me?</h1>
         <p className="login-pitch">
           A daily crew check-in for long missions. When several people feel off at once, it checks real ISS cabin CO₂ before blaming anyone.
         </p>
@@ -302,7 +301,7 @@ function Shell({ children }: { children: ReactNode }) {
           <span className="login-tag">Simulated crew</span> No real person's data. The demo PINs are shown next to each name.
         </p>
         <p>
-          Your session ends when you close this tab. Shipshape says "likely" and never diagnoses.
+          Your session ends when you close this tab. Ship Or Me? says "likely" and never diagnoses.
         </p>
       </footer>
     </div>
