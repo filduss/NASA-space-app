@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react'
 import type { AccountRole } from '../data/types.ts'
 import { useStore } from '../state.tsx'
 import { DEMO_PINS, TOUR } from './demo.ts'
@@ -7,6 +7,9 @@ import { isPinShaped, PIN_LENGTH } from './pin.ts'
 import { attemptsFor, homePage, mayOpen, type User } from './session.ts'
 import { TourLink } from './TourLink.tsx'
 import './login.css'
+
+/** The on-screen keypad, phone order. Empty strings keep the grid in place. */
+const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'back'] as const
 
 const ROLE_LABEL: Record<AccountRole, string> = { astronaut: 'Astronaut', medical: 'Medical officer', surgeon: 'Flight surgeon' }
 
@@ -102,6 +105,21 @@ export function Login() {
     if (digits.length === PIN_LENGTH) void submit(digits)
   }
 
+  const press = (key: string) => {
+    if (busy || locked) return
+    if (key === 'back') setPin((p) => p.slice(0, -1))
+    else onChange(pin + key)
+  }
+
+  // Digits and Backspace typed while a keypad button has focus still go into the PIN.
+  const onKeyDown = (e: KeyboardEvent<HTMLFormElement>) => {
+    if (e.target === pinRef.current || e.metaKey || e.ctrlKey || e.altKey) return
+    if (/^\d$/.test(e.key)) press(e.key)
+    else if (e.key === 'Backspace') press('back')
+    else return
+    e.preventDefault()
+  }
+
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     void submit(pin)
@@ -174,7 +192,7 @@ export function Login() {
             <h2 id="pin-title">{name}</h2>
             <p className="login-sub">Enter your {PIN_LENGTH}-digit PIN</p>
           </div>
-          <form onSubmit={onSubmit} className="login-form">
+          <form onSubmit={onSubmit} onKeyDown={onKeyDown} className="login-form">
             <label htmlFor="pin" className="visually-hidden">
               PIN for {name}
             </label>
@@ -188,7 +206,8 @@ export function Login() {
               id="pin"
               className="login-pin"
               type="password"
-              inputMode="numeric"
+              // The keypad below is the keyboard: no system keyboard pops up over it on a phone.
+              inputMode="none"
               autoComplete="off"
               pattern="[0-9]*"
               maxLength={PIN_LENGTH}
@@ -198,11 +217,26 @@ export function Login() {
               aria-describedby="pin-msg"
             />
             <p id="pin-msg" className="login-msg" role="status" aria-live="polite">
-              {busy ? 'Checking…' : locked ? `${message ?? 'Locked.'} Try again in ${mmss(lockedUntil - now)}.` : message}
+              {locked ? `${message ?? 'Locked.'} Try again in ${mmss(lockedUntil - now)}.` : busy ? null : message}
             </p>
-            <button type="submit" className="login-btn login-btn-primary" disabled={busy || locked || pin.length !== PIN_LENGTH}>
-              Log in
-            </button>
+            <div className="login-keypad" role="group" aria-label="PIN keypad">
+              {KEYS.map((k, i) =>
+                k === '' ? (
+                  <span key={i} aria-hidden="true" />
+                ) : (
+                  <button
+                    key={k}
+                    type="button"
+                    className={k === 'back' ? 'login-key login-key-back' : 'login-key'}
+                    onClick={() => press(k)}
+                    disabled={busy || locked || (k === 'back' ? pin.length === 0 : pin.length >= PIN_LENGTH)}
+                    aria-label={k === 'back' ? 'Delete last digit' : k}
+                  >
+                    {k === 'back' ? '⌫' : k}
+                  </button>
+                ),
+              )}
+            </div>
           </form>
         </section>
       )}

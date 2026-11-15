@@ -15,6 +15,7 @@
 | 15 Nov 2026 | Claude Code (Claude Opus 5.5) | After the team opened the sources: their claims on screen (CO₂ context on the Ship screen, the PVT-B lapse at 355 ms, NASA's bone-loss and daily-exercise figures), `docs/CITATIONS.md` updated, the live link in the README; merging `judge-fixes` into `main` | Team review pending |
 | 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `dashboard-trim`: Cabin air and Bone & muscle panels removed from `/dashboard` (with the CO₂ chart sheet only they opened); body stage capped at 660px wide, skeleton size unchanged; docs | Team review pending |
 | 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Access: "Logged in as" label removed from `/dashboard`; new `/checkin` page (check-in and Me) for crew; `/app` closed to astronauts; the flight surgeon given the crew medical officer's access plus summaries (summaries-only timeline removed); tests, SPEC, README. Review pass: Me-screen ship link now points to the dashboard, crew-only board code removed, `docs/screenshots/earth-day-223.png` retaken | Team review pending |
+| 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `pin-keypad`: on-screen number keypad for the PIN on the login page (system keyboard suppressed on phones, physical keyboard still works); docs | Team review pending |
 
 ## What AI does not do in the product
 
