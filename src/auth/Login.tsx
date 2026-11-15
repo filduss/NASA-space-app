@@ -227,7 +227,7 @@ export function Login() {
             <div className="login-keypad" role="group" aria-label="PIN keypad">
               {KEYS.map((k, i) =>
                 k === '' ? (
-                  <span key={i} aria-hidden="true" />
+                  <span key={`blank-${i}`} aria-hidden="true" />
                 ) : (
                   <button
                     key={k}
