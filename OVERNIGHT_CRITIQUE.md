@@ -6,6 +6,24 @@ Written on 15 Nov 2026 from 04:30 CET, on branch `fable`, by an AI reviewer acti
 
 **Baseline before any change:** `npm test` 120 of 120 pass, `npm run build` passes, the checksum verify passes, and the four tour stops open in about a second each.
 
+## Read this first
+
+**Three things before you submit**
+
+1. **Choose a license and fix the Team list in the README.** Space Apps expects open-source work; "License: To be decided" means it is not. The Team list names two people while commits come from more.
+2. **Deploy this branch and open the live site twice** (the service worker swaps to the new build on the second load). Then click the four tour stops on the live URL, once on a phone, in a private window.
+3. **Read the three text changes that speak for you** and revert any you disagree with: the check-in's privacy line (8ba912a), the "What to do now" card on the Ship screen (last commit, our wording, labelled as not a NASA procedure), and the "stress test, not a validation" sentence on the challenge page (2962faa).
+
+**A 60-second demo script**
+
+- 0-10 s, start page: "On a long mission, when you feel bad, is it you or the ship? Shipshape checks the cabin air before blaming anyone." Click tour stop 1.
+- 10-25 s, Ship screen, day 213: "This is real ISS CO₂ from NASA's open data. It nearly doubles, three of four crew drift at once, so the app says: likely the ship, not you. Check the air first."
+- 25-40 s, click Next, Chen's dashboard, day 221: "Eight days later the air is normal, but Chen still sleeps badly. Now it is likely him, and only he sees it."
+- 40-50 s, click Next, Summaries, day 223: "Still off on day 3: a summary reaches the flight surgeon on Earth, twelve minutes away."
+- 50-60 s, click Next, challenge page: "Tested on 200 simulated crews over 10 real ISS traces, with the blind spots stated. No AI in the product, works offline."
+
+**Also added, beyond the issue list:** a strip on every tour stop with one click to the next (2901bae), and the "What to do now" card. **Not finished when the session ended:** a sweep of every mission day on every screen for errors (the four golden days, all tour stops, the check-in flow and offline use were verified); no pull request was opened.
+
 ## Decisions taken without asking
 
 | Decision | Why |
@@ -26,24 +44,24 @@ Severity is how much it can cost with a judge. Status is one of Fixed (commit), 
 
 | # | Severity | Issue | Status |
 | --- | --- | --- | --- |
-| 1 | Critical | Dashboard goes fully blank when WebGL is unavailable | Open |
-| 2 | Critical | No error boundary anywhere: any render error is a blank page | Open |
-| 3 | High | The challenge page claims things the app no longer does | Open |
-| 4 | High | The check-in says answers go to the flight surgeon; the medical officer sees them | Open |
-| 5 | High | Phone header overlaps for the medical officer (tour stop 1 on a phone) | Open |
-| 6 | Medium | Inbox names a ship alert's reasons but its table hides them | Open |
-| 7 | Medium | Stale "share" wording where no screen can share | Open |
-| 8 | Medium | Data-load failure tells a judge to run `npm run data` | Open |
-| 9 | Medium | Duplicate React key on the PIN keypad (console error on every login) | Open |
-| 10 | Medium | Ship summaries on day 6 are labelled "Day-3 summary" | Open |
-| 11 | Medium | Link previews: no Open Graph tags, no `<noscript>` | Open |
-| 12 | Medium | README: stale layout, license "To be decided", team list | Open |
-| 13 | Medium | The 90% accuracy is measured on a simulator built on the rule's own assumption | Open |
-| 14 | Low | Low-contrast small text on the login | Open |
-| 15 | Low | Body-zone chips truncate on desktop ("Head & s…") | Open |
-| 16 | Low | 325 kB entry bundle; 728 kB dashboard chunk | Open |
-| 17 | Low | Radiation card reads alarming (64% of career limit) for a side feature | Open |
-| 18 | Low | Citations still marked unchecked | Open |
+| 1 | Critical | Dashboard goes fully blank when WebGL is unavailable | Fixed (bd16edf) |
+| 2 | Critical | No error boundary anywhere: any render error is a blank page | Fixed (9c52efa) |
+| 3 | High | The challenge page claims things the app no longer does | Fixed (2962faa) |
+| 4 | High | The check-in says answers go to the flight surgeon; the medical officer sees them | Partly fixed (8ba912a): the line is now true; the stricter privacy in CONTEXT.md is not built |
+| 5 | High | Phone header overlaps for the medical officer (tour stop 1 on a phone) | Fixed (de98737) |
+| 6 | Medium | Inbox names a ship alert's reasons but its table hides them | Fixed (e7f621e) |
+| 7 | Medium | Stale "share" wording where no screen can share | Fixed (e7f621e) |
+| 8 | Medium | Data-load failure tells a judge to run `npm run data` | Fixed (9c52efa) |
+| 9 | Medium | Duplicate React key on the PIN keypad (console error on every login) | Fixed (5d436c2) |
+| 10 | Medium | Ship summaries on day 6 are labelled "Day-3 summary" | Fixed (e7f621e) |
+| 11 | Medium | Link previews: no Open Graph tags, no `<noscript>` | Partly fixed (72c7096): no og:image, it needs a hosted PNG at the final URL |
+| 12 | Medium | README: stale layout, license "To be decided", team list | Partly fixed (c92a0e0): layout corrected; license and team list are the team's to decide |
+| 13 | Medium | The 90% accuracy is measured on a simulator built on the rule's own assumption | Fixed (2962faa): caveat beside the headline figure |
+| 14 | Low | Low-contrast small text on the login | Fixed (19f508c) |
+| 15 | Low | Body-zone chips truncate on desktop ("Head & s…") | Fixed (2ef070f) |
+| 16 | Low | 325 kB entry bundle; 728 kB dashboard chunk | Not done: loads in about a second and is cached; not worth the risk today |
+| 17 | Low | Radiation card reads alarming (64% of career limit) for a side feature | Not done: already caveated on the card; keep the number out of the video |
+| 18 | Low | Citations still marked unchecked | Not done: a human must open the sources |
 
 ### 1. Dashboard goes blank without WebGL (Critical)
 
