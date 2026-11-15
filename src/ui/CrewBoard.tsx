@@ -60,7 +60,7 @@ export function ShipBanner({ r, onOpen, followUp }: { r: DayResult; onOpen?: () 
       </div>
       {onOpen && (
         <button type="button" className={tone === 'ok' || tone === 'idle' ? 'btn' : 'btn btn-primary'} onClick={onOpen}>
-          {decision.outcome === 'ship' ? 'Why the app says this' : 'Cabin air'}
+          Cabin air
         </button>
       )}
     </section>

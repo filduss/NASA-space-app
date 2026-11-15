@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react'
 import type { AccountRole } from '../data/types.ts'
 import { useStore } from '../state.tsx'
-import { DEMO_PINS, TOUR, tourStop } from './demo.ts'
+import { DEMO_PINS } from './demo.ts'
 import { appPath, hrefOf, pageOf, safeNext } from './paths.ts'
 import { isPinShaped, PIN_LENGTH } from './pin.ts'
 import { attemptsFor, homePage, mayOpen, type User } from './session.ts'
-import { TourLink } from './TourLink.tsx'
 import './login.css'
 
 /** The on-screen keypad, phone order. Empty strings keep the grid in place. */
@@ -140,7 +139,6 @@ export function Login() {
             </button>
           </div>
         </section>
-        <Tour />
       </Shell>
     )
   }
@@ -246,42 +244,7 @@ export function Login() {
           </form>
         </section>
       )}
-      {/* The tour is help beside the login. Wide screens keep it next to the keypad so nothing
-          jumps; on a phone it steps aside once a person is picked. */}
-      <Tour picked={picked !== null} />
     </Shell>
-  )
-}
-
-/** Help for judges, beside the login: the golden path in one click per step, each logging in with that person's public demo PIN. */
-function Tour({ picked = false }: { picked?: boolean }) {
-  const { nameOf } = useStore()
-  return (
-    <aside className={`login-tour${picked ? ' login-tour-picked' : ''}`} aria-labelledby="tour">
-      <h2 id="tour">
-        <span className="login-tour-mark" aria-hidden="true">
-          ?
-        </span>
-        Judging? Take the tour
-      </h2>
-      <p className="login-tour-sub">Four one-click stops through the demo. Each logs in with that person's demo PIN for you.</p>
-      <ol className="login-steps">
-        {TOUR.map((t, i) => (
-          <li key={t.title}>
-            <TourLink stop={tourStop(i)} className="login-step">
-              <span className="login-step-n" aria-hidden="true">
-                {i + 1}
-              </span>
-              <span className="login-step-text">
-                <span className="login-step-title">{t.title}</span>
-                <span className="login-step-body">{t.body}</span>
-                <span className="login-step-as">{t.as ? `Opens as ${nameOf(t.as)}` : 'No login needed'}</span>
-              </span>
-            </TourLink>
-          </li>
-        ))}
-      </ol>
-    </aside>
   )
 }
 
@@ -291,19 +254,9 @@ function Shell({ children }: { children: ReactNode }) {
       <div className="login-aurora" aria-hidden="true" />
       <header className="login-brand">
         <h1>Ship Or Me?</h1>
-        <p className="login-pitch">
-          A daily crew check-in for long missions. When several people feel off at once, it checks real ISS cabin CO₂ before blaming anyone.
-        </p>
+        <p className="login-pitch">A health monitor for anyone who can't just open a window.</p>
       </header>
       <main className="login-main">{children}</main>
-      <footer className="login-foot">
-        <p>
-          The demo PINs are shown next to each name.
-        </p>
-        <p>
-          Your session ends when you close this tab. Ship Or Me? says "likely" and never diagnoses.
-        </p>
-      </footer>
     </div>
   )
 }

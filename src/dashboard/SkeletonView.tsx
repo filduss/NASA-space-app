@@ -326,9 +326,9 @@ export function SkeletonView({ zones, focus, onFocus }: Props) {
               onClick={() => onFocus(focus === z.key ? null : z.key)}
             >
               <span className="sk-label-dot" />
+              {/* Only the zone's name: what is off shows once the person taps it and the view zooms in. */}
               <span className="sk-label-text">
                 <strong>{z.label}</strong>
-                <span>{st.reasons.join(' · ')}</span>
               </span>
             </button>
           )

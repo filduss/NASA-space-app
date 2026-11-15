@@ -65,7 +65,7 @@ export interface Line {
   from: SourceKey | 'app'
 }
 
-export type Part = 'measure' | 'howTo' | 'why' | 'nasa' | 'limit' | 'canDo' | 'tellNow' | 'app'
+export type Part = 'measure' | 'howTo' | 'why' | 'nasa' | 'limit' | 'canDo' | 'tellNow'
 
 /** The parts of an entry, in reading order, with their headings. */
 export const PARTS: { key: Part; heading: string }[] = [
@@ -76,7 +76,6 @@ export const PARTS: { key: Part; heading: string }[] = [
   { key: 'limit', heading: 'Limit or target' },
   { key: 'canDo', heading: 'What you can do' },
   { key: 'tellNow', heading: 'Tell your medical officer now if' },
-  { key: 'app', heading: 'What the app does with it' },
 ]
 
 export type Section = 'start' | 'you' | 'cabin' | 'risks'
@@ -106,19 +105,11 @@ const [comfortLo, comfortHi] = RULES.tempComfortC
 const [limitLo, limitHi] = RULES.tempLimitC
 const [rhComfortLo, rhComfortHi] = RULES.rhComfortPct
 const [rhLimitLo, rhLimitHi] = RULES.rhLimitPct
-const CREW_SHARE = `${Math.round(RULES.crewShare * 100)}%`
-
-/** Shown at the top of the Guide, always. */
-export const EMERGENCY_LINE =
-  'In an emergency, follow your onboard medical procedures and call your crew medical officer. This guide explains readings; it does not tell you what is wrong.'
-
-/** Shown under the emergency line: the one instruction that holds for every reading. */
-export const CONCERN_LINE = 'If something worries you, tell your crew medical officer. You do not need a reading to change first.'
 
 /** How every symptom is answered at check-in. */
 const NONE_TODAY = app('No symptoms? Tap “None today”: the check-in needs an answer here.')
 const FROM_SENSORS = app('You do not measure it: the ship’s sensors do.')
-const CO2_CHIP = app('The “CO₂” chip in the Ship check at the top of your dashboard shows whether it is in its usual range today.')
+const CO2_CHIP = app('The “Cabin CO₂ level” chip in the Ship or me box at the top of your dashboard shows whether it is in its usual range today.')
 const CABIN_NOTICE = app('The app compares it with NASA’s comfort range every day; you do not need to watch it yourself.')
 const STEADY_SCALE = app(
   'Use the scale the same way every day. The app looks for change from your own usual, so a steady scale matters more than the exact number.',
@@ -129,7 +120,7 @@ const READINGS: GuideEntry[] = [
   {
     id: 'you-or-ship',
     section: 'start',
-    title: 'Ship check: likely the ship, or not',
+    title: 'Ship or me: likely the ship, or not',
     words: ['verdict', 'alert', 'ship alert', 'status', 'why am i', 'how it works', 'normal', 'usual', 'drift', 'likely you', 'all good'],
     risks: ['co2'],
     parts: {
@@ -140,14 +131,7 @@ const READINGS: GuideEntry[] = [
       ],
       howTo: [
         app('Check in each morning. It takes about a minute, and the more days the app has, the better it knows your usual.'),
-        app('Open My dashboard: the Ship check at the top gives today’s answer, with a “You” chip and a “CO₂” chip.'),
-      ],
-      app: [
-        app(
-          `It says “Likely the ship, not you” when the cabin air is outside its usual or NASA’s range and at least ${CREW_SHARE} of the crew are off on readings that air can explain, on the same day.`,
-        ),
-        app('It says “Likely not the ship” when you are off and the air does not explain it. That is not a diagnosis. “All good” means you and the air are both within usual.'),
-        app(`If you are still off on day ${RULES.persistDays}, a short summary goes to your flight surgeon.`),
+        app('Open My dashboard: the Ship or me box at the top gives today’s answer, with a “Cabin CO₂ level” chip.'),
       ],
     },
   },
@@ -170,12 +154,6 @@ const READINGS: GuideEntry[] = [
         from('co2Why', 'NASA set it there to keep headaches below 1.4%.'),
         from('co2Ground', 'If CO₂ stays high for days, the flight control team repairs the scrubbers or turns on extra scrubbing.'),
       ],
-      app: [
-        app(
-          `It compares today with the cabin’s own usual level: ${RULES.cabinMarginMmHg} mmHg above it, or over ${RULES.co2LimitMmHg} mmHg, makes CO₂ a suspect.`,
-        ),
-        app(`It counts toward “Likely the ship” only when at least ${CREW_SHARE} of the crew are off on CO₂-linked readings: headache, sleep, fatigue, irritability.`),
-      ],
     },
   },
   {
@@ -196,7 +174,6 @@ const READINGS: GuideEntry[] = [
         from('cabinLimits', `Health limit ${limitLo}–${limitHi} °C.`),
         from('issCabinRange', 'On the ISS the temperature stays between 18 and 27 °C.'),
       ],
-      app: [app('Outside the comfort range it becomes a suspect for sleep changes. Outside the health limit it shows red.')],
     },
   },
   {
@@ -214,7 +191,6 @@ const READINGS: GuideEntry[] = [
         from('cabinLimits', `Health limit ${rhLimitLo}–${rhLimitHi}%.`),
         from('issCabinRange', 'On the ISS humidity stays between 30 and 65%.'),
       ],
-      app: [app('Outside the comfort range it becomes a suspect for a stuffy nose and dry or sore eyes. Outside the health limit it shows red.')],
     },
   },
   {
@@ -229,10 +205,6 @@ const READINGS: GuideEntry[] = [
       why: [from('radEffects', 'Dose raises cancer risk and may affect thinking and behavior. A solar storm can cause nausea, vomiting and fatigue.')],
       limit: [from('radLimit', `A career limit of ${CAREER_LIMIT_MSV} mSv, the same for every age and sex.`)],
       canDo: [from('radEffects', 'When you are warned of a solar storm, go to the shelter.')],
-      app: [
-        app('The number is the ship’s typical daily dose times the mission day. It leaves out solar storms and earlier missions, so it is an estimate.'),
-        app('It is shown, never judged: it is not part of any alert.'),
-      ],
     },
   },
   {
@@ -257,10 +229,6 @@ const READINGS: GuideEntry[] = [
         from('sleepDebt', 'Short nights add up to a sleep debt. Only good-quality sleep pays it back.'),
         from('blueLight', 'Avoid blue light before sleep. NASA’s lighting guidance uses blue light in the morning and red light in the evening.'),
       ],
-      app: [
-        app(`It flags short sleep when you sleep under ${RULES.shortSleepHours} h on ${RULES.shortSleepNights} or more of the last ${RULES.shortSleepWindow} nights.`),
-        app('It compares your sleep with your own usual. Cabin CO₂ and temperature can both explain a change.'),
-      ],
     },
   },
   {
@@ -278,7 +246,6 @@ const READINGS: GuideEntry[] = [
       ],
       why: [from('sleepIss', 'Sleep loss slows responses: on the ISS, nights under 6 h went with slower responses.')],
       limit: [from('pvtLapse', 'The test works like PVT-B: a response of 355 ms or slower counts as a lapse.')],
-      app: [app('It compares your speed with your own usual. No cabin factor explains it, so it never points at the ship.')],
     },
   },
   {
@@ -297,9 +264,6 @@ const READINGS: GuideEntry[] = [
       why: [
         from('co2Symptoms', 'NASA lists fatigue among crew symptoms at higher cabin CO₂.'),
         from('sleepIss', 'Short sleep went with more stress and a heavier workload on the ISS.'),
-      ],
-      app: [
-        app('Both count toward a CO₂ alert. NASA’s CO₂ list names fatigue but not irritability: linking irritability to CO₂ is this app’s own choice.'),
       ],
     },
   },
@@ -325,12 +289,6 @@ const READINGS: GuideEntry[] = [
         from('ppc', 'Private psychological conferences are held on a routine schedule.'),
         from('outlets', 'NASA notes that photographing Earth and journaling are important outlets for stress.'),
       ],
-      app: [
-        app('They stay yours: the crew board shows only a count with no names, and they never count toward a ship alert.'),
-        app(`It also tells you when your usual has slowly slipped since your first ${RULES.startNormalDays} check-ins.`),
-        app(`If you are still off on day ${RULES.persistDays}, your flight surgeon is told.`),
-        app('The check-in has a button to ask for a private conference.'),
-      ],
     },
   },
   {
@@ -343,7 +301,7 @@ const READINGS: GuideEntry[] = [
       measure: [app(`Minutes of exercise each day, from your watch, against a target of ${RULES.exerciseTargetMin} minutes.`)],
       howTo: [
         app('Wear your watch while you exercise: it logs the minutes. You do not enter them.'),
-        app('Your check-in shows yesterday’s minutes under “Last night”.'),
+        app('Your dashboard shows the minutes against the daily target.'),
       ],
       why: [
         from('boneLoss', 'In weightlessness, weight-bearing bones lose on average 1 to 1.5% of their mineral density a month.'),
@@ -351,11 +309,6 @@ const READINGS: GuideEntry[] = [
       ],
       limit: [from('exerciseTime', 'ISS crews exercise about two hours a day. The schedule allows 2.5 hours, 6 days a week, including setup.')],
       canDo: [from('exercisePlan', 'Do both kinds: about 30 minutes of aerobic exercise and 30–60 minutes of resistance training.')],
-      app: [
-        app(
-          `Shown, never judged. The card turns to “watch” when you are under target on ${RULES.exerciseLapseDays} of the last ${RULES.exerciseWindowDays} days. It is not part of any alert.`,
-        ),
-      ],
     },
   },
   {
@@ -373,7 +326,6 @@ const READINGS: GuideEntry[] = [
         from('fluidShift', 'The fluid shift of weightlessness causes similar headaches.'),
       ],
       limit: [from('co2Limit', `For the air: a 1-hour CO₂ average of no more than ${RULES.co2LimitMmHg} mmHg.`)],
-      app: [app(`One headache never blames the air. It counts toward a CO₂ alert only when at least ${CREW_SHARE} of the crew are off on CO₂-linked readings while CO₂ is up.`)],
     },
   },
   {
@@ -389,7 +341,6 @@ const READINGS: GuideEntry[] = [
         from('cabinLimits', 'Air outside NASA’s humidity range can leave your nose dry, stuffy or irritated.'),
         from('congestionCo2', 'On the ISS the odds of reporting congestion doubled for each 1 mmHg more CO₂, and it kept being reported long after the early fluid shift settled.'),
       ],
-      app: [app('It counts toward a humidity alert only. The app does not check it against CO₂.')],
     },
   },
   {
@@ -405,7 +356,6 @@ const READINGS: GuideEntry[] = [
         from('cabinLimits', 'Air outside NASA’s humidity range can leave your eyes dry or irritated.'),
         from('dryEye', 'Over 30% of ISS crew reported dry eye in space. Strong air flow, CO₂, lighting and screen work can all play a part, as well as humidity.'),
       ],
-      app: [app('It counts toward a humidity alert only.')],
     },
   },
   {
@@ -435,7 +385,6 @@ const READINGS: GuideEntry[] = [
         from('co2Symptoms', 'NASA lists nausea among crew symptoms when CO₂ is above 4.5 mmHg.'),
         from('hypoxiaSigns', 'Dizziness and nausea are also among the signs of low oxygen.'),
       ],
-      app: [app('They never count toward a ship alert.')],
     },
   },
   {
@@ -456,7 +405,6 @@ const READINGS: GuideEntry[] = [
       ],
       limit: [from('spo2', 'For most healthy people it is 95–100%.')],
       canDo: [from('spo2', 'Poor circulation, skin temperature and skin thickness can throw a reading off, so read it together with how you feel.')],
-      app: [app('Shown for information. No rule reads it.')],
     },
   },
   {
@@ -475,9 +423,6 @@ const READINGS: GuideEntry[] = [
         from('bioMonitor', 'The Canadian Space Agency’s Bio-Monitor garment for the ISS measures these same kinds of signals.'),
         from('cvRisk', 'Spaceflight can decondition the heart and blood vessels.'),
         from('hrv', 'Changes in HRV can show that deconditioning.'),
-      ],
-      app: [
-        app('Shown so you can see your own pattern. No rule reads them, and a wrist sensor can be off.'),
       ],
     },
   },

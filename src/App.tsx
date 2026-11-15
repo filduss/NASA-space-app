@@ -39,7 +39,6 @@ export function App({ page }: { page: 'checkin' | 'guide' | 'app' }) {
   const crewId = s.role.kind === 'crew' ? s.role.crewId : null
   // The Ship tab carries the same orange / red as the cabin air on the dashboard.
   const shipLevel = s.todayResult.decision.outcome === 'ship' ? (cabinLevel(s.todayResult.cabin) === 'alert' ? 'alert' : 'watch') : null
-  const who = s.role.kind === 'crew' ? s.nameOf(s.role.crewId) : s.role.kind === 'cmo' ? 'Crew medical officer' : 'Flight surgeon, Mission Control (Earth)'
   const me = s.user ? s.nameOf(s.user.crewId) : ''
   const myRole = s.user ? ROLE_WORD[s.user.role] : ''
 
@@ -50,21 +49,28 @@ export function App({ page }: { page: 'checkin' | 'guide' | 'app' }) {
     document.title = `${heading} · Ship Or Me?`
   }, [heading])
 
-  return (
-    <div className={page === 'checkin' ? 'app app-narrow' : 'app'}>
-      <header className="appbar">
-        <div className="appbar-brand">
-          <span className="appicon" aria-hidden="true">
-            S
-          </span>
-          <div>
-            <p className="appbar-name">Ship Or Me?</p>
-            <p className="appbar-meta">Is it me, or the ship?</p>
-          </div>
-        </div>
+  // Every page has the same head row on the page itself, with no top bar (as on the dashboard): who and
+  // what on the left, the toolbar on the right. The crew app's screens are tabs in a row of their own
+  // under it.
+  const eyebrow = guide
+    ? 'What your readings mean, and why they matter in space'
+    : page === 'checkin'
+      ? `${me} · ${s.mission.label} · mission day ${s.today}`
+      : `${me}, ${myRole} · ${s.mission.label} · mission day ${s.today}`
 
-        {!guide && tabs.length > 1 && (
-          <nav className="tabs" aria-label="Screens" data-tour="screens">
+  return (
+    <div className={page === 'checkin' ? 'app app-checkin' : 'app'}>
+      <header className="intro intro-page">
+        <div className="intro-title">
+          <p className="intro-eyebrow">{eyebrow}</p>
+          <h1>{heading}</h1>
+        </div>
+        {s.user && <Toolbar user={s.user} pages={OTHER_PAGES.filter((p) => p !== page)} day={s.today} onLogOut={s.logOut} />}
+      </header>
+
+      {!guide && tabs.length > 1 && (
+        <nav className="tabs-row" aria-label="Screens">
+          <div className="tabs" data-tour="screens">
             {tabs.map((t) => (
               <button key={t} type="button" className={t === screen ? 'tab tab-on' : 'tab'} aria-current={t === screen ? 'page' : undefined} onClick={() => s.setScreen(t)}>
                 {LABELS[t]}
@@ -75,30 +81,9 @@ export function App({ page }: { page: 'checkin' | 'guide' | 'app' }) {
                 )}
               </button>
             ))}
-          </nav>
-        )}
-
-        <div className="account">
-          <span className="account-who">
-            <span className="avatar-sm" aria-hidden="true">
-              {me.slice(0, 1)}
-            </span>
-            <span className="account-text">
-              <span className="account-name">{me}</span>
-              <span className="account-role">{myRole}</span>
-            </span>
-          </span>
-          {s.user && <Toolbar user={s.user} pages={OTHER_PAGES.filter((p) => p !== page)} day={s.today} onLogOut={s.logOut} />}
-        </div>
-      </header>
-
-      <section className="intro">
-        <div>
-          <p className="intro-eyebrow">{guide ? 'What your readings mean, and why they matter in space' : `${s.mission.label} · mission day ${s.today} · ${who}`}</p>
-          <h1>{heading}</h1>
-        </div>
-      </section>
-
+          </div>
+        </nav>
+      )}
 
       {guide ? (
         <main>
@@ -117,13 +102,6 @@ export function App({ page }: { page: 'checkin' | 'guide' | 'app' }) {
 
       {/* The Guide shows no mission day or person's data, so it has no demo controls or walkthrough. */}
       {!guide && <DemoDock settings={<DemoSettings />} page={page} surgeon={s.role.kind === 'surgeon'} />}
-
-      <footer className="foot">
-        <p>
-          Ship Or Me? says "likely" and never diagnoses; it supports the flight surgeon and never replaces one. Radiation figures are
-          published averages for the chosen setting, not dosimeter readings.
-        </p>
-      </footer>
     </div>
   )
 }

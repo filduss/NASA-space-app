@@ -7,7 +7,7 @@ Built for the NASA Space Apps Challenge 2026, "Create Health Monitoring Software
 ## For judges
 
 - **Live demo: [shipshape-rho.vercel.app](https://shipshape-rho.vercel.app/)**, installable and offline-capable.
-- **The start page has a judge's tour beside the login.** One click per step, no PIN to type: day 213 "likely the ship" (as Dana, the medical officer), day 221 "likely you" (Chen's own dashboard), day 223 "day 3 reaches Earth" (Mira, the flight surgeon), then the crew's Guide (Chen).
+- **The challenge page opens each screen in one click,** no PIN to type, logged in as the person who would see it. The golden path: day 213 "likely the ship" (as Dana, the medical officer), day 221 "likely you" (Chen's own dashboard), day 223 "day 3 reaches Earth" (Mira, the flight surgeon), then the crew's Guide (Chen).
 - **How it answers the challenge:** the `/challenge` page, no login: the five questions, the evidence and the limits.
 - **The crew's Guide** (`/guide`, the book button on the dashboard): plain explanations of every reading, why it matters in space and NASA's limit, with a search that understands everyday words ("head hurts"). Its sources are not shown to the crew; every one is listed in [docs/CITATIONS.md](docs/CITATIONS.md), and a sentence appears only after a person on the team has opened its source.
 
@@ -23,7 +23,7 @@ Built for the NASA Space Apps Challenge 2026, "Create Health Monitoring Software
 - A slow mood decline that never jumps on any one day: 94% are flagged against the person's starting normal, and 93% reach the flight surgeon (9% without that check).
 - The known blind spot, stated on the challenge page: a personal problem that starts during a ship alert is put down to the ship until the air recovers (8 of 32 such events never got a personal label).
 - The simulated crews beside real ISS crews: headache days 2.1% against NASA's 2.7%; sleep 7.2 h against about 6.5 h, which we state rather than hide.
-- Every reading links to the NASA Human System Risk it informs, on the check-in and on the challenge page.
+- Every reading links to the NASA Human System Risk it informs, on the challenge page.
 
 | | |
 | --- | --- |
@@ -43,7 +43,7 @@ npm run build      # production build, installable and offline-capable
 
 ### Log in
 
-Beside the login, the start page has a **judge's tour**: five links that walk the demo (day 213 as Dana, day 221 as Chen, day 223 as Mira on Earth, the Guide as Chen, and the challenge page). Each logs in with that person's demo PIN for you. To log in by hand, pick a person and enter their PIN on the on-screen keypad (or type it); it is printed on their card. These are demo PINs:
+The start page is only the login. The **judge's tour** (`TOUR` in `src/auth/demo.ts`) is still built but no longer linked from it: five stops that walk the demo (day 213 as Dana, day 221 as Chen, day 223 as Mira on Earth, the Guide as Chen, and the challenge page). Each logs in with that person's demo PIN for you. To log in by hand, pick a person and enter their PIN on the on-screen keypad (or type it); it is printed on their card. These are demo PINs:
 
 | Person | Role | PIN |
 | --- | --- | --- |
@@ -61,7 +61,7 @@ The login is a privacy gate for a demo, not security: there is no server, so any
 
 - **/dashboard**: the logged-in person's dashboard on a 3D skeleton. Zones turn orange when something drifts from their own normal and red when it lasts to day 3 or cabin CO₂ is over the limit. Its demo days are the crew app's: 212 (CO₂ starts to climb), 213 (cabin high, Chen fine), 221 (air normal, Chen still off) and 223 (day 3); `?day=221` opens a specific day. Chen (PIN 3333) is the one to follow. Tap a vital tile to open it larger, with ranges from one day to the whole mission so far and the flagged days marked.
 - **/challenge** (no login): how the demo answers the challenge's five questions, the backtest evidence and the Antarctic case. Each answer has a button that opens the screen that shows it.
-- **/checkin**: the logged-in crew member's morning check-in. Their status against their own normal is on their dashboard. The check-in takes about a minute: a simulated wearable has measured last night's sleep and yesterday's exercise, shown but never asked, and the person taps five 0-10 ratings (sleep quality, fatigue, irritability, stress, mood) and their symptoms. From the check-in they can also ask for a conference with the flight surgeon, routine or urgent. The wearable's heart rate, HRV, blood oxygen, breathing and skin temperature are shown for information on the check-in and the dashboard; no rule uses them yet.
+- **/checkin**: the logged-in crew member's morning check-in. Their status against their own normal is on their dashboard. The check-in takes about a minute: a simulated wearable measures last night's sleep and yesterday's exercise, so they are never asked, and the person taps five 0-10 ratings (sleep quality, fatigue, irritability, stress, mood) and their symptoms. From the check-in they can also ask for a conference with the flight surgeon, routine or urgent. The wearable's heart rate, HRV, blood oxygen, breathing and skin temperature are shown for information on the dashboard; no rule uses them yet.
 - **/app**: the crew app, for Dana and Mira. Use the **demo dock** at the bottom of the screen: day 212 (all OK), 213 (CO₂ rises, "Likely the ship, not you"), 221 (air back to normal, one person still off), 223 (day 3, summary to the flight surgeon). **Mission**, under the dock's settings button, switches between the ISS, the lunar surface, Mars transit and an Antarctic station; it changes the delay to Earth and the radiation card on the Ship screen, never the rules. The crew board's **crew timeline** shows 14 days of cabin CO₂, how many crew drift, and a row per person; tap a day to read it. Log in as Mira for the same screens plus **Summaries**: on day 223 Chen's day-3 summary arrives, with times in Houston.
 
 ## Rebuild the data

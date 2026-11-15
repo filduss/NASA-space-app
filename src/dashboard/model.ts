@@ -1,5 +1,5 @@
 // Turns one person's engine result into what the personal dashboard draws: the status box
-// (the ship check: likely the ship or not), a level per body zone, vital tiles, and the notifications for
+// ("Ship or me": likely the ship or not), a level per body zone, vital tiles, and the notifications for
 // the day. No new rules live here; every level comes from the engine's own output (drift, days
 // off, tier, attribution, exercise lapse) or the cabin CO2 limit.
 

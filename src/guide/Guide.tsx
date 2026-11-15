@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { hrefOf } from '../auth/paths.ts'
 import {
-  CONCERN_LINE,
-  EMERGENCY_LINE,
   ENTRIES,
   entryById,
   listed,
@@ -134,10 +132,6 @@ export function Guide() {
 
   return (
     <div className="guide">
-      <div className="guide-note" role="note">
-        <p>{EMERGENCY_LINE}</p>
-        <p>{CONCERN_LINE}</p>
-      </div>
       <div className={current ? 'guide-layout guide-reading' : 'guide-layout'}>
         <nav className="guide-side" aria-label="Guide topics">
           <input

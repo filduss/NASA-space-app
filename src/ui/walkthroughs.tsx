@@ -29,8 +29,8 @@ const DASHBOARD: WalkStep[] = [
     title: 'Your body at a glance',
     body: (
       <p>
-        A zone turns orange (watch) or red (alert) when something there is off your own usual. Colour is never the only sign, each level has its own shape so colour-blind
-        crew can read it too.
+        A zone turns orange (watch) or red (alert) when something there is off your own usual. Tap a zone to zoom in and see what is off. Colour is never the only sign,
+        each level has its own shape so colour-blind crew can read it too.
       </p>
     ),
   },
@@ -47,11 +47,6 @@ const DASHBOARD: WalkStep[] = [
 ]
 
 const CHECKIN: WalkStep[] = [
-  {
-    target: 'last-night',
-    title: 'Already filled in',
-    body: <p>Last night's sleep and yesterday's exercise come from the wearable, so the check-in never asks for them.</p>,
-  },
   {
     target: 'ratings',
     title: 'Five quick ratings',

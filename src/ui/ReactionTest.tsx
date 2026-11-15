@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactionResult } from '../state.tsx'
-import { Origin } from './bits.tsx'
 
 // A short reaction test in the style of NASA's Reaction Self Test (PVT-B): wait, then tap as soon
 // as the counter starts. The flight protocol is 3 minutes; the demo runs 30 seconds.
@@ -105,37 +104,45 @@ export function ReactionTest({ result, onResult }: { result: ReactionResult | nu
   const running = phase === 'waiting' || phase === 'go'
   const left = Math.max(0, Math.ceil((DURATION_MS - elapsed) / 1000))
 
+  // One box of a fixed height for every phase (start, running, result), so the card never grows.
   return (
     <div className="rt">
       {phase === 'idle' && (
-        <button type="button" className="btn" onClick={start}>
-          Start the 30-second test
+        <button type="button" className="rt-pad rt-idle" onClick={start}>
+          <span className="rt-big">Start</span>
+          <span className="rt-small">30 seconds · tap or press space when the pad turns blue</span>
         </button>
       )}
       {running && (
         <button type="button" className={`rt-pad rt-${phase}`} onPointerDown={tap} aria-label="Tap when the pad lights up">
           <span className="rt-big">{phase === 'go' ? 'TAP' : 'Wait…'}</span>
           <span className="rt-small">
-            {left} s left{last ? ` · last: ${last}` : ''} · tap here or press space
+            {left} s left{last ? ` · last: ${last}` : ''}
           </span>
         </button>
       )}
       {phase === 'done' && (
         <div className="rt-result">
-          {result ? (
-            <p>
-              <strong>{result.meanMs} ms</strong> mean response · {result.responses} responses · {result.lapses} lapses (≥ {LAPSE_MS} ms, as PVT-B counts them) ·{' '}
-              {result.falseStarts} early taps
-            </p>
-          ) : (
-            <p>No responses recorded.</p>
-          )}
-          <p className="fine">
-            <Origin kind="live" /> Shown for this session only. Browser timing is an estimate, and you have no baseline here yet, so it is
-            not compared with anything.
-          </p>
-          <button type="button" className="link" onClick={start}>
-            Run it again
+          <div className="rt-result-text">
+            {result ? (
+              <>
+                <p>
+                  <strong>{result.meanMs} ms</strong> average
+                </p>
+                <p className="fine">
+                  {result.responses} responses · <span title={`Responses of ${LAPSE_MS} ms or more, as PVT-B counts them`}>{result.lapses} lapses</span> ·{' '}
+                  {result.falseStarts} early · an estimate, this session only
+                </p>
+              </>
+            ) : (
+              <>
+                <p>No responses recorded.</p>
+                <p className="fine">Tap the pad when it turns blue.</p>
+              </>
+            )}
+          </div>
+          <button type="button" className="btn btn-quiet rt-again" onClick={start}>
+            Run again
           </button>
         </div>
       )}

@@ -47,34 +47,36 @@ body.dash-body {
     radial-gradient(35% 35% at 10% 80%, rgba(48, 209, 88, 0.05), transparent 70%);
 }
 
-.dash > :not(.dash-aurora):not(.toast):not(.bar):not(.sheet):not(.demo) {
+.dash > :not(.dash-aurora):not(.toast):not(.sheet):not(.demo) {
   position: relative;
 }
 
-/* ---------- top bar ---------- */
+/* ---------- page head ---------- */
 
+/* No top bar: the person on the left and the toolbar on the right sit on the page itself. The row is
+   exactly as wide as the three columns below, so the avatar starts at the Ship or me card's left edge
+   and log out ends at the Vitals panel's right edge. --grid-max is the sum of the columns' maximum
+   widths and the gaps in .grid. */
 .bar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
+  --grid-max: calc(340px + 660px + 420px + 2 * 20px);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 16px;
-  margin: 0 -24px 20px;
-  padding: 14px 24px;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: var(--d-blur);
-  -webkit-backdrop-filter: var(--d-blur);
-  border-bottom: 1px solid var(--d-stroke);
+  gap: 10px 20px;
+  width: 100%;
+  max-width: var(--grid-max);
+  margin: 0 auto 8px;
+  padding: 18px 0 12px;
 }
 
 .bar-who {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 .avatar {
+  flex: none;
   display: grid;
   place-items: center;
   width: 40px;
@@ -88,6 +90,8 @@ body.dash-body {
 .bar-name {
   font-size: 17px;
   font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
 }
 .bar-meta {
   color: var(--d-ink-2);
@@ -116,9 +120,10 @@ body.dash-body {
 
 .grid {
   display: grid;
-  /* The stage stops at 660px: the frame hugs the body instead of filling wide screens. At its
-     860px max height that keeps width / height >= 0.75, so SkeletonView keeps its 30° view and
-     the skeleton its size. The spare width goes either side of the three columns. */
+  /* Change these widths together with --grid-max in .bar. The stage stops at 660px: the
+     frame hugs the body instead of filling wide screens. At its 860px max height that keeps
+     width / height >= 0.75, so SkeletonView keeps its 30° view and the skeleton its size. The
+     spare width goes either side of the three columns. */
   grid-template-columns: minmax(300px, 340px) minmax(0, 660px) minmax(360px, 420px);
   justify-content: center;
   gap: 20px;
@@ -237,7 +242,7 @@ body.dash-body {
 .hero > * {
   position: relative;
 }
-.hero h1 {
+.hero .hero-title {
   font-size: 28px;
   line-height: 1.12;
   font-weight: 700;
@@ -589,11 +594,6 @@ body.dash-body {
   font-size: 13px;
   font-weight: 600;
 }
-.sk-label-text span {
-  color: currentColor;
-  font-size: 12px;
-  font-weight: 500;
-}
 
 @keyframes ping {
   0% {
@@ -673,7 +673,8 @@ body.dash-body {
 .zone:active {
   transform: scale(0.98);
 }
-/* Names and reasons wrap instead of cutting off ("Head & s…"): the reason is the point of the chip. */
+/* Names wrap instead of cutting off ("Head & s…"). The chip says only Normal, Watch or Alert;
+   what is off shows in the zone detail once the chip is tapped. */
 .zone-name {
   font-size: 13px;
   font-weight: 600;
@@ -710,6 +711,58 @@ body.dash-body {
 .zone-on {
   border-color: var(--d-blue);
   box-shadow: 0 0 0 1px var(--d-blue);
+}
+
+/* The open zone: its level and what is off, under the stage's top row while the view is zoomed in. */
+.zone-detail {
+  position: absolute;
+  top: 56px;
+  left: 14px;
+  width: min(300px, calc(100% - 28px));
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--d-stroke-2);
+  background: rgba(20, 20, 22, 0.78);
+  backdrop-filter: var(--d-blur);
+  -webkit-backdrop-filter: var(--d-blur);
+  color: var(--d-ink);
+}
+.zone-detail-watch {
+  border-color: rgba(255, 159, 10, 0.45);
+}
+.zone-detail-alert {
+  border-color: rgba(255, 69, 58, 0.55);
+}
+.zone-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.zone-detail-word {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--d-ink-2);
+}
+.zone-detail-watch .zone-detail-word {
+  color: #ffb340;
+}
+.zone-detail-alert .zone-detail-word {
+  color: #ff6961;
+}
+.zone-detail-list {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 0 0 0 22px;
+  font-size: 13px;
+  color: var(--d-ink-2);
+}
+.zone-detail-ok {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--d-ink-2);
 }
 
 /* ---------- vitals ---------- */
@@ -1049,11 +1102,45 @@ body.dash-body {
   color: var(--d-ink);
   background: rgba(118, 118, 128, 0.45);
 }
+/* Time range: a segmented control, as the crew app's tabs. The picked range is a raised grey
+   segment, so it reads by shape and weight, not colour alone. */
 .sheet-seg {
   justify-self: start;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 11px;
+  background: rgba(118, 118, 128, 0.24);
 }
 .sheet-seg button {
-  min-width: 56px;
+  min-width: 64px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--d-ink-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+.sheet-seg button:hover {
+  color: var(--d-ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+.sheet-seg .seg-on,
+.sheet-seg .seg-on:hover {
+  background: #636366;
+  color: var(--d-ink);
+  font-weight: 600;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35), 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+}
+.sheet-seg button:focus-visible {
+  outline: 2px solid var(--d-blue);
+  outline-offset: 1px;
 }
 .sheet-stats {
   display: grid;
@@ -1079,6 +1166,31 @@ body.dash-body {
   font-size: 16px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+/* The Symptoms sheet: a narrower sheet listing today's symptoms, each Guide entry with its
+   "What this means" button. */
+.sheet.sheet-sm {
+  width: min(480px, calc(100vw - 48px));
+}
+.sym-list {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+}
+.sym-list li {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px 8px;
+  border-radius: 14px;
+  background: var(--d-surface-2);
+}
+.sym-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+.sym-list .guide-more {
+  justify-self: start;
 }
 .sheet-note {
   font-size: 12px;
@@ -1328,7 +1440,7 @@ body.dash-body {
   .hero {
     padding: 18px;
   }
-  .hero h1 {
+  .hero .hero-title {
     font-size: 24px;
   }
   .tile-value {
@@ -1362,8 +1474,7 @@ body.dash-body {
     padding: 0 16px 16px;
   }
   .bar {
-    margin: 0 -16px 16px;
-    padding: 10px 16px;
+    padding: 12px 0 8px;
   }
   .grid {
     grid-template-columns: minmax(0, 1fr);
@@ -1375,13 +1486,14 @@ body.dash-body {
   .zones {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .hero h1 {
+  .hero .hero-title {
     font-size: 24px;
   }
 }
 
 @media (max-width: 760px) {
-  .sheet {
+  .sheet,
+  .sheet.sheet-sm {
     width: 100%;
     max-height: 94dvh;
     margin: auto 0 0;

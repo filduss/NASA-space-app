@@ -28,12 +28,8 @@ describe('Guide content', () => {
     }
   })
 
-  it('every entry says what it is, and every reading says what the app does with it', () => {
-    for (const e of ENTRIES) {
-      expect(summary(e), e.id).not.toBe('')
-      const parts = visibleParts(e).map((p) => p.key)
-      if (e.section !== 'risks' && e.id !== 'vision') expect(parts, e.id).toContain('app')
-    }
+  it('every entry says what it is', () => {
+    for (const e of ENTRIES) expect(summary(e), e.id).not.toBe('')
   })
 
   it('every check-in item’s entry says how to check it, without assuming the reader knows', () => {

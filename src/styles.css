@@ -26,7 +26,6 @@
   --watch-ink: #ffb340;
   --alert-ink: #ff6961;
   --real-ink: #64b5ff;
-  --bar: rgba(0, 0, 0, 0.55);
   --shadow: none;
   --glow: radial-gradient(60% 50% at 50% 0%, rgba(10, 132, 255, 0.14), transparent 70%),
     radial-gradient(40% 40% at 85% 90%, rgba(94, 92, 230, 0.1), transparent 70%),
@@ -128,11 +127,47 @@ input {
     --dock-room: 124px;
   }
 }
-/* The check-in page is one centred column, the width of the form. */
-.app-narrow {
-  --col: 760px;
+/* The head row of every page, on the page itself with no top bar (the dashboard's .bar in
+   dashboard.css is the same row): who and what on the left, the toolbar on the right, each lined up
+   with the boxes below. */
+.intro.intro-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px 20px;
+  padding: 20px 0 16px;
 }
-.app > :not(.appbar):not(.demo) {
+.intro-title {
+  min-width: 0;
+}
+.intro.intro-page h1 {
+  font-size: 30px;
+}
+.intro-page .toolbar {
+  justify-self: end;
+}
+/* The check-in fits on one screen: a little less room above and below its title. */
+.app-checkin .intro.intro-page {
+  padding: 20px 0 14px;
+}
+.app-checkin .intro.intro-page h1 {
+  font-size: 28px;
+}
+/* The crew app's screens: a row of tabs under the head row. */
+.tabs-row {
+  margin-bottom: 16px;
+}
+/* The challenge page's links are words, too wide to sit beside the title on a phone: a row of their own. */
+@media (max-width: 720px) {
+  .intro-links.intro-page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .intro-links .toolbar {
+    grid-column: 1;
+    justify-self: start;
+  }
+}
+.app > :not(.demo) {
   width: min(var(--col), 100% - 48px);
   margin-inline: auto;
 }
@@ -143,51 +178,6 @@ input {
   z-index: -1;
   pointer-events: none;
   background: var(--glow);
-}
-
-/* ---------- top bar ---------- */
-.appbar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 10px 16px;
-  padding: 12px max(24px, (100% - var(--col)) / 2);
-  background: var(--bar);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  border-bottom: 1px solid var(--line);
-}
-.appbar-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-.appicon {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: linear-gradient(145deg, #5e5ce6, #0a84ff);
-  color: #fff;
-  font-weight: 700;
-  font-size: 17px;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
-}
-.appbar-name {
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.2;
-}
-.appbar-meta {
-  font-size: 12px;
-  color: var(--ink-3);
-  white-space: nowrap;
 }
 
 /* Tabs: an Apple segmented control. */
@@ -238,48 +228,6 @@ input {
 }
 .tab-flag-alert {
   color: var(--alert);
-}
-
-.account {
-  grid-column: -2;
-  justify-self: end;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  white-space: nowrap;
-}
-.account-who {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding-right: 14px;
-  border-right: 1px solid var(--line-2);
-}
-.account-text {
-  display: grid;
-  line-height: 1.2;
-}
-.account-name {
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 600;
-}
-.account-role {
-  color: var(--ink-3);
-  font-size: 11px;
-}
-.avatar-sm {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #5e5ce6, #0a84ff);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
 }
 
 /* ---------- large title ---------- */
@@ -386,9 +334,6 @@ input {
 .muted {
   color: var(--ink-2);
 }
-.evidence-line {
-  margin-top: 12px;
-}
 .fine {
   font-size: 13px;
   color: var(--ink-3);
@@ -449,13 +394,6 @@ input {
   font-weight: 600;
   color: var(--ink-2);
   letter-spacing: 0;
-}
-.origin-live {
-  background: transparent;
-  box-shadow: inset 0 0 0 1px var(--fill-2);
-}
-.origin-estimate {
-  border-color: var(--accent);
 }
 /* The challenge map: one question per row, its answer, and a button to the screen that shows it. */
 .qa {
@@ -936,6 +874,21 @@ input {
   max-width: 760px;
   padding-bottom: 8px;
 }
+/* Once sent, the summary and the conference card sit in the middle of the page. */
+.ci-done {
+  margin-inline: auto;
+}
+/* One column on a narrow screen; on a wide one the ratings beside the symptoms, reaction test and
+   conference, so the whole check-in fits without scrolling. */
+.ci-grid {
+  display: grid;
+  gap: var(--gap);
+}
+.ci-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
 .ci-intro {
   display: flex;
   flex-wrap: wrap;
@@ -948,36 +901,21 @@ input {
   font-weight: 600;
   color: var(--alert-ink);
 }
-.ci-wearable {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-.ci-wearable > div,
 .ci-receipt > div {
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   background: var(--surface-2);
 }
-.ci-wearable dt,
 .ci-receipt dt {
   font-size: 13px;
   color: var(--ink-2);
 }
-.ci-wearable dd,
 .ci-receipt dd {
   margin: 2px 0 0;
   font-size: 20px;
   font-weight: 600;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-}
-.ci-vitals {
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  margin: 10px 0 8px;
-}
-.ci-vitals dd {
-  font-size: 17px;
 }
 .ci-receipt {
   display: grid;
@@ -1126,59 +1064,53 @@ input {
   background: none;
   border-color: var(--line-2);
 }
-.ci-optional {
-  margin-bottom: 10px;
-}
 .ci-anchor {
   scroll-margin-top: 16px;
 }
-.ci-conf {
+.ci-asks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.ci-ask {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin: 12px 0 0;
-  padding: 0;
-  border: 0;
-}
-.ci-choice {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 12px 14px;
+  justify-content: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 8px 14px;
   border: 1px solid var(--line-2);
   border-radius: 14px;
+  background: var(--fill);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
   cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.1s, border-color 0.1s;
 }
-.ci-choice input {
-  width: 20px;
-  height: 20px;
-  margin: 1px 0 0;
-  flex: 0 0 auto;
-  accent-color: var(--accent);
+.ci-ask strong {
+  font-size: 15px;
 }
-.ci-choice > span {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.ci-ask .fine {
+  color: var(--ink-2);
 }
-.ci-choice-on {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+.ci-ask:hover {
+  background: var(--fill-2);
 }
-.ci-choice-urgent {
-  border-color: var(--alert);
+.ci-ask-urgent {
+  border-color: color-mix(in srgb, var(--alert) 55%, transparent);
   background: color-mix(in srgb, var(--alert) 12%, transparent);
 }
-.ci-choice-urgent input {
-  accent-color: var(--alert);
+.ci-ask-urgent strong {
+  color: var(--alert-ink);
 }
-.ci-conf .btn {
-  align-self: flex-start;
-  margin-top: 4px;
+.ci-ask-urgent:hover {
+  background: color-mix(in srgb, var(--alert) 22%, transparent);
 }
-.btn-urgent,
-.btn-urgent:hover:not(:disabled) {
-  background: var(--alert);
+.ci-ask:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 /* The Send button floats on its own at the bottom of the screen while the person scrolls: no panel
    around it, a large capsule as in Apple's apps. Grey until every answer is in, then blue. */
@@ -1244,38 +1176,183 @@ input {
     min-width: 0;
   }
 }
+/* Wide screens: the ratings beside the symptoms, reaction test and conference, with Send at the foot
+   of the second column, so the whole check-in fits on one screen without scrolling. The conference
+   card is in view, so the "Need help now?" link above the form is not needed there. */
+@media (min-width: 900px) {
+  .app-checkin:has(> .demo) {
+    padding-bottom: var(--dock-room);
+  }
+  .ci-form {
+    max-width: none;
+    padding-bottom: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    gap: 12px var(--gap);
+    align-items: start;
+  }
+  .ci-form .ci-intro {
+    display: none;
+  }
+  .ci-grid {
+    display: contents;
+  }
+  .ci-grid > .card {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+  .ci-side {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 10px;
+  }
+  .ci-grid .ci-side .card {
+    padding-block: 12px;
+  }
+  .ci-grid .ci-side .card > * + * {
+    margin-top: 8px;
+  }
+  .ci-form .ci-bar {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: end;
+    position: static;
+  }
+  .ci-form .ci-send {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    box-shadow: none;
+  }
+  .ci-grid .card {
+    padding: 14px 16px;
+  }
+  .ci-grid .card > * + * {
+    margin-top: 10px;
+  }
+  .ci-grid .card h2 {
+    font-size: 17px;
+  }
+  .ci-ratings {
+    gap: 10px;
+  }
+  .ci-rating-head {
+    margin-bottom: 3px;
+  }
+  .ci-question {
+    font-size: 15px;
+  }
+  .ci-num {
+    height: 34px;
+  }
+  .ci-ends {
+    margin-top: 3px;
+  }
+  .ci-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .ci-tile {
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 14px;
+  }
+  .ci-grid .guide-about {
+    font-size: 12px;
+  }
+  .ci-grid .card .muted {
+    font-size: 13px;
+  }
+}
+/* The reaction test is one box of a fixed height: start, running and result all fill it, so the card
+   never grows or shrinks. */
+.rt {
+  --rt-h: 120px;
+  height: var(--rt-h);
+}
 .rt-pad {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
-  height: 170px;
+  height: 100%;
   border: 0;
   border-radius: var(--radius-sm);
   background: var(--fill);
   color: var(--ink);
+  font: inherit;
   cursor: pointer;
   touch-action: manipulation;
   user-select: none;
   transition: background 0.1s;
+}
+.rt-idle {
+  border: 1px dashed var(--line-2);
+  background: transparent;
+}
+.rt-idle .rt-big {
+  font-size: 20px;
+  color: var(--accent);
+}
+.rt-idle:hover {
+  background: var(--fill);
+}
+.rt-pad:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .rt-go {
   background: var(--accent);
   color: var(--accent-ink);
 }
 .rt-big {
-  font-size: 34px;
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: 0.02em;
+  line-height: 1.1;
 }
 .rt-small {
   font-size: 13px;
   opacity: 0.85;
 }
-.rt-result > * + * {
-  margin-top: 6px;
+.rt-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 100%;
+  padding: 8px 8px 8px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--fill);
+}
+.rt-result-text {
+  min-width: 0;
+}
+.rt-result-text strong {
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.rt-again {
+  flex: none;
+}
+@media (min-width: 900px) {
+  .rt {
+    --rt-h: 64px;
+  }
+  .rt-result {
+    padding-block: 4px;
+  }
+  .ci-asks {
+    gap: 6px;
+  }
+  .ci-ask {
+    min-height: 48px;
+    padding: 6px 12px;
+  }
 }
 
 /* ---------- me, ship ---------- */
@@ -1377,21 +1454,6 @@ input {
 .stat-note {
   font-size: 12px;
   color: var(--ink-3);
-}
-.rule {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.rule li {
-  padding: 12px 14px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-}
-.rule .rule-watch {
-  border-color: color-mix(in srgb, var(--watch) 35%, transparent);
-  background: color-mix(in srgb, var(--watch) 11%, var(--surface-2));
 }
 .facts {
   display: grid;
@@ -1579,28 +1641,17 @@ details[open] > summary {
 
 /* ---------- small screens ---------- */
 @media (max-width: 860px) {
-  .appbar {
-    grid-template-columns: 1fr auto;
-  }
   .tabs {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    justify-self: stretch;
+    display: flex;
   }
   .tab {
     flex: 1 0 auto;
     justify-content: center;
   }
-  .appbar-meta {
-    display: none;
-  }
 }
 @media (max-width: 720px) {
-  .app > :not(.appbar):not(.demo) {
+  .app > :not(.demo) {
     width: calc(100% - 32px);
-  }
-  .appbar {
-    padding: 10px 16px;
   }
   .tab {
     flex: 1 1 auto;
@@ -1611,15 +1662,6 @@ details[open] > summary {
   }
   .intro h1 {
     font-size: 30px;
-  }
-  .account {
-    gap: 10px;
-  }
-  .account-who {
-    padding-right: 10px;
-  }
-  .account-text {
-    display: none;
   }
   .card,
   .banner,
@@ -1664,8 +1706,8 @@ details[open] > summary {
   border: 5px solid transparent;
   background-clip: padding-box;
   border-radius: 50%;
-  background-color: var(--fill);
-  color: var(--ink-2);
+  background-color: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
   font: inherit;
   font-size: 13px;
   font-weight: 700;
@@ -1674,8 +1716,8 @@ details[open] > summary {
   cursor: pointer;
 }
 .guide-q:hover {
-  background-color: var(--fill-2);
-  color: var(--ink);
+  background-color: var(--accent);
+  color: var(--accent-ink);
 }
 .guide-about {
   font-size: 15px;
@@ -1748,13 +1790,6 @@ details[open] > summary {
   padding-left: 18px;
 }
 .guide-nasa p {
-  color: var(--ink-2);
-  font-size: 15px;
-}
-/* What the app does: for the curious, after everything the reader acts on. */
-.guide-app {
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
   color: var(--ink-2);
   font-size: 15px;
 }
@@ -1868,19 +1903,6 @@ details[open] > summary {
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-.guide-note {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px 16px;
-  border-left: 3px solid var(--alert);
-  border-radius: 4px var(--radius-sm) var(--radius-sm) 4px;
-  background: var(--surface);
-  font-size: 15px;
-}
-.guide-note p + p {
-  color: var(--ink-2);
 }
 .guide-layout {
   display: grid;
@@ -2018,8 +2040,7 @@ details[open] > summary {
 /* Phone: the list, or the open topic. */
 @media (max-width: 899px) {
   .guide-layout:not(.guide-reading) .guide-pane,
-  .guide-reading .guide-side,
-  .guide:has(.guide-reading) .guide-note {
+  .guide-reading .guide-side {
     display: none;
   }
   .guide-pane {

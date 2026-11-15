@@ -16,18 +16,6 @@ export function Mark({ tone, children }: { tone: Tone; children: ReactNode }) {
   )
 }
 
-/** A note on how a number is held: live and not stored (the reaction test), or an estimate from
- *  published figures (radiation). Screens carry no simulated / real labels (docs/SPEC.md). */
-export function Origin({ kind, children }: { kind: 'live' | 'estimate'; children?: ReactNode }) {
-  const text = { live: 'Live, not stored', estimate: 'Estimate' }[kind]
-  return (
-    <span className={`origin origin-${kind}`}>
-      {text}
-      {children ? <> · {children}</> : null}
-    </span>
-  )
-}
-
 /** `tour` marks the card for the walkthrough (src/ui/Walkthrough.tsx). */
 export function Card({ title, aside, tone, children, id, tour }: { title?: ReactNode; aside?: ReactNode; tone?: Tone; children: ReactNode; id?: string; tour?: string }) {
   return (

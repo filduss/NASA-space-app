@@ -3,6 +3,7 @@ import { hrefOf } from '../auth/paths.ts'
 import type { User } from '../auth/session.ts'
 import { vitalLines } from '../data/wearable.ts'
 import { exerciseWeek } from '../engine/gravity.ts'
+import type { SymptomKey } from '../engine/types.ts'
 import { ENTRY_FOR, entryById } from '../guide/entries.ts'
 import { GuideLink } from '../guide/Guide.tsx'
 import { useStore } from '../state.tsx'
@@ -13,7 +14,7 @@ import { ChartSheet, type ChartTarget } from './ChartSheet.tsx'
 import { Sparkline } from './charts.tsx'
 import type { RangeKey } from './history.ts'
 import { LEVEL_WORD, LevelIcon } from './LevelIcon.tsx'
-import { notices, verdict, vitals, zoneStates, ZONES, type Notice, type Vital, type VerdictSide, type ZoneKey } from './model.ts'
+import { notices, verdict, vitals, zoneStates, ZONES, type Level, type Notice, type Vital, type VerdictSide, type ZoneKey, type ZoneState } from './model.ts'
 import { SkeletonView } from './SkeletonView.tsx'
 import './dashboard.css'
 
@@ -157,6 +158,103 @@ function WhatItMeans({ id, label, text = 'What this means' }: { id: string; labe
   )
 }
 
+/** Today's symptoms: the count and names. When something is reported, a tap opens them in a sheet. */
+function SymptomsTile({ symptoms, level, onOpen }: { symptoms: SymptomKey[]; level: Level; onOpen: () => void }) {
+  const some = symptoms.length > 0
+  return (
+    <article className={`tile tile-${level}${some ? ' tile-open' : ''}`} onClick={some ? onOpen : undefined}>
+      <header className="tile-head">
+        <h3>Symptoms</h3>
+        {some && <ExpandButton label="Open today's symptoms" onClick={onOpen} />}
+      </header>
+      <p className="tile-value tile-value-sm">{some ? symptoms.length : 'None'}</p>
+      <p className="tile-sub">{some ? symptoms.map(symptomLabel).join(', ') : 'Nothing reported today'}</p>
+    </article>
+  )
+}
+
+/**
+ * Today's symptoms in a sheet: each Guide entry with the symptoms it covers and its "What it means"
+ * button. A native modal <dialog>, as the chart sheet, so Esc and focus trapping come from the browser.
+ */
+function SymptomsSheet({ symptoms, level, onClose }: { symptoms: SymptomKey[]; level: Level; onClose: () => void }) {
+  const ref = useRef<HTMLDialogElement>(null)
+  // Taken at first render, before the dialog moves focus inside itself.
+  const opener = useRef(document.activeElement as HTMLElement | null)
+  useEffect(() => {
+    const dlg = ref.current
+    if (!dlg) return
+    // Not closed in the cleanup: StrictMode runs this twice, and a close() would fire onClose.
+    if (!dlg.open) dlg.showModal()
+    const overflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = overflow
+      const back = opener.current
+      requestAnimationFrame(() => back?.focus?.())
+    }
+  }, [])
+  // Dizziness and nausea share one Guide entry, so they share one row.
+  const groups = [...new Set(symptoms.map((k) => ENTRY_FOR[k]))].map((id) => ({ id, names: symptoms.filter((k) => ENTRY_FOR[k] === id).map(symptomLabel) }))
+  return (
+    <dialog ref={ref} className="sheet sheet-sm" aria-labelledby="symptoms-title" onClose={onClose} onClick={(e) => e.target === ref.current && onClose()}>
+      <div className={`sheet-card sheet-${level}`}>
+        <span className="sheet-grab" aria-hidden="true" />
+        <header className="sheet-head">
+          <div>
+            <p className="sheet-eyebrow">Vitals</p>
+            <h2 id="symptoms-title" className="sheet-title">
+              Symptoms
+              {level !== 'ok' && (
+                <span className={`pill pill-${level}`}>
+                  <LevelIcon level={level} size={12} />
+                  {LEVEL_WORD[level]}
+                </span>
+              )}
+            </h2>
+            <p className="sheet-now">Reported today</p>
+          </div>
+          <button type="button" className="sheet-close" onClick={onClose} aria-label="Close">
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+              <path d="M2 2l10 10M12 2L2 12" />
+            </svg>
+          </button>
+        </header>
+        <ul className="sym-list">
+          {groups.map((g) => (
+            <li key={g.id}>
+              <p className="sym-name">{g.names.join(', ')}</p>
+              <WhatItMeans id={g.id} label={g.names.join(', ')} text={`${entryById(g.id)?.title}: what it means`} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </dialog>
+  )
+}
+
+/** What is off in one body zone, shown once the person taps it and the skeleton zooms in. */
+function ZoneDetail({ label, state }: { label: string; state: ZoneState }) {
+  return (
+    <div className={`zone-detail zone-detail-${state.level}`} role="status">
+      <p className="zone-detail-head">
+        <LevelIcon level={state.level} size={14} />
+        <strong>{label}</strong>
+        <span className="zone-detail-word">{LEVEL_WORD[state.level]}</span>
+      </p>
+      {state.reasons.length > 0 ? (
+        <ul className="zone-detail-list">
+          {state.reasons.map((r) => (
+            <li key={r}>{r}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="zone-detail-ok">Within your normal today</p>
+      )}
+    </div>
+  )
+}
+
 /** One side of the answer: a level by shape, colour and word. The detail is a tooltip. */
 function HeroChip({ label, side, known = true }: { label: string; side: VerdictSide; known?: boolean }) {
   if (!known) {
@@ -210,8 +308,11 @@ export function Dashboard() {
   const zones = useMemo(() => zoneStates(me, exercise), [me, exercise])
   const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise), [me, cabin, s.commDelaySec, exercise])
   const tiles = useMemo(() => vitals(me, history, today, TREND_DAYS), [me, history, today])
+  const symptoms = me.assessment.symptoms
+  const symptomsLevel: Level = symptoms.length ? (zones.head.level === 'alert' ? 'alert' : 'watch') : 'ok'
+  const [symptomsOpen, setSymptomsOpen] = useState(false)
   const chartVital = chart ? tiles.find((t) => t.key === chart.key) : undefined
-  const symptomGuides = [...new Set(me.assessment.symptoms.map((k) => ENTRY_FOR[k]))]
+  const focusZone = focus ? ZONES.find((z) => z.key === focus) : undefined
   const v = verdict(me, cabin)
   // A published figure for real ISS crews, shown beside the person's own usual sleep (backtest.json).
   const issSleep = s.data.backtest?.meta.issCrews?.sleepHours
@@ -257,33 +358,30 @@ export function Dashboard() {
         </div>
       )}
 
+      {/* The person on the left and the toolbar on the right, as wide as the grid below. */}
       <header className="bar">
         <div className="bar-who">
           <span className="avatar" aria-hidden="true">
             {name.slice(0, 1)}
           </span>
           <div>
-            <p className="bar-name">
-              {name}
-            </p>
+            <h1 className="bar-name">{name}</h1>
             <p className="bar-meta">
               {s.mission.label} · <span className="bar-meta-long">Mission day</span>
               <span className="bar-meta-short">Day</span> {today}
             </p>
           </div>
         </div>
-
         <Toolbar user={user} pages={['guide', 'app']} day={today} onLogOut={s.logOut} />
       </header>
 
       <main className="grid">
         <section className="col col-left">
           <div className={`hero hero-${v.tint}`} data-tour="answer">
-            <p className="hero-kicker">Ship check</p>
-            <h1>{v.title}</h1>
+            <p className="hero-kicker">Ship or me</p>
+            <h2 className="hero-title">{v.title}</h2>
             <ul className="hero-chips">
-              <HeroChip label="You" side={v.you} />
-              <HeroChip label="CO₂" side={v.co2} known={v.co2.known} />
+              <HeroChip label="Cabin CO₂ level" side={v.co2} known={v.co2.known} />
             </ul>
           </div>
 
@@ -318,6 +416,7 @@ export function Dashboard() {
                 </button>
               )}
             </div>
+            {focusZone && <ZoneDetail label={focusZone.label} state={zones[focusZone.key]} />}
             <ul className="zones">
               {ZONES.map((z) => {
                 const st = zones[z.key]
@@ -326,7 +425,7 @@ export function Dashboard() {
                     <button type="button" className={`zone zone-${st.level}${focus === z.key ? ' zone-on' : ''}`} onClick={() => setFocus(focus === z.key ? null : z.key)} aria-pressed={focus === z.key}>
                       <LevelIcon level={st.level} size={14} />
                       <span className="zone-name">{z.label}</span>
-                      <span className="zone-why">{st.level === 'ok' ? 'Normal' : st.reasons.join(', ')}</span>
+                      <span className="zone-why">{LEVEL_WORD[st.level]}</span>
                     </button>
                   </li>
                 )
@@ -356,16 +455,7 @@ export function Dashboard() {
                   }
                 />
               ))}
-              <article className={`tile tile-${me.assessment.symptoms.length ? (zones.head.level === 'alert' ? 'alert' : 'watch') : 'ok'}`}>
-                <header className="tile-head">
-                  <h3>Symptoms</h3>
-                </header>
-                <p className="tile-value tile-value-sm">{me.assessment.symptoms.length ? me.assessment.symptoms.length : 'None'}</p>
-                <p className="tile-sub">{me.assessment.symptoms.length ? me.assessment.symptoms.map(symptomLabel).join(', ') : 'Nothing reported today'}</p>
-                {symptomGuides.map((id) => (
-                  <WhatItMeans key={id} id={id} label={id} text={symptomGuides.length > 1 ? `${entryById(id)?.title}: what it means` : undefined} />
-                ))}
-              </article>
+              <SymptomsTile symptoms={symptoms} level={symptomsLevel} onOpen={() => setSymptomsOpen(true)} />
             </div>
           </div>
         </section>
@@ -380,6 +470,7 @@ export function Dashboard() {
           onClose={() => setChart(null)}
         />
       )}
+      {symptomsOpen && symptoms.length > 0 && <SymptomsSheet symptoms={symptoms} level={symptomsLevel} onClose={() => setSymptomsOpen(false)} />}
 
       <DemoDock page="dashboard" />
     </div>

@@ -4,7 +4,7 @@
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 .tbtn {
   appearance: none;
@@ -12,7 +12,7 @@
   align-items: center;
   gap: 6px;
   height: 34px;
-  padding: 0 14px 0 11px;
+  padding: 0 12px 0 10px;
   border: 0;
   border-radius: 999px;
   background: rgba(118, 118, 128, 0.24);
@@ -44,6 +44,11 @@
 .tbtn-quiet:hover {
   background: rgba(255, 69, 58, 0.14);
   color: #ff453a;
+}
+/* Log out has no fill, so its glyph and word, not its padding, line up with the right edge of the
+   boxes below the head row. */
+.toolbar > .tbtn-quiet:last-child {
+  margin-right: -12px;
 }
 .tbtn-icon {
   flex: none;
@@ -84,6 +89,14 @@
   }
   .toolbar-sep {
     display: none;
+  }
+  .toolbar > .tbtn-quiet:last-child {
+    margin-right: -9px;
+  }
+  /* A button with a word and no glyph keeps its word. */
+  .tbtn.tbtn-text {
+    width: auto;
+    padding: 0 12px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

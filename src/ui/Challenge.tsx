@@ -8,6 +8,7 @@ import type { BacktestScenario, TraceCabin } from '../data/types.ts'
 import { RULES } from '../engine/config.ts'
 import { useStore } from '../state.tsx'
 import { Card, RiskLinks } from './bits.tsx'
+import './toolbar.css'
 import { list } from './text.ts'
 
 // The public page for judges and visitors, with no login: where the demo answers each of the
@@ -431,35 +432,23 @@ export function ChallengePage() {
   }, [])
   return (
     <div className="app">
-      <header className="appbar">
-        <div className="appbar-brand">
-          <span className="appicon" aria-hidden="true">
-            S
-          </span>
-          <div>
-            <p className="appbar-name">Ship Or Me?</p>
-            <p className="appbar-meta">Is it me, or the ship?</p>
-          </div>
+      {/* The same head row as every other page: no top bar, the title on the left and the links on the right. */}
+      <header className="intro intro-page intro-links">
+        <div className="intro-title">
+          <p className="intro-eyebrow">NASA Space Apps Challenge 2026 · Create Health Monitoring Software for Astronauts on Space Missions</p>
+          <h1>How it answers the challenge</h1>
         </div>
-        <span />
-        <nav className="account" aria-label="Pages">
-          <a className="link" href={hrefOf('login', base)}>
+        <nav className="toolbar" aria-label="Pages">
+          <a className="tbtn tbtn-text" href={hrefOf('login', base)}>
             Judge's tour
           </a>
           {s.user && (
-            <a className="link" href={hrefOf(homePage(s.user), base)}>
+            <a className="tbtn tbtn-text" href={hrefOf(homePage(s.user), base)}>
               Back to the demo
             </a>
           )}
         </nav>
       </header>
-
-      <section className="intro">
-        <div>
-          <p className="intro-eyebrow">NASA Space Apps Challenge 2026 · Create Health Monitoring Software for Astronauts on Space Missions</p>
-          <h1>How Ship Or Me? answers the challenge</h1>
-        </div>
-      </section>
 
       <main>
         <div className="stack">

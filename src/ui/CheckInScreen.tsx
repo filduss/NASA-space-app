@@ -1,13 +1,11 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
 import { SPEC, SYMPTOMS } from '../engine/deviation.ts'
 import type { SymptomKey } from '../engine/types.ts'
-import { vitalLines, type WearableReading } from '../data/wearable.ts'
 import { hrefOf } from '../auth/paths.ts'
 import { useStore, type ReactionResult } from '../state.tsx'
-import { INDICATOR_RISKS, SYMPTOM_RISKS, type HrpRiskKey } from '../data/hrp.ts'
 import { ENTRY_FOR, entryById } from '../guide/entries.ts'
 import { GuideLink } from '../guide/Guide.tsx'
-import { Card, Mark, Origin, RiskLinks } from './bits.tsx'
+import { Card, Mark } from './bits.tsx'
 import {
   formFrom,
   left,
@@ -34,7 +32,6 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
   const [form, setForm] = useState<CheckInForm>(() => formFrom(existing))
   const [mode, setMode] = useState<'form' | 'receipt'>(sentLive ? 'receipt' : 'form')
   const [reaction, setReaction] = useState<ReactionResult | null>(s.liveReaction[`${crewId}|${s.today}`] ?? null)
-  const [helpOpen, setHelpOpen] = useState(false)
   const helpRef = useRef<HTMLElement>(null)
 
   const missing = left(form)
@@ -48,7 +45,6 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
   }
 
   const needHelp = () => {
-    setHelpOpen(true)
     helpRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
@@ -57,63 +53,54 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
   }
 
   return (
-    <div className="stack checkin">
+    <div className="stack checkin ci-form">
       <div className="ci-intro">
         <button type="button" className="link ci-help-link" onClick={needHelp}>
           Need help now?
         </button>
       </div>
 
-      <Card
-        title={
-          <>
-            Last night <GuideLink id={ENTRY_FOR.sleepHours} label="Sleep" />
-          </>
-        }
-        tour="last-night">
-        <WearableLine wearable={wearable} />
-        <RiskLinks risks={INDICATOR_RISKS.sleepHours} />
-      </Card>
+      {/* Two columns on a wide screen, so the whole check-in fits without scrolling. */}
+      <div className="ci-grid">
+        <Card title="How you feel this morning" tour="ratings">
+          <div className="ci-ratings">
+            {RATINGS.map((r) => (
+              <RatingRow key={r.key} rating={r} value={form.ratings[r.key]} onChange={(v) => setForm((f) => rate(f, r.key, v))} />
+            ))}
+          </div>
+        </Card>
 
-      <Card title="How you feel this morning" tour="ratings">
-        <div className="ci-ratings">
-          {RATINGS.map((r) => (
-            <RatingRow key={r.key} rating={r} value={form.ratings[r.key]} onChange={(v) => setForm((f) => rate(f, r.key, v))} />
-          ))}
+        <div className="ci-side">
+          <Card title="Symptoms since yesterday" tour="symptoms">
+            <SymptomTiles value={form.symptoms} onToggle={(k) => setForm((f) => toggleSymptom(f, k))} onNone={() => setForm(noSymptoms)} />
+            <p className="guide-about">
+              In the Guide:{' '}
+              {[...new Set(SYMPTOMS.map((sym) => ENTRY_FOR[sym.key]))].map((id, i) => (
+                <span key={id}>
+                  {i > 0 && ' · '}
+                  <GuideLink id={id} label={entryById(id)?.title ?? id}>
+                    {entryById(id)?.title}
+                  </GuideLink>
+                </span>
+              ))}
+            </p>
+          </Card>
+
+          <Card
+            title={
+              <>
+                Reaction test <GuideLink id={ENTRY_FOR.reaction} label="Reaction test" />
+              </>
+            }
+            aside={<span className="muted">Optional</span>}>
+            <ReactionTest result={reaction} onResult={setReaction} />
+          </Card>
+
+          <section ref={helpRef} id="conference" className="ci-anchor" data-tour="conference">
+            <ConferenceCard crewId={crewId} />
+          </section>
         </div>
-      </Card>
-
-      <Card title="Symptoms since yesterday" tour="symptoms">
-        <SymptomTiles value={form.symptoms} onToggle={(k) => setForm((f) => toggleSymptom(f, k))} onNone={() => setForm(noSymptoms)} />
-        <p className="guide-about">
-          In the Guide:{' '}
-          {[...new Set(SYMPTOMS.map((sym) => ENTRY_FOR[sym.key]))].map((id, i) => (
-            <span key={id}>
-              {i > 0 && ' · '}
-              <GuideLink id={id} label={entryById(id)?.title ?? id}>
-                {entryById(id)?.title}
-              </GuideLink>
-            </span>
-          ))}
-        </p>
-        <RiskLinks risks={[...new Set(SYMPTOMS.flatMap((sym) => SYMPTOM_RISKS[sym.key]))] as HrpRiskKey[]} />
-      </Card>
-
-      <Card
-        title={
-          <>
-            Reaction test <GuideLink id={ENTRY_FOR.reaction} label="Reaction test" />
-          </>
-        }
-        aside={<Origin kind="live" />}>
-        <p className="muted ci-optional">Optional.</p>
-        <ReactionTest result={reaction} onResult={setReaction} />
-        <RiskLinks risks={INDICATOR_RISKS.reaction} />
-      </Card>
-
-      <section ref={helpRef} id="conference" className="ci-anchor" data-tour="conference">
-        <ConferenceCard crewId={crewId} open={helpOpen} onOpen={() => setHelpOpen(true)} />
-      </section>
+      </div>
 
       <div className="ci-bar" role="region" aria-label="Send the check-in">
         <button type="button" className="btn btn-primary ci-send" data-tour="send" onClick={submit} disabled={missing > 0}>
@@ -121,37 +108,6 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
         </button>
       </div>
     </div>
-  )
-}
-
-function WearableLine({ wearable }: { wearable: WearableReading | null }) {
-  if (!wearable) return <p className="muted">No wearable reading for last night.</p>
-  return (
-    <>
-      <dl className="ci-wearable">
-        <div>
-          <dt>Slept</dt>
-          <dd>{wearable.sleepHours === null ? 'no reading' : hoursText(wearable.sleepHours)}</dd>
-        </div>
-        <div>
-          <dt>Exercise yesterday</dt>
-          <dd>{wearable.exerciseMin === null ? 'none logged' : `${wearable.exerciseMin} min`}</dd>
-        </div>
-      </dl>
-      {wearable.vitals && (
-        <>
-          <dl className="ci-wearable ci-vitals">
-            {vitalLines(wearable.vitals).map((l) => (
-              <div key={l.label}>
-                <dt>{l.label}</dt>
-                <dd>{l.value}</dd>
-              </div>
-            ))}
-          </dl>
-          <p className="fine">Vitals are shown for information: the rules don't use them yet.</p>
-        </>
-      )}
-    </>
   )
 }
 
@@ -213,7 +169,6 @@ function RatingRow({ rating, value, onChange }: { rating: Rating; value: number 
         <span>0 {rating.lo}</span>
         <span>{rating.hi} 10</span>
       </div>
-      <RiskLinks risks={INDICATOR_RISKS[rating.key]} />
     </div>
   )
 }
@@ -258,17 +213,18 @@ function useCareTeam(crewId: string) {
   }
 }
 
-function ConferenceCard({ crewId, open, onOpen }: { crewId: string; open: boolean; onOpen: () => void }) {
+/** Two buttons side by side, each sending its request at once: no step to open them first. */
+function ConferenceCard({ crewId }: { crewId: string }) {
   const s = useStore()
   const team = useCareTeam(crewId)
   const sent = s.todayResult.people[crewId]?.conference ?? null
-  const [urgent, setUrgent] = useState<boolean | null>(null)
   const delay = delayText(s.commDelaySec)
   const surgeon = team.surgeon ? `${team.surgeon}, your flight surgeon,` : 'Your flight surgeon'
+  const surgeonName = team.surgeon ?? 'Your flight surgeon'
   const onBoard = team.selfIsMedical
     ? 'You are the crew medical officer, so nobody else on board is told.'
     : `${team.medical ? `${team.medical}, the crew medical officer,` : 'The crew medical officer'} has been told privately, now.`
-  const onBoardShort = team.selfIsMedical ? 'Nobody else on board is told (you are the medical officer)' : `${team.medical ?? 'The crew medical officer'} on board is told at once`
+  const urgentNote = team.selfIsMedical ? `${surgeonName} in ${delay}` : `${team.medical ?? 'Medical officer'} now, ${surgeonName} in ${delay}`
 
   if (sent) {
     const isUrgent = sent === 'urgent'
@@ -293,52 +249,28 @@ function ConferenceCard({ crewId, open, onOpen }: { crewId: string; open: boolea
 
   return (
     <Card title="Talk to your flight surgeon">
-      <p className="muted">Ask for a private medical conference at any time, without finishing the check-in.</p>
-      {!open ? (
-        <button type="button" className="btn" onClick={onOpen}>
-          Ask for a conference
+      <p className="muted">A private medical conference, any time, without finishing the check-in.</p>
+      <div className="ci-asks" role="group" aria-label="Ask for a conference">
+        <button type="button" className="ci-ask" onClick={() => s.requestConference(crewId, false)}>
+          <strong>Next conference</strong>
+          <span className="fine">Only {surgeonName} is told</span>
         </button>
-      ) : (
-        <fieldset className="ci-conf">
-          <legend className="sr-only">When do you need it?</legend>
-          <label className={urgent === false ? 'ci-choice ci-choice-on' : 'ci-choice'}>
-            <input type="radio" name="conference" checked={urgent === false} onChange={() => setUrgent(false)} />
-            <span>
-              <strong>At the next scheduled conference</strong>
-              <span className="fine">Only {team.surgeon ?? 'your flight surgeon'} is told.</span>
-            </span>
-          </label>
-          <label className={urgent === true ? 'ci-choice ci-choice-on ci-choice-urgent' : 'ci-choice'}>
-            <input type="radio" name="conference" checked={urgent === true} onChange={() => setUrgent(true)} />
-            <span>
-              <strong>Urgent: now</strong>
-              <span className="fine">
-                {onBoardShort}; {team.surgeon ?? 'the flight surgeon'} gets it in {delay}.
-              </span>
-            </span>
-          </label>
-          <button
-            type="button"
-            className={urgent ? 'btn btn-primary btn-urgent' : 'btn btn-primary'}
-            disabled={urgent === null}
-            onClick={() => urgent !== null && s.requestConference(crewId, urgent)}
-          >
-            Send request
-          </button>
-        </fieldset>
-      )}
+        <button type="button" className="ci-ask ci-ask-urgent" onClick={() => s.requestConference(crewId, true)}>
+          <strong>Urgent: now</strong>
+          <span className="fine">{urgentNote}</span>
+        </button>
+      </div>
     </Card>
   )
 }
 
 function Receipt({ crewId, reaction, onChange }: { crewId: string; reaction: ReactionResult | null; onChange: () => void }) {
   const s = useStore()
-  const [helpOpen, setHelpOpen] = useState(false)
   const sent = s.checkIns.find((c) => c.crewId === crewId && c.day === s.today && !c.simulated)
   if (!sent) return null
   const ratings: RatingKey[] = RATINGS.map((r) => r.key)
   return (
-    <div className="stack checkin">
+    <div className="stack checkin ci-done">
       <Card title={<Mark tone="ok">Checked in, day {s.today}</Mark>} aside={<span className="origin">Saved in this browser</span>}>
         <dl className="ci-receipt">
           {ratings.map((k) => (
@@ -369,7 +301,7 @@ function Receipt({ crewId, reaction, onChange }: { crewId: string; reaction: Rea
           </button>
         </div>
       </Card>
-      <ConferenceCard crewId={crewId} open={helpOpen} onOpen={() => setHelpOpen(true)} />
+      <ConferenceCard crewId={crewId} />
     </div>
   )
 }
