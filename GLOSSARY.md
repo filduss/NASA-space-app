@@ -9,7 +9,7 @@ The crew's built-in reference that explains, in plain words, what each reading m
 _Avoid_: Guidebook, help, manual, FAQ
 
 **Guide entry**:
-One topic in the Guide, written in fixed parts: what we measure, why it matters in space, NASA's limit or target, what you can do, and when to tell the medical officer now. The last two appear only when a NASA source names them.
+One topic in the Guide, written in fixed parts: what we measure, how to check it, why it matters in space, NASA's limit or target, what you can do, and when to tell the medical officer now. The last two appear only when a NASA source names them.
 _Avoid_: Article, card, page
 
 **Reading**:

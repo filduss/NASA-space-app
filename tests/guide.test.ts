@@ -36,6 +36,22 @@ describe('Guide content', () => {
     }
   })
 
+  it('every check-in item’s entry says how to check it, without assuming the reader knows', () => {
+    for (const k of [...INDICATOR_KEYS, ...SYMPTOMS.map((s) => s.key)]) {
+      const entry = ENTRIES.find((e) => e.id === ENTRY_FOR[k])!
+      expect(visibleParts(entry).map((p) => p.key), k).toContain('howTo')
+    }
+  })
+
+  it('every NASA risk says in plain words what it is, and keeps NASA’s own name below', () => {
+    for (const e of ENTRIES.filter((x) => x.section === 'risks')) {
+      const parts = visibleParts(e)
+      expect(parts[0].key, e.id).toBe('measure')
+      expect(summary(e), e.id).not.toMatch(/^Risk of/)
+      expect(parts.map((p) => p.key), e.id).toContain('nasa')
+    }
+  })
+
   it('every check-in item has an entry to open from its "?"', () => {
     const ids = new Set(ENTRIES.map((e) => e.id))
     for (const k of [...INDICATOR_KEYS, ...SYMPTOMS.map((s) => s.key)]) expect(ids.has(ENTRY_FOR[k]), k).toBe(true)

@@ -6,7 +6,7 @@ import { hrefOf } from '../auth/paths.ts'
 import { useStore, type ReactionResult } from '../state.tsx'
 import { INDICATOR_RISKS, SYMPTOM_RISKS, type HrpRiskKey } from '../data/hrp.ts'
 import { ENTRY_FOR, entryById } from '../guide/entries.ts'
-import { GuideLink, guideHref } from '../guide/Guide.tsx'
+import { GuideLink } from '../guide/Guide.tsx'
 import { Card, Mark, Origin, RiskLinks } from './bits.tsx'
 import {
   formFrom,
@@ -95,7 +95,9 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
           {[...new Set(SYMPTOMS.map((sym) => ENTRY_FOR[sym.key]))].map((id, i) => (
             <span key={id}>
               {i > 0 && ' · '}
-              <a href={guideHref(id)}>{entryById(id)?.title}</a>
+              <GuideLink id={id} label={entryById(id)?.title ?? id}>
+                {entryById(id)?.title}
+              </GuideLink>
             </span>
           ))}
         </p>

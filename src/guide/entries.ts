@@ -65,23 +65,26 @@ export interface Line {
   from: SourceKey | 'app'
 }
 
-export type Part = 'measure' | 'why' | 'limit' | 'canDo' | 'tellNow' | 'app'
+export type Part = 'measure' | 'howTo' | 'why' | 'nasa' | 'limit' | 'canDo' | 'tellNow' | 'app'
 
 /** The parts of an entry, in reading order, with their headings. */
 export const PARTS: { key: Part; heading: string }[] = [
   { key: 'measure', heading: 'What it is' },
+  { key: 'howTo', heading: 'How to check it' },
   { key: 'why', heading: 'Why it matters in space' },
+  { key: 'nasa', heading: 'NASA’s name for it' },
   { key: 'limit', heading: 'Limit or target' },
   { key: 'canDo', heading: 'What you can do' },
   { key: 'tellNow', heading: 'Tell your medical officer now if' },
   { key: 'app', heading: 'What the app does with it' },
 ]
 
-export type Section = 'cabin' | 'you' | 'risks'
+export type Section = 'start' | 'you' | 'cabin' | 'risks'
 
 export const SECTIONS: { key: Section; title: string }[] = [
-  { key: 'cabin', title: 'Cabin' },
+  { key: 'start', title: 'Start here' },
   { key: 'you', title: 'You' },
+  { key: 'cabin', title: 'Cabin' },
   { key: 'risks', title: 'NASA risks' },
 ]
 
@@ -109,10 +112,22 @@ const CREW_SHARE = `${Math.round(RULES.crewShare * 100)}%`
 export const EMERGENCY_LINE =
   'In an emergency, follow your onboard medical procedures and call your crew medical officer. This guide explains readings; it does not tell you what is wrong.'
 
+/** Shown under the emergency line: the one instruction that holds for every reading. */
+export const CONCERN_LINE = 'If something worries you, tell your crew medical officer. You do not need a reading to change first.'
+
+/** How every symptom is answered at check-in. */
+const NONE_TODAY = app('No symptoms? Tap “None today”: the check-in needs an answer here.')
+const FROM_SENSORS = app('You do not measure it: the ship’s sensors do.')
+const CABIN_CHIP = app('The “Cabin air” chip at the top of your dashboard shows whether the air is in its usual range today.')
+const STEADY_SCALE = app(
+  'Use the scale the same way every day. The app looks for change from your own usual, so a steady scale matters more than the exact number.',
+)
+const WATCH_SAYS_LITTLE = app('One reading on its own says little: look at it over several days, and at how you feel.')
+
 const READINGS: GuideEntry[] = [
   {
     id: 'you-or-ship',
-    section: 'cabin',
+    section: 'start',
     title: 'Likely you, or likely the ship',
     words: ['verdict', 'alert', 'ship alert', 'status', 'why am i', 'how it works', 'normal', 'usual', 'drift'],
     risks: ['co2'],
@@ -121,6 +136,10 @@ const READINGS: GuideEntry[] = [
         app(
           `Each day the app compares your check-in with your own usual: the middle of your last ${RULES.baselineWindowDays} check-ins. A reading far from your usual counts as off.`,
         ),
+      ],
+      howTo: [
+        app('Check in each morning. It takes about a minute, and the more days the app has, the better it knows your usual.'),
+        app('Open My dashboard: the two chips at the top, “You” and “Cabin air”, show today’s call.'),
       ],
       app: [
         app(
@@ -139,6 +158,7 @@ const READINGS: GuideEntry[] = [
     risks: ['co2'],
     parts: {
       measure: [app('How much carbon dioxide is in the cabin air, as a daily average in mmHg.')],
+      howTo: [FROM_SENSORS, CABIN_CHIP],
       why: [
         from('co2Symptoms', 'On earlier missions, crews reported headaches at CO₂ between 2.8 and 4.5 mmHg, and fatigue, poorer sleep and nausea above 4.5 mmHg.'),
         from('fluidShift', 'Weightlessness causes similar headaches through the fluid shift, so one headache does not mean the air is to blame.'),
@@ -165,6 +185,7 @@ const READINGS: GuideEntry[] = [
     risks: ['sleep'],
     parts: {
       measure: [app('The cabin air temperature, as a daily average in °C.')],
+      howTo: [FROM_SENSORS, CABIN_CHIP],
       why: [
         from('cabinLimits', 'Outside NASA’s limits the crew can overheat and work less well.'),
         from('sleepEnv', 'Temperature is one of the things that disturb sleep in space, with noise, vibration and light.'),
@@ -185,6 +206,7 @@ const READINGS: GuideEntry[] = [
     risks: ['medical'],
     parts: {
       measure: [app('How much water vapour is in the cabin air, as relative humidity in percent.')],
+      howTo: [FROM_SENSORS, CABIN_CHIP],
       why: [from('cabinLimits', 'Air that is too dry or too humid can leave your nose and eyes dry, stuffy or irritated, and can cause skin rashes.')],
       limit: [
         from('cabinComfort', `Comfort range ${rhComfortLo}–${rhComfortHi}%.`),
@@ -202,6 +224,7 @@ const READINGS: GuideEntry[] = [
     risks: ['radiation'],
     parts: {
       measure: [app('An estimate of the radiation dose you have taken on this mission, in millisieverts (mSv).')],
+      howTo: [app('You do not measure it: the app estimates it from the mission day. It is not a dosimeter reading.')],
       why: [from('radEffects', 'Dose raises cancer risk and may affect thinking and behavior. A solar storm can cause nausea, vomiting and fatigue.')],
       limit: [from('radLimit', `A career limit of ${CAREER_LIMIT_MSV} mSv, the same for every age and sex.`)],
       canDo: [from('radEffects', 'When you are warned of a solar storm, go to the shelter.')],
@@ -219,6 +242,11 @@ const READINGS: GuideEntry[] = [
     risks: ['sleep'],
     parts: {
       measure: [app('How long you slept, from your watch, and how rested you feel, which you rate from 0 to 10 at check-in.')],
+      howTo: [
+        app('Wear your watch to bed: it records how long you slept. You do not enter the hours.'),
+        app('At check-in, rate how well you slept last night: 0 is very badly, 10 is very well.'),
+        STEADY_SCALE,
+      ],
       why: [
         from('sleepIss', 'On six-month ISS missions astronauts slept about 6.5 h. Nights under 6 h went with slower responses, more stress and a heavier workload.'),
         from('sleepEnv', 'Noise, temperature, vibration and light all disturb sleep in space.'),
@@ -242,6 +270,11 @@ const READINGS: GuideEntry[] = [
     risks: ['sleep'],
     parts: {
       measure: [app('A short test: tap as soon as the signal appears. The app measures how fast you respond and counts lapses.')],
+      howTo: [
+        app('It is at the end of your check-in, and optional.'),
+        app('Wait for the pad to light up, then tap it or press space as fast as you can. Taps before it lights are counted as early taps.'),
+        app('Take it at about the same point in your day, so today compares fairly with your usual.'),
+      ],
       why: [from('sleepIss', 'Sleep loss slows responses: on the ISS, nights under 6 h went with slower responses.')],
       limit: [from('pvtLapse', 'The test works like PVT-B: a response of 355 ms or slower counts as a lapse.')],
       app: [app('It compares your speed with your own usual. No cabin factor explains it, so it never points at the ship.')],
@@ -255,6 +288,11 @@ const READINGS: GuideEntry[] = [
     risks: ['sleep', 'behavioral', 'team'],
     parts: {
       measure: [app('Two ratings from 0 to 10 in your check-in: how tired you feel and how easily irritated.')],
+      howTo: [
+        app('Rate how you feel right now, this morning, not how yesterday went.'),
+        app('Tired: 0 is not at all, 10 is exhausted. Irritable: 0 is calm, 10 is on edge.'),
+        app('An honest number helps more than a brave one: it is what lets the app tell a bad night from bad air.'),
+      ],
       why: [
         from('co2Symptoms', 'NASA lists fatigue among crew symptoms at higher cabin CO₂.'),
         from('sleepIss', 'Short sleep went with more stress and a heavier workload on the ISS.'),
@@ -272,6 +310,11 @@ const READINGS: GuideEntry[] = [
     risks: ['behavioral', 'team'],
     parts: {
       measure: [app('Two private ratings from 0 to 10 in your check-in: your mood and how stressed you feel.')],
+      howTo: [
+        app('Rate how you feel this morning. Mood: 0 is very low, 10 is very good. Stress: 0 is not at all, 10 is very stressed.'),
+        app('There is no right number. A low day is worth recording as it is.'),
+        app('You do not have to wait for a number to change to talk to someone: use “Need help now?” at the top of the check-in.'),
+      ],
       why: [
         from('isolation', 'NASA: the isolation and confinement of spaceflight can affect thinking and behavior.'),
         from('bhConcerns', 'Stress, depression, anxiety, relationship problems and grief are common concerns on missions. They can be temporary and ease with time or support.'),
@@ -297,6 +340,10 @@ const READINGS: GuideEntry[] = [
     risks: ['bone', 'muscle', 'aerobic'],
     parts: {
       measure: [app(`Minutes of exercise each day, from your watch, against a target of ${RULES.exerciseTargetMin} minutes.`)],
+      howTo: [
+        app('Wear your watch while you exercise: it logs the minutes. You do not enter them.'),
+        app('Your check-in shows yesterday’s minutes under “Last night”.'),
+      ],
       why: [
         from('boneLoss', 'In weightlessness, weight-bearing bones lose on average 1 to 1.5% of their mineral density a month.'),
         from('exerciseKey', 'Exercise is one of the most important ways to limit the loss of strength.'),
@@ -318,6 +365,7 @@ const READINGS: GuideEntry[] = [
     risks: ['co2', 'medical'],
     parts: {
       measure: [app('A symptom you tick in your check-in.')],
+      howTo: [app('Tick “Headache” if you have had one since yesterday’s check-in, even a mild one.'), NONE_TODAY],
       why: [
         from('headacheRate', 'In one NASA review, 19 of 49 astronauts reported headaches.'),
         from('co2Symptoms', 'On earlier missions, crews reported headaches from 2.8 mmHg of CO₂.'),
@@ -335,6 +383,7 @@ const READINGS: GuideEntry[] = [
     risks: ['medical'],
     parts: {
       measure: [app('A symptom you tick in your check-in.')],
+      howTo: [app('Tick “Congestion” if your nose has felt blocked or stuffy since yesterday’s check-in.'), NONE_TODAY],
       why: [
         from('cabinLimits', 'Air outside NASA’s humidity range can leave your nose dry, stuffy or irritated.'),
         from('congestionCo2', 'On the ISS the odds of reporting congestion doubled for each 1 mmHg more CO₂, and it kept being reported long after the early fluid shift settled.'),
@@ -350,6 +399,7 @@ const READINGS: GuideEntry[] = [
     risks: ['medical'],
     parts: {
       measure: [app('A symptom you tick in your check-in.')],
+      howTo: [app('Tick “Dry or sore eyes” if your eyes have felt dry, gritty or sore since yesterday’s check-in.'), NONE_TODAY],
       why: [
         from('cabinLimits', 'Air outside NASA’s humidity range can leave your eyes dry or irritated.'),
         from('dryEye', 'Over 30% of ISS crew reported dry eye in space. Strong air flow, CO₂, lighting and screen work can all play a part, as well as humidity.'),
@@ -378,6 +428,7 @@ const READINGS: GuideEntry[] = [
     risks: ['sensorimotor'],
     parts: {
       measure: [app('Symptoms you tick in your check-in.')],
+      howTo: [app('“Dizziness” and “Nausea” are two tiles: tick each one you have had since yesterday’s check-in.'), NONE_TODAY],
       why: [
         from('sensorimotor', 'Changes in gravity can cause motion sickness and disorientation. After landing it takes hours to days to readapt.'),
         from('co2Symptoms', 'NASA lists nausea among crew symptoms when CO₂ is above 4.5 mmHg.'),
@@ -394,6 +445,10 @@ const READINGS: GuideEntry[] = [
     risks: ['hypoxia'],
     parts: {
       measure: [app('Blood oxygen saturation (SpO₂) from your watch, in percent.')],
+      howTo: [
+        app('You do not enter it: your watch measures it. It is under “From your wearable” on your dashboard, and on your check-in.'),
+        WATCH_SAYS_LITTLE,
+      ],
       why: [
         from('hypoxiaCauses', 'Low oxygen can follow a loss of cabin pressure, a life-support failure, a toxic exposure, or illness or injury.'),
         from('hypoxiaSigns', 'Its signs include fatigue, nausea, headache, dizziness, mood changes, poorer sleep and fast breathing. Changes in thinking can go unnoticed.'),
@@ -411,6 +466,10 @@ const READINGS: GuideEntry[] = [
     risks: ['cv'],
     parts: {
       measure: [app('Resting heart rate, heart rate variability (HRV), breathing rate and skin temperature, from your watch.')],
+      howTo: [
+        app('You do not enter them: your watch measures them. They are under “From your wearable” on your dashboard, and on your check-in.'),
+        WATCH_SAYS_LITTLE,
+      ],
       why: [
         from('bioMonitor', 'The Canadian Space Agency’s Bio-Monitor garment for the ISS measures these same kinds of signals.'),
         from('cvRisk', 'Spaceflight can decondition the heart and blood vessels.'),
@@ -423,7 +482,25 @@ const READINGS: GuideEntry[] = [
   },
 ]
 
-/** One plain sentence per risk, where a checked source gives one. The NASA title is always shown. */
+/** What each NASA risk means, in plain words: the NASA title (hrpTitles) said simply. */
+const RISK_PLAIN: Record<HrpRiskKey, string> = {
+  sleep: 'Too little sleep, a disturbed body clock or too much work can hurt your health and how well you work.',
+  behavioral: 'Changes in thinking, mood or behavior during a mission can affect your health and work, and last after it.',
+  team: 'A crew that struggles to cooperate, coordinate or communicate can work less well and feel worse.',
+  co2: 'Cabin CO₂, over hours or over months, can affect health and performance during the mission.',
+  sensorimotor: 'Changes to your balance and sense of motion can affect critical tasks and your health.',
+  sans: 'A change to the eyes and nervous system that comes with spaceflight.',
+  medical: 'An illness or injury during the mission can harm your health and how well you work.',
+  bone: 'Spaceflight changes bone, which can lead to a fracture.',
+  muscle: 'Smaller, weaker muscles with less endurance reduce what you can physically do.',
+  aerobic: 'Lower aerobic fitness reduces what you can physically do.',
+  radiation: 'Space radiation raises the chance of cancer.',
+  eihso: 'Working far from Earth, with less help from the ground, can lead to worse mission outcomes.',
+  cv: 'Changes to the heart and blood vessels can affect your health and how well you work.',
+  hypoxia: 'Too little oxygen can reduce crew health and performance.',
+}
+
+/** One sentence per risk on why it matters, where a checked source gives one. */
 const RISK_WHY: Partial<Record<HrpRiskKey, Line[]>> = {
   sleep: [from('sleepEnv', 'Sleep loss and a disturbed body clock lead to fatigue and errors.')],
   behavioral: [from('isolation', 'The isolation and confinement of spaceflight can affect thinking and behavior.')],
@@ -446,8 +523,9 @@ function riskEntries(): GuideEntry[] {
     words: ['risk', 'nasa risk', 'hrp'],
     risks: [key],
     parts: {
-      measure: [from('hrpTitles', HRP_RISKS[key].title)],
+      measure: [from('hrpTitles', RISK_PLAIN[key])],
       why: RISK_WHY[key],
+      nasa: [from('hrpTitles', HRP_RISKS[key].title)],
     },
   }))
 }
