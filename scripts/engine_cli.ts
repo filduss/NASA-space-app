@@ -42,7 +42,12 @@ const runs = input.runs.map((run) => {
     days: days.map((d) => ({
       day: d.day,
       outcome: d.decision.outcome,
+      // The cabin factors a ship alert blamed, and the ones the rule suspected today (the backtest
+      // counts real days per factor from these, so no threshold is repeated in Python).
+      causes: d.decision.causes,
+      suspects: d.cabin.suspects,
       cabinElevated: d.cabin.elevated,
+      cabinOverLimit: d.cabin.overLimit,
       cabinKnown: d.decision.cabinKnown,
       shipEpisodeDay: d.shipEpisodeDay,
       summaries: d.summaries.map((s) => s.kind),

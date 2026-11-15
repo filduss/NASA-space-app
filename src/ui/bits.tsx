@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { HRP_RISKS, type HrpRiskKey } from '../data/hrp.ts'
 
 // Status is always shape + word, never color alone.
 export type Tone = 'ok' | 'watch' | 'alert' | 'idle' | 'info'
@@ -37,6 +38,24 @@ export function Card({ title, aside, tone, children, id }: { title?: ReactNode; 
       )}
       {children}
     </section>
+  )
+}
+
+/** "NASA risk: Sleep loss": the NASA Human System Risks a reading informs, each linked to NASA's page. */
+export function RiskLinks({ risks }: { risks: HrpRiskKey[] }) {
+  if (risks.length === 0) return null
+  return (
+    <span className="risk-links">
+      NASA risk{risks.length > 1 ? 's' : ''}:{' '}
+      {risks.map((k, i) => (
+        <span key={k}>
+          {i > 0 && ', '}
+          <a href={HRP_RISKS[k].url} target="_blank" rel="noreferrer" title={HRP_RISKS[k].title}>
+            {HRP_RISKS[k].short}
+          </a>
+        </span>
+      ))}
+    </span>
   )
 }
 

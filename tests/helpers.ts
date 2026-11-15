@@ -27,11 +27,19 @@ export function steady(crewId: string, fromDay: number, toDay: number): CheckIn[
   return out
 }
 
-export function cabin(fromDay: number, toDay: number, level = 2.4, over: Record<number, number | null> = {}): CabinDay[] {
+/** Cabin days at a steady CO2 level, 22.5 °C and 45% humidity, with per-day overrides. */
+export function cabin(
+  fromDay: number,
+  toDay: number,
+  level = 2.4,
+  over: Record<number, number | null> = {},
+  air: Record<number, { temp?: number; rh?: number }> = {},
+): CabinDay[] {
   const out: CabinDay[] = []
   for (let d = fromDay; d <= toDay; d++) {
     const co2 = d in over ? over[d] : level + (d % 2 === 0 ? 0.05 : -0.05)
-    out.push({ day: d, date: `day-${d}`, hours: co2 === null ? 0 : 24, co2Mean: co2, co2Max1h: co2 === null ? null : co2 + 0.3, temp: 22.5, rh: 45 })
+    const { temp = 22.5, rh = 45 } = air[d] ?? {}
+    out.push({ day: d, date: `day-${d}`, hours: co2 === null ? 0 : 24, co2Mean: co2, co2Max1h: co2 === null ? null : co2 + 0.3, temp, rh })
   }
   return out
 }

@@ -1,6 +1,6 @@
 import { RULES } from './config.ts'
 import { INDICATORS, SPEC } from './deviation.ts'
-import type { DayResult, IndicatorKey, PersonStatus } from './types.ts'
+import type { CabinFactor, DayResult, IndicatorKey, PersonStatus } from './types.ts'
 
 // Who may see what (docs/SPEC.md, "Privacy"). The UI only ever renders through these helpers.
 
@@ -107,6 +107,8 @@ export interface CmoItem {
   count?: number
   of?: number
   indicators: IndicatorKey[]
+  /** A ship item: the cabin factors blamed. */
+  causes?: CabinFactor[]
 }
 
 export function cmoInbox(day: DayResult, shareWatch: Record<string, boolean>): CmoItem[] {
@@ -117,11 +119,13 @@ export function cmoInbox(day: DayResult, shareWatch: Record<string, boolean>): C
     if (p.conference === 'urgent') items.push({ kind: 'urgent', crewId: p.crewId, indicators: [] })
   }
   if (day.decision.outcome === 'ship') {
+    const causes = day.decision.causes
     items.push({
       kind: 'ship',
-      count: day.decision.driftingCo2.length,
+      count: day.decision.driftingShip.length,
       of: day.decision.crewSize,
-      indicators: unique(people.flatMap((p) => p.assessment.co2LinkedOff)),
+      indicators: unique(people.flatMap((p) => causes.flatMap((f) => p.assessment.linkedOff[f]))),
+      causes,
     })
   }
   if (day.decision.outcome === 'shared') {

@@ -1,14 +1,20 @@
 import { startingBaseline, trailingBaseline, type Sample } from './baseline.ts'
 import { RULES } from './config.ts'
-import type { CheckIn, IndicatorKey, IndicatorResult, PersonDay, SymptomKey } from './types.ts'
+import type { CabinFactor, CheckIn, IndicatorKey, IndicatorResult, PersonDay, SymptomKey } from './types.ts'
+
+/** The cabin factors the ship-or-me rule checks, in the order it names them. */
+export const CABIN_FACTORS: CabinFactor[] = ['co2', 'temp', 'rh']
 
 export interface IndicatorSpec {
   key: IndicatorKey
   label: string
   /** Which direction is unwanted. */
   direction: 'lowBad' | 'highBad'
-  /** May the ship-or-me rule use it? Only indicators with published CO2 evidence. */
-  co2Linked: boolean
+  /**
+   * The cabin factors that could explain drift in this indicator, so the ship-or-me rule may use it for
+   * them. Each link has a source in docs/SPEC.md; mood, stress and alertness have none.
+   */
+  linkedTo: CabinFactor[]
   /** Shared on the crew board by default, or private to the person. */
   privacy: 'shared' | 'private'
   /**
@@ -32,80 +38,80 @@ export const INDICATORS: IndicatorSpec[] = [
     key: 'sleepHours',
     label: 'Sleep duration',
     direction: 'lowBad',
-    co2Linked: true,
+    linkedTo: ['co2', 'temp'],
     privacy: 'shared',
     minSpread: 0.5,
     unit: 'h',
     offText: 'Sleep shorter than',
-    whyWeAsk: 'Under 6 h of sleep was linked to slower responses and higher stress on the ISS.',
-    source: 'ISS Reaction Self Test study (sleep deficiency in spaceflight)',
+    whyWeAsk: 'On six-month ISS missions astronauts slept about 6.5 h, and nights under 6 h went with slower responses and more stress.',
+    source: 'ISS Reaction Self-Test study, 24 astronauts (Jones et al. 2022); NASA lists poor sleep among CO₂ symptoms and temperature among what disturbs sleep in space',
   },
   {
     key: 'sleepQuality',
     label: 'Sleep quality',
     direction: 'lowBad',
-    co2Linked: true,
+    linkedTo: ['co2', 'temp'],
     privacy: 'shared',
     minSpread: 1,
     unit: '/10',
     offText: 'Sleep quality below',
-    whyWeAsk: 'Higher cabin CO₂ has been linked to sleep problems.',
-    source: 'Law et al. 2014 and follow-on reports; effect size is a demo parameter',
+    whyWeAsk: 'NASA lists poor sleep among crew symptoms at higher cabin CO₂, and temperature among what disturbs sleep in space.',
+    source: 'NASA OCHMO-TB-004 (CO₂); NASA sleep risk page (temperature); effect size is a demo parameter',
   },
   {
     key: 'fatigue',
     label: 'Fatigue',
     direction: 'highBad',
-    co2Linked: true,
+    linkedTo: ['co2'],
     privacy: 'shared',
     minSpread: 1,
     unit: '/10',
     offText: 'Fatigue above',
-    whyWeAsk: 'Fatigue tracks sleep loss and has been linked to higher cabin CO₂.',
-    source: 'Effect size is a demo parameter',
+    whyWeAsk: 'Fatigue tracks sleep loss, and NASA lists it with headaches among crew symptoms at higher cabin CO₂.',
+    source: 'NASA OCHMO-TB-004; effect size is a demo parameter',
   },
   {
     key: 'irritability',
     label: 'Irritability',
     direction: 'highBad',
-    co2Linked: true,
+    linkedTo: ['co2'],
     privacy: 'shared',
     minSpread: 1,
     unit: '/10',
     offText: 'Irritability above',
-    whyWeAsk: 'Irritability has been reported alongside higher cabin CO₂.',
-    source: 'Effect size is a demo parameter',
+    whyWeAsk: 'Irritability often follows poor sleep. The rule also links it to cabin CO₂, which NASA’s CO₂ symptom list does not.',
+    source: 'From the plan, not from NASA’s CO₂ symptom list (OCHMO-TB-004); effect size is a demo parameter',
   },
   {
     key: 'symptoms',
     label: 'Symptoms',
     direction: 'highBad',
-    co2Linked: true,
+    linkedTo: ['co2', 'rh'],
     privacy: 'shared',
     minSpread: 1,
     unit: '',
     offText: 'Symptoms reported',
-    whyWeAsk: 'On the ISS the odds of a headache doubled for each 1 mmHg of CO₂.',
-    source: 'Law et al. 2014',
+    whyWeAsk: 'On the ISS the odds of a headache doubled for each 1 mmHg of CO₂. NASA’s cabin standard says air outside its humidity range dries and irritates the eyes and nose.',
+    source: 'Law et al. 2014; NASA-STD-3001 Vol 2 [V2 6012]',
   },
   {
     key: 'reaction',
     label: 'Alertness',
     direction: 'lowBad',
-    co2Linked: false,
+    linkedTo: [],
     privacy: 'shared',
     minSpread: 0.04,
     minSpreadRelative: true,
     unit: 'responses/s',
     offText: 'Response speed below',
-    whyWeAsk: 'A short reaction test picks up the effects of sleep loss before you feel them.',
-    source: 'NASA Reaction Self Test (PVT-B); thresholds are demo parameters, browser timing is an estimate',
+    whyWeAsk: 'A short reaction test picks up the effects of sleep loss before you feel them: on the ISS, nights under 6 h went with slower responses.',
+    source: 'NASA Reaction Self Test (PVT-B); Jones et al. 2022; thresholds are demo parameters, browser timing is an estimate',
   },
   {
     key: 'stress',
     label: 'Stress',
     direction: 'highBad',
-    co2Linked: false,
+    linkedTo: [],
     privacy: 'private',
     slowDrift: true,
     minSpread: 1,
@@ -118,7 +124,7 @@ export const INDICATORS: IndicatorSpec[] = [
     key: 'mood',
     label: 'Mood',
     direction: 'lowBad',
-    co2Linked: false,
+    linkedTo: [],
     privacy: 'private',
     slowDrift: true,
     minSpread: 1,
@@ -134,15 +140,29 @@ export const SPEC: Record<IndicatorKey, IndicatorSpec> = Object.fromEntries(
   INDICATORS.map((i) => [i.key, i]),
 ) as Record<IndicatorKey, IndicatorSpec>
 
-/** Symptoms the ship rule may count. Headache is the one with a published CO2 dose-response. */
-export const CO2_LINKED_SYMPTOMS: SymptomKey[] = ['headache']
+/**
+ * Which cabin factor each symptom may count toward. Headache is the one with a published CO2
+ * dose-response (Law et al. 2014). Congestion and dry or sore eyes count toward humidity: NASA-STD-3001
+ * [V2 6012] names "dry, stuffy and/or irritated mucous membranes" outside its humidity range. NASA's CO2
+ * brief also reports nausea above 4.5 mmHg, anecdotally; it is not used.
+ */
+export const SYMPTOM_LINKS: Record<SymptomKey, CabinFactor[]> = {
+  headache: ['co2'],
+  dizziness: [],
+  nausea: [],
+  congestion: ['rh'],
+  eye_strain: ['rh'],
+}
+
+/** Symptoms the ship rule may count toward cabin CO2. */
+export const CO2_LINKED_SYMPTOMS: SymptomKey[] = (Object.keys(SYMPTOM_LINKS) as SymptomKey[]).filter((s) => SYMPTOM_LINKS[s].includes('co2'))
 
 export const SYMPTOMS: { key: SymptomKey; label: string }[] = [
   { key: 'headache', label: 'Headache' },
   { key: 'dizziness', label: 'Dizziness' },
   { key: 'nausea', label: 'Nausea' },
   { key: 'congestion', label: 'Congestion' },
-  { key: 'eye_strain', label: 'Eye strain' },
+  { key: 'eye_strain', label: 'Dry or sore eyes' },
 ]
 
 /** The number the engine compares. Reaction time becomes response speed, as in the PVT literature. */
@@ -188,7 +208,8 @@ export function assessPerson(crewId: string, day: number, history: CheckIn[], me
   const indicators = {} as PersonDay['indicators']
   if (!today) {
     for (const k of INDICATOR_KEYS) indicators[k] = blank(k, 'not_measured')
-    return { crewId, day, checkedIn: false, live: false, indicators, off: [], co2LinkedOff: [], symptoms: [] }
+    const linkedOff = { co2: [], temp: [], rh: [] }
+    return { crewId, day, checkedIn: false, live: false, indicators, off: [], co2LinkedOff: [], linkedOff, symptoms: [] }
   }
 
   for (const spec of INDICATORS) {
@@ -255,11 +276,14 @@ export function assessPerson(crewId: string, day: number, history: CheckIn[], me
   }
 
   const off = INDICATOR_KEYS.filter((k) => indicators[k].off)
-  const co2LinkedOff = off.filter((k) => {
-    if (!SPEC[k].co2Linked) return false
-    if (k === 'symptoms') return today.symptoms.some((s) => CO2_LINKED_SYMPTOMS.includes(s))
-    return true
-  })
+  const linkedOff = {} as PersonDay['linkedOff']
+  for (const f of CABIN_FACTORS) {
+    linkedOff[f] = off.filter((k) => {
+      if (!SPEC[k].linkedTo.includes(f)) return false
+      if (k === 'symptoms') return today.symptoms.some((s) => SYMPTOM_LINKS[s].includes(f))
+      return true
+    })
+  }
   return {
     crewId,
     day,
@@ -267,7 +291,8 @@ export function assessPerson(crewId: string, day: number, history: CheckIn[], me
     live: !today.simulated,
     indicators,
     off,
-    co2LinkedOff,
+    co2LinkedOff: linkedOff.co2,
+    linkedOff,
     symptoms: today.symptoms,
   }
 }

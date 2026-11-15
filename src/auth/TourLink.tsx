@@ -19,9 +19,9 @@ export function TourLink({ stop, className, children }: { stop: TourStop; classN
     e.preventDefault()
     if (state === 'busy') return
     setState('busy')
-    const r = await logIn(stop.as, DEMO_PINS[stop.as])
-    if (r.ok) window.location.assign(href)
-    else setState('failed')
+    // The store loads the page itself once the PIN is checked, without changing who this page shows.
+    const r = await logIn(stop.as, DEMO_PINS[stop.as], href)
+    if (!r.ok) setState('failed')
   }
 
   return (

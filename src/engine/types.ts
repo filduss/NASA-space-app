@@ -102,9 +102,24 @@ export interface PersonDay {
   indicators: Record<IndicatorKey, IndicatorResult>
   /** Indicators off today. */
   off: IndicatorKey[]
-  /** The subset that the ship-or-me rule may use. Never contains mood or stress. */
+  /** The subset that cabin CO2 could explain (the same list as `linkedOff.co2`). Never contains mood or stress. */
   co2LinkedOff: IndicatorKey[]
+  /** For each cabin factor, the indicators off today that it could explain. Never contains mood or stress. */
+  linkedOff: Record<CabinFactor, IndicatorKey[]>
   symptoms: SymptomKey[]
+}
+
+/** A cabin cause the ship-or-me rule can name. All three come from the same real ISS telemetry. */
+export type CabinFactor = 'co2' | 'temp' | 'rh'
+
+/** Cabin temperature (°C) or relative humidity (%) today, against NASA's ranges (engine/config.ts). */
+export interface ComfortStatus {
+  /** 24 h mean; null when the day has too few hours of data. */
+  value: number | null
+  /** Below or above the comfort range of NASA-STD-3001 [V2 6013]; null inside it or without data. */
+  outside: 'low' | 'high' | null
+  /** Outside the crew health limits of NASA-STD-3001 [V2 6012]. */
+  overLimit: boolean
 }
 
 export interface CabinStatus {
@@ -124,6 +139,13 @@ export interface CabinStatus {
   overLimit: boolean
   /** Most recent day with a usable mean, for the freshness label. */
   lastDataDay: number | null
+  temp: ComfortStatus
+  rh: ComfortStatus
+  /**
+   * The cabin factors the ship-or-me rule may blame today: CO2 above its own baseline or over its limit,
+   * temperature or humidity outside NASA's comfort range.
+   */
+  suspects: CabinFactor[]
 }
 
 export type Outcome = 'none' | 'ship' | 'me' | 'shared'
@@ -136,8 +158,14 @@ export interface Decision {
   driftingCo2: string[]
   /** Crew drifting on any indicator today. */
   driftingAny: string[]
+  /** For each cabin factor, the crew drifting today on indicators it could explain. */
+  driftingOn: Record<CabinFactor, string[]>
+  /** The cabin factors behind today's ship alert, in CO2, temperature, humidity order; empty without one. */
+  causes: CabinFactor[]
+  /** Crew drifting on indicators that today's causes could explain: the people a ship alert covers. */
+  driftingShip: string[]
   cabinElevated: boolean
-  /** Ship alert carried over from an earlier day because the cabin is still above baseline or over the limit. */
+  /** Ship alert carried over from an earlier day because the factor behind it is still a suspect. */
   held: boolean
   /** False when the cabin had no usable data: the rule could not check the air. */
   cabinKnown: boolean
@@ -185,7 +213,9 @@ export interface SurgeonSummary {
   /** `start` is the starting normal when the indicator is off because of a slow change, else null. */
   indicators: { key: IndicatorKey; daysOff: number; value: number | null; usual: number | null; start: number | null }[]
   affected?: string[]
-  cabin: Pick<CabinStatus, 'co2Mean' | 'co2Max1h' | 'baseline' | 'elevated' | 'aboveLimit' | 'overLimit' | 'hasData'>
+  /** Ship summaries: the cabin factors blamed. */
+  causes?: CabinFactor[]
+  cabin: Pick<CabinStatus, 'co2Mean' | 'co2Max1h' | 'baseline' | 'elevated' | 'aboveLimit' | 'overLimit' | 'hasData' | 'temp' | 'rh'>
 }
 
 export interface DayResult {

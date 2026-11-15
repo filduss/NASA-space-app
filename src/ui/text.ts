@@ -1,7 +1,7 @@
 import type { BacktestFile } from '../data/types.ts'
 import { RULES } from '../engine/config.ts'
 import { SPEC, SYMPTOMS } from '../engine/deviation.ts'
-import type { IndicatorKey, IndicatorResult, SymptomKey } from '../engine/types.ts'
+import type { CabinFactor, CabinStatus, ComfortStatus, IndicatorKey, IndicatorResult, SymptomKey } from '../engine/types.ts'
 
 // All wording lives here. Cards say what was measured against the person's own normal
 // ("below your usual for 4 days"), say "likely", and never name a diagnosis.
@@ -97,14 +97,66 @@ export function mmHg(v: number | null, digits = 1): string {
   return v === null ? 'n/a' : `${v.toFixed(digits)} mmHg`
 }
 
+export function celsius(v: number | null): string {
+  return v === null ? 'n/a' : `${v.toFixed(1)} °C`
+}
+
+export function rhPercent(v: number | null): string {
+  return v === null ? 'n/a' : `${Math.round(v)}%`
+}
+
+/** What each cabin factor is called in a sentence, and the readings it could explain. */
+export const FACTOR: Record<CabinFactor, { name: string; feels: string }> = {
+  co2: { name: 'cabin CO₂', feels: 'CO₂-linked changes (headache, sleep, fatigue, irritability)' },
+  temp: { name: 'cabin temperature', feels: 'sleep changes' },
+  rh: { name: 'cabin humidity', feels: 'a stuffy nose or dry, sore eyes' },
+}
+
+/** "cabin CO₂", "cabin CO₂ and cabin temperature". */
+export function causeWords(causes: CabinFactor[]): string {
+  return list(causes.map((f) => FACTOR[f].name))
+}
+
+const OFF_USUAL: Record<CabinFactor, string> = {
+  co2: 'cabin CO₂ is above its usual level',
+  temp: "the cabin temperature is outside NASA's comfort range",
+  rh: "the cabin humidity is outside NASA's comfort range",
+}
+
+/** Why the ship is blamed, for a sentence ending "...while <this>". */
+export function shipBecause(causes: CabinFactor[]): string {
+  return list((causes.length ? causes : (['co2'] as CabinFactor[])).map((f) => OFF_USUAL[f]))
+}
+
+/** Temperature or humidity against NASA's ranges, in words: "22.6 °C, inside NASA's comfort range (20–25 °C)". */
+export function comfortLine(f: 'temp' | 'rh', s: ComfortStatus): string {
+  const [lo, hi] = f === 'temp' ? RULES.tempComfortC : RULES.rhComfortPct
+  const [llo, lhi] = f === 'temp' ? RULES.tempLimitC : RULES.rhLimitPct
+  const v = f === 'temp' ? celsius(s.value) : rhPercent(s.value)
+  const range = f === 'temp' ? `${lo}–${hi} °C` : `${lo}–${hi}%`
+  if (s.value === null) return 'no usable reading today'
+  if (s.overLimit) return `${v}, outside NASA's crew health limits (${f === 'temp' ? `${llo}–${lhi} °C` : `${llo}–${lhi}%`})`
+  if (s.outside) return `${v}, ${s.outside === 'low' ? 'below' : 'above'} NASA's comfort range (${range})`
+  return `${v}, inside NASA's comfort range (${range})`
+}
+
+/** Today's temperature and humidity in one sentence, for the Ship screen and summaries. */
+export function airLine(cabin: Pick<CabinStatus, 'temp' | 'rh'>): string {
+  return `Temperature ${comfortLine('temp', cabin.temp)}; humidity ${comfortLine('rh', cabin.rh)}.`
+}
+
 /** The rule's track record in one line, for the Ship screen: the backtest's base case. Null without the file. */
 export function evidenceLine(bt: BacktestFile | null): string | null {
   const base = bt?.scenarios[0]
   if (!bt || !base || base.shipOrMeAccuracy === null) return null
   const every = base.falseAlarms.shipPerCrewDay > 0 ? Math.round(1 / base.falseAlarms.shipPerCrewDay) : null
+  const split = base.accuracyByClass
+  const named =
+    split?.shipDays.accuracy != null && split.personalDays.accuracy != null
+      ? `said "the ship" in ${percent(split.shipDays.accuracy)} of alerts on days with a CO₂ rise and "not the ship" in ${percent(split.personalDays.accuracy)} on days with one person's own problem`
+      : `named the right cause in ${percent(base.shipOrMeAccuracy)} of alerts`
   return (
-    `Tested on ${bt.meta.crews} simulated crews over ${Object.keys(bt.meta.traces).length} real ISS CO₂ traces: ` +
-    `the rule named the right cause in ${percent(base.shipOrMeAccuracy)} of alerts` +
+    `Tested on ${bt.meta.crews} simulated crews over ${Object.keys(bt.meta.traces).length} real ISS cabin traces: the rule ${named}` +
     (every ? `, and raised a ship alert with no CO₂ rise behind it about once every ${every} crew-days.` : '.')
   )
 }

@@ -2,15 +2,66 @@ import { useMemo } from 'react'
 import { cabinLevel } from '../dashboard/model.ts'
 import { RULES } from '../engine/config.ts'
 import { shipFollowUp } from '../engine/privacy.ts'
+import type { CabinFactor, CabinStatus } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
-import { Card, Mark, Origin, Stat } from './bits.tsx'
+import { Card, Mark, Origin, RiskLinks, Stat } from './bits.tsx'
 import { LineChart } from './charts.tsx'
 import { ShipBanner } from './CrewBoard.tsx'
 import { FollowUpCard } from './FollowUp.tsx'
 import { RadiationCard } from './Radiation.tsx'
-import { evidenceLine, list, mmHg } from './text.ts'
+import { causeWords, celsius, comfortLine, evidenceLine, FACTOR, list, mmHg, rhPercent } from './text.ts'
 
 const CHART_DAYS = 14
+
+/** "Cabin CO₂ is off and enough of the crew feel it, so the likely cause is the ship", and what that rules out. */
+function shipVerdict(causes: CabinFactor[], cabin: CabinStatus): string {
+  const named = causeWords(causes)
+  const ruledOut = (['temp', 'rh'] as const).filter((f) => !causes.includes(f) && cabin[f].value !== null && !cabin[f].outside)
+  const out = ruledOut.length
+    ? ` ${capital(causeWords(ruledOut))} ${ruledOut.length > 1 ? 'are' : 'is'} inside NASA's comfort range, so ${ruledOut.length > 1 ? 'they are' : 'it is'} ruled out.`
+    : ''
+  return `${capital(named)} ${causes.length > 1 ? 'are' : 'is'} off and enough of the crew feel it, so the likely cause is the ship.${out}`
+}
+
+const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+/**
+ * The steps while a ship alert is on. A fixed template: one thing for the crew to do, and what the app
+ * does by itself. These are ours, not a NASA procedure, and the card says so.
+ */
+/** What to look at first for each cabin factor the alert blames. */
+const CHECK_FIRST: Record<CabinFactor, string> = {
+  co2: 'the CO₂ removal system and the airflow where people sleep and work',
+  temp: 'the temperature control and the airflow at the sleep stations',
+  rh: 'the humidity control',
+}
+
+function WhatNow({ alertDay, causes }: { alertDay: number; causes: CabinFactor[] }) {
+  return (
+    <Card title="What to do now" aside={<span className="count">day {alertDay} of the alert</span>}>
+      <ol className="lines steps">
+        <li>
+          <strong>Check the air before anyone's health.</strong> Look at {list((causes.length ? causes : (['co2'] as CabinFactor[])).map((f) => CHECK_FIRST[f]))},
+          and compare a second sensor if there is one.
+        </li>
+        <li>
+          <strong>Nobody is singled out.</strong> Each affected person's own dashboard already says "Likely the ship", so a bad day is not put down
+          to them.
+        </li>
+        <li>
+          <strong>Earth hears about the cabin, not about people.</strong> A crew-level summary goes to the flight surgeon on day{' '}
+          {RULES.persistDays} of an alert and every {RULES.persistDays} days while it lasts. Anyone can still ask for a private conference
+          from their check-in.
+        </li>
+        <li>
+          <strong>The app keeps checking.</strong> The alert is re-checked at every check-in. Once the air is back to usual, this screen
+          shows for {RULES.followUpDays} days whether the crew recovered too, and anyone still off is told privately it is now likely them.
+        </li>
+      </ol>
+      <p className="fine">Suggested steps by this demo, not a NASA procedure. The crew's own flight rules come first.</p>
+    </Card>
+  )
+}
 
 export function ShipAlert() {
   const s = useStore()
@@ -38,6 +89,11 @@ export function ShipAlert() {
   const recent = s.data.cabin.daily.filter((d) => d.day <= s.today && d.day > s.today - CHART_DAYS)
   const followUp = shipFollowUp(s.results)
   const evidence = evidenceLine(s.data.backtest)
+  // Real days across every ISS trace in the backtest, from the engine's own cabin status.
+  const traces = Object.values(s.data.backtest?.meta.traces ?? {}).flatMap((t) => (t.cabin ? [t.cabin] : []))
+  const allDays = traces.reduce((n, t) => n + t.daysWithData, 0)
+  const offDays = (f: 'co2' | 'temp' | 'rh') => traces.reduce((n, t) => n + t.suspectDays[f], 0)
+  const airSuspects = cabin.suspects.filter((f) => f !== 'co2') as ('temp' | 'rh')[]
 
   return (
     <div className="stack">
@@ -80,6 +136,8 @@ export function ShipAlert() {
                 <th>Real date (UTC)</th>
                 <th>24 h mean</th>
                 <th>Highest 1-h avg</th>
+                <th>Temperature</th>
+                <th>Humidity</th>
                 <th>Hours of data</th>
               </tr>
             </thead>
@@ -90,12 +148,46 @@ export function ShipAlert() {
                   <td>{d.date}</td>
                   <td>{mmHg(d.co2Mean, 2)}</td>
                   <td>{mmHg(d.co2Max1h, 2)}</td>
+                  <td>{celsius(d.temp)}</td>
+                  <td>{rhPercent(d.rh)}</td>
                   <td>{d.hours}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </details>
+      </Card>
+
+      {/* After the chart: the real CO₂ trace stays right under the banner, and the steps follow the evidence. */}
+      {decision.outcome === 'ship' && <WhatNow alertDay={r.shipEpisodeDay} causes={decision.causes} />}
+      <Card title="Cabin temperature and humidity" aside={<Origin kind="real">{meta.mission}, NASA OSDR</Origin>}>
+        <div className="stats">
+          <Stat
+            label="Temperature, 24 h"
+            tone={cabin.temp.overLimit ? 'alert' : cabin.temp.outside ? 'watch' : undefined}
+            value={celsius(cabin.temp.value)}
+            note={`NASA comfort range ${RULES.tempComfortC[0]}–${RULES.tempComfortC[1]} °C`}
+          />
+          <Stat
+            label="Humidity, 24 h"
+            tone={cabin.rh.overLimit ? 'alert' : cabin.rh.outside ? 'watch' : undefined}
+            value={rhPercent(cabin.rh.value)}
+            note={`NASA comfort range ${RULES.rhComfortPct[0]}–${RULES.rhComfortPct[1]}%`}
+          />
+          {allDays > 0 && (
+            <Stat
+              label={`${traces.length} ISS missions, ${allDays} days`}
+              value={`${offDays('temp')} days`}
+              note={`temperature outside the comfort range; humidity on ${offDays('rh') || 'no'} days; CO₂ a suspect on ${offDays('co2')}`}
+            />
+          )}
+        </div>
+        <p className="fine">
+          From the same ISS telemetry as the CO₂. The comfort range is the one NASA's cabin standard cites for comfort and performance
+          (NASA-STD-3001 Vol 2 [V2 6013]); outside 18–27 °C or 25–75% humidity is over its crew health limits ([V2 6012]). The rule blames the
+          temperature only when half the crew sleep worse, and the humidity only when half the crew have a stuffy nose or dry, sore eyes. On
+          the ISS, CO₂ is the factor that moves: across the missions above, humidity never left the comfort range.
+        </p>
       </Card>
 
       <Card title="Why the app says this">
@@ -111,18 +203,35 @@ export function ShipAlert() {
                     : `Cabin CO₂ is within its own baseline (${mmHg(cabin.co2Mean)} against ${mmHg(cabin.baseline)}) and its 24 h mean is under ${RULES.co2LimitMmHg} mmHg`}
             </Mark>
           </li>
+          {(['temp', 'rh'] as const).map((f) => (
+            <li key={f} className={cabin[f].outside ? 'rule-watch' : undefined}>
+              <Mark tone={cabin[f].outside ? 'watch' : cabin[f].value === null ? 'idle' : 'ok'}>
+                Cabin {f === 'temp' ? 'temperature' : 'humidity'}: {comfortLine(f, cabin[f])}
+              </Mark>
+            </li>
+          ))}
           <li className={affected.length >= needed ? 'rule-watch' : undefined}>
             <Mark tone={affected.length >= needed ? 'watch' : 'ok'}>
               {affected.length} of {decision.crewSize} crew drift on CO₂-linked indicators today{affected.length ? ` (${list(affected)})` : ''}; the rule
               needs {needed}
             </Mark>
           </li>
+          {airSuspects.map((f) => {
+            const who = decision.driftingOn[f].map(s.nameOf)
+            return (
+              <li key={f} className={who.length >= needed ? 'rule-watch' : undefined}>
+                <Mark tone={who.length >= needed ? 'watch' : 'ok'}>
+                  {who.length} of {decision.crewSize} crew show {FACTOR[f].feels} today{who.length ? ` (${list(who)})` : ''}; the rule needs {needed}
+                </Mark>
+              </li>
+            )
+          })}
           <li className={decision.outcome === 'ship' ? 'rule-watch rule-verdict' : 'rule-verdict'}>
             <strong>
               {decision.outcome === 'ship'
                 ? decision.held
-                  ? 'Ship alert still on: it was raised earlier and the cabin is still above baseline.'
-                  : 'Both hold, so the likely cause is the ship.'
+                  ? `Ship alert still on: it was raised earlier and ${causeWords(decision.causes)} is still off its usual.`
+                  : shipVerdict(decision.causes, cabin)
                 : decision.outcome === 'shared'
                   ? 'Several people are off their usual, but the rule cannot blame the air. The crew medical officer gets the pattern, with no names.'
                   : decision.outcome === 'me'
@@ -132,16 +241,28 @@ export function ShipAlert() {
           </li>
         </ol>
         <ul className="lines">
-          <li>CO₂-linked indicators are sleep, headache, fatigue and irritability. Mood and stress never count toward a ship alert.</li>
+          <li>
+            Each cabin factor has its own indicators: CO₂ headache, sleep, fatigue and irritability; temperature sleep; humidity a stuffy
+            nose and dry or sore eyes. Mood and stress never count toward a ship alert.
+          </li>
           <li>
             On the ISS, the odds of a reported headache doubled for each 1 mmHg of CO₂ (Law et al. 2014). NASA limits the 1-hour average to
             3 mmHg (NASA-STD-3001 Vol 2 [V2 6004]).
           </li>
           <li>
-            The air is a suspect when it is above its own usual level, or when its 24 h mean is over 3 mmHg, so a cabin that stays high for
-            weeks never counts as normal.
+            From earlier missions, NASA reports headaches with fatigue and malaise at 2.8–4.5 mmHg, and fatigue, decreased sleep and nausea
+            above 4.5 mmHg (OCHMO-TB-004). Its sleep risk names temperature among what disturbs sleep in space, and its cabin standard
+            expects dry, stuffy, irritated eyes and nose outside the humidity range ([V2 6012]).
+            <RiskLinks risks={['co2', 'sleep']} />
           </li>
-          <li>Fluid shifts in microgravity cause headaches too, so one headache is never enough: the rule needs crew-wide timing and the CO₂ rise.</li>
+          <li>
+            CO₂ is a suspect when it is above its own usual level, or when its 24 h mean is over 3 mmHg, so a cabin that stays high for
+            weeks never counts as normal. Temperature and humidity are suspects outside NASA's comfort range.
+          </li>
+          <li>
+            Fluid shifts in microgravity cause headaches too (OCHMO-TB-004), so one headache is never enough: the rule needs crew-wide timing
+            and the CO₂ rise.
+          </li>
           <li>This is a likely cause, re-checked at every check-in. It is not a diagnosis.</li>
         </ul>
         {evidence && (

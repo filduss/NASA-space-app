@@ -105,7 +105,7 @@ export function DemoDock() {
             <span className="tag">Simulated crew</span> No real person's data.
           </p>
           <p>
-            <span className="tag tag-real">Real ISS CO₂</span> NASA OSDR, {s.data.cabin.meta.mission}, replayed on the mission calendar.
+            <span className="tag tag-real">Real ISS cabin air</span> CO₂, temperature and humidity, NASA OSDR, {s.data.cabin.meta.mission}, replayed on the mission calendar.
           </p>
           <p>Shipshape says "likely" and never diagnoses.</p>
           <p className="demo-credit">

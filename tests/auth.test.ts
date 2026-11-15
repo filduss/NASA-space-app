@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { DEMO_PINS, TOUR } from '../src/auth/demo.ts'
+import { DEMO_PINS, TOUR, tourIndex, tourStop } from '../src/auth/demo.ts'
 import { appPath, hrefOf, pageOf, safeNext } from '../src/auth/paths.ts'
 import { derive, isPinShaped, sameBytes, verifyPin } from '../src/auth/pin.ts'
 import {
@@ -163,6 +163,20 @@ describe('roles', () => {
       expect(DEMO_PINS[stop.as]).toMatch(/^\d{4}$/)
       expect(mayOpen({ crewId: stop.as, role: account!.role }, stop.page)).toBe(true)
     }
+  })
+  it('a tour link keeps its stop and carries its place in the tour, so the page can offer the next stop', () => {
+    TOUR.forEach((stop, i) => {
+      const link = tourStop(i)
+      expect(link.page).toBe(stop.page)
+      expect(link.as).toBe(stop.as)
+      const q = new URLSearchParams(link.search)
+      for (const [k, v] of new URLSearchParams(stop.search ?? '')) expect(q.get(k)).toBe(v)
+      expect(tourIndex(link.search ?? '')).toBe(i)
+    })
+    expect(tourIndex('?day=213')).toBeNull()
+    expect(tourIndex('?tour=0')).toBeNull()
+    expect(tourIndex(`?tour=${TOUR.length + 1}`)).toBeNull()
+    expect(tourIndex('?tour=abc')).toBeNull()
   })
   it('accounts.json has a flight surgeon who is not in the crew, with a name of their own', () => {
     const file = JSON.parse(readFileSync('public/data/accounts.json', 'utf8')) as AccountsFile

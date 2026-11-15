@@ -63,7 +63,11 @@ function ExpandButton({ label, onClick }: { label: string; onClick: () => void }
   )
 }
 
-function VitalTile({ v, onOpen }: { v: Vital; onOpen: () => void }) {
+/**
+ * `reference` is a published figure for real ISS crews, shown beside the person's own usual for
+ * context. The rules compare each person only with their own normal; the reference judges nothing.
+ */
+function VitalTile({ v, onOpen, reference }: { v: Vital; onOpen: () => void; reference?: { text: string; title: string } }) {
   const [hover, setHover] = useState<string | null>(null)
   const fmt = (x: number) => (v.key === 'reaction' ? `${Math.round(x)} ms` : v.key === 'sleepHours' ? `${x.toFixed(1)} h` : `${x}/10`)
   const usualNum = v.usual === null ? null : Number(v.usual)
@@ -86,7 +90,15 @@ function VitalTile({ v, onOpen }: { v: Vital; onOpen: () => void }) {
           </span>
         )}
       </div>
-      <p className="tile-sub">{hover ?? (v.usual === null ? 'Learning your normal' : `Usual ${v.usual}${v.unit === '/10' ? '' : ` ${v.unit}`}`)}</p>
+      <p className="tile-sub">
+        {hover ?? (v.usual === null ? 'Learning your normal' : `Usual ${v.usual}${v.unit === '/10' ? '' : ` ${v.unit}`}`)}
+        {!hover && reference && (
+          <span className="tile-ref" title={reference.title}>
+            {' '}
+            · {reference.text}
+          </span>
+        )}
+      </p>
       <Sparkline series={v.series} usual={usualNum} level={v.level} format={fmt} onHover={setHover} />
     </article>
   )
@@ -126,6 +138,8 @@ export function Dashboard() {
   const tiles = useMemo(() => vitals(me, history, today, TREND_DAYS), [me, history, today])
   const chartVital = chart ? tiles.find((t) => t.key === chart.key) : undefined
   const v = verdict(me, cabin)
+  // A published figure for real ISS crews, shown beside the person's own usual sleep (backtest.json).
+  const issSleep = s.data.backtest?.meta.issCrews?.sleepHours
 
   // An iOS-style banner drops in when a day brings something new to look at.
   const [banner, setBanner] = useState<Notice | null>(null)
@@ -269,7 +283,19 @@ export function Dashboard() {
             </h2>
             <div className="tiles">
               {tiles.map((v) => (
-                <VitalTile key={v.key} v={v} onOpen={() => setChart({ kind: 'vital', key: v.key })} />
+                <VitalTile
+                  key={v.key}
+                  v={v}
+                  onOpen={() => setChart({ kind: 'vital', key: v.key })}
+                  reference={
+                    v.key === 'sleepHours' && issSleep
+                      ? {
+                          text: `ISS ${issSleep.value} h`,
+                          title: `Real ISS crews: ${issSleep.text} (${issSleep.source}). For context only: the rules compare you with your own normal.`,
+                        }
+                      : undefined
+                  }
+                />
               ))}
               <article className={`tile tile-${me.assessment.symptoms.length ? (zones.head.level === 'alert' ? 'alert' : 'watch') : 'ok'}`}>
                 <header className="tile-head">

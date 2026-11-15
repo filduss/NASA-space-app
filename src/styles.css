@@ -13,7 +13,7 @@
   --fill-2: rgba(118, 118, 128, 0.4);
   --ink: #f5f5f7;
   --ink-2: rgba(235, 235, 245, 0.62);
-  --ink-3: rgba(235, 235, 245, 0.38);
+  --ink-3: rgba(235, 235, 245, 0.5);
   --line: rgba(255, 255, 255, 0.08);
   --line-2: rgba(255, 255, 255, 0.14);
   --accent: #0a84ff;
@@ -88,14 +88,35 @@ input {
 }
 
 .boot {
+  max-width: 560px;
+  margin: 0 auto;
   padding: 48px 16px;
   text-align: center;
   color: var(--ink-2);
+}
+.boot-title {
+  margin: 0 0 8px;
+  font-size: 22px;
+  color: var(--ink);
+}
+.boot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 20px 0;
+}
+.boot-detail {
+  overflow-wrap: anywhere;
 }
 /* The bar runs edge to edge; everything else sits in a centred column. */
 .app {
   --col: 1032px;
   padding-bottom: 48px;
+}
+/* The check-in page is one centred column, the width of the form. */
+.app-narrow {
+  --col: 760px;
 }
 .app > :not(.appbar) {
   width: min(var(--col), 100% - 48px);
@@ -206,6 +227,7 @@ input {
 }
 
 .account {
+  grid-column: -2;
   justify-self: end;
   display: flex;
   flex-wrap: nowrap;
@@ -545,6 +567,7 @@ input {
   color: var(--accent);
   font-size: 15px;
   font-weight: 600;
+  text-decoration: none;
   cursor: pointer;
   transition: background 0.2s, transform 0.15s;
 }
@@ -603,6 +626,95 @@ input {
   margin-left: 8px;
   font-weight: 400;
   color: var(--ink-2);
+}
+
+/* ---------- judge's tour strip ---------- */
+/* On pages opened from the tour: which stop this is and one click to the next. In the normal flow,
+   above the page, so it covers nothing. */
+.tourbar {
+  display: flex;
+  align-items: center;
+  gap: 8px 16px;
+  min-height: 44px;
+  padding: 6px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  background: color-mix(in srgb, var(--accent) 14%, #000);
+  color: var(--ink);
+  font-size: 14px;
+}
+.tourbar-here {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  min-width: 0;
+  margin: 0 auto 0 0;
+}
+.tourbar-n {
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.tourbar-title {
+  font-weight: 600;
+}
+.tourbar-next {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+.tourbar-next:hover {
+  background: color-mix(in srgb, var(--accent) 88%, black);
+}
+.tourbar-next .tour-state {
+  color: var(--accent-ink);
+}
+.tourbar-close {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.tourbar-close:hover {
+  background: var(--fill);
+  color: var(--ink);
+}
+@media (max-width: 720px) {
+  .tourbar {
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .tourbar-here {
+    flex: 1 1 100%;
+    order: 1;
+  }
+  .tourbar-next {
+    order: 2;
+    flex: 1 1 auto;
+    justify-content: center;
+    max-width: calc(100% - 40px);
+  }
+  .tourbar-close {
+    order: 3;
+  }
 }
 
 /* ---------- banner (cabin air) ---------- */
@@ -951,6 +1063,38 @@ input {
   gap: 12px;
   margin-bottom: 8px;
 }
+.risk-links {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.cite {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.hrp-list {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.hrp-list li {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.hrp-item {
+  font-weight: 600;
+}
+.hrp-kind {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-3);
+}
 .ci-question {
   font-size: 16px;
   font-weight: 600;
@@ -1115,13 +1259,6 @@ input {
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
 }
-.ci-left {
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-2);
-}
-.ci-left strong {
-  color: var(--ink);
-}
 .ci-send {
   margin-left: auto;
   min-height: 46px;
@@ -1187,6 +1324,11 @@ input {
   gap: 6px;
   padding-left: 1.1em;
   list-style: disc;
+}
+.lines.steps {
+  list-style: decimal;
+  gap: 10px;
+  padding-left: 1.4em;
 }
 .lines li::marker {
   color: var(--ink-3);
@@ -1511,6 +1653,11 @@ details[open] > summary {
     font-size: 30px;
   }
   .account-who > span:last-child {
+    display: none;
+  }
+  /* The medical officer has three account links; beside them the brand name does not fit on a
+     phone and the avatar used to sit on top of it. The icon stays. */
+  .appbar:has(.account > :nth-child(4)) .appbar-brand > div {
     display: none;
   }
   .card,

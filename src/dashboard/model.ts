@@ -7,7 +7,7 @@ import { RULES } from '../engine/config.ts'
 import { SPEC } from '../engine/deviation.ts'
 import type { ExerciseWeek } from '../engine/gravity.ts'
 import type { CabinStatus, CheckIn, IndicatorKey, PersonStatus, SymptomKey } from '../engine/types.ts'
-import { delayText, indicatorLine, symptomLabel } from '../ui/text.ts'
+import { celsius, comfortLine, delayText, indicatorLine, rhPercent, symptomLabel } from '../ui/text.ts'
 
 /** ok = within own normal, watch = orange, alert = red. */
 export type Level = 'ok' | 'watch' | 'alert'
@@ -68,11 +68,18 @@ export interface ZoneState {
   reasons: string[]
 }
 
-/** Cabin air: mean above the 3 mmHg limit is red; above its own usual or a 1-hour peak over the limit is orange. */
+/** Cabin CO2: mean above the 3 mmHg limit is red; above its own usual or a 1-hour peak over the limit is orange. */
 export function cabinLevel(c: Pick<CabinStatus, 'hasData' | 'co2Mean' | 'elevated' | 'aboveLimit'>): Level {
   if (!c.hasData) return 'ok'
   if (c.co2Mean !== null && c.co2Mean > RULES.co2LimitMmHg) return 'alert'
   if (c.elevated || c.aboveLimit) return 'watch'
+  return 'ok'
+}
+
+/** Cabin temperature and humidity: outside NASA's health limits is red, outside its comfort range orange. */
+export function airLevel(c: Pick<CabinStatus, 'temp' | 'rh'>): Level {
+  if (c.temp.overLimit || c.rh.overLimit) return 'alert'
+  if (c.temp.outside || c.rh.outside) return 'watch'
   return 'ok'
 }
 
@@ -162,15 +169,18 @@ function shipDetail(cabin: CabinStatus): string {
   const mean = `CO₂ ${cabin.co2Mean.toFixed(1)} mmHg`
   if (cabin.co2Mean > RULES.co2LimitMmHg) return `${mean}, over the ${RULES.co2LimitMmHg} mmHg limit`
   if (cabin.elevated) return cabin.baseline !== null ? `${mean}, usual ${cabin.baseline.toFixed(1)}` : `${mean}, above its usual`
+  const off = (['temp', 'rh'] as const).find((f) => cabin[f].outside)
+  if (off) return `${off === 'temp' ? 'Temperature' : 'Humidity'} ${comfortLine(off, cabin[off])}`
   if (cabin.aboveLimit) return `1-hour peak ${cabin.co2Max1h?.toFixed(1)} mmHg, daily average normal`
-  return `${mean}, at its usual level`
+  return `${mean}, ${celsius(cabin.temp.value)}, ${rhPercent(cabin.rh.value)} humidity: all at their usual levels`
 }
 
 export function verdict(me: PersonStatus, cabin: CabinStatus): Verdict {
   const a = me.assessment
   const you: VerdictSide = { level: youLevel(me), detail: '' }
   you.detail = youDetail(me, you.level)
-  const ship: VerdictSide = { level: cabinLevel(cabin), detail: shipDetail(cabin) }
+  // Cabin CO2, temperature and humidity: orange or red as on the crew app (cabinLevel, airLevel).
+  const ship: VerdictSide = { level: worst(cabinLevel(cabin), airLevel(cabin)), detail: shipDetail(cabin) }
   const pick = (tint: Level, title: string, note: string | null = null): Verdict => ({ tint, title, note, you, ship })
 
   if (me.tier === 4) return pick('alert', 'Help is on the way', 'Your crew medical officer was told.')
@@ -229,6 +239,18 @@ export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, 
       body: cabin.elevated
         ? `Average ${cabin.co2Mean?.toFixed(1)} mmHg, usual ${cabin.baseline?.toFixed(1)} mmHg.`
         : `One hour reached ${cabin.co2Max1h?.toFixed(1)} mmHg (limit ${RULES.co2LimitMmHg}). The daily average is normal.`,
+    })
+  }
+  for (const f of ['temp', 'rh'] as const) {
+    const st = cabin[f]
+    if (!st.outside) continue
+    const word = f === 'temp' ? (st.outside === 'low' ? 'cooler' : 'warmer') : st.outside === 'low' ? 'drier' : 'more humid'
+    out.push({
+      id: f,
+      source: 'air',
+      level: st.overLimit ? 'alert' : 'watch',
+      title: `Cabin ${word} than NASA's comfort range`,
+      body: `${f === 'temp' ? 'Temperature' : 'Humidity'} ${comfortLine(f, st)}.`,
     })
   }
   for (const key of a.off) {

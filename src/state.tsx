@@ -10,8 +10,8 @@ import type { CheckIn, ConferenceRequest, DayResult, SurgeonSummary } from './en
 import { wearableReading, type WearableReading } from './data/wearable.ts'
 
 export type Role = Viewer
-export type Screen = 'board' | 'checkin' | 'me' | 'ship' | 'inbox' | 'summary'
-const SCREENS: Screen[] = ['board', 'checkin', 'me', 'ship', 'inbox', 'summary']
+export type Screen = 'board' | 'checkin' | 'ship' | 'inbox' | 'summary'
+const SCREENS: Screen[] = ['board', 'checkin', 'ship', 'inbox', 'summary']
 
 /** ?day=, ?screen= and ?mission= open a page on a given day, screen and setting (links and the judge's tour). */
 function fromUrl(): { day: number; screen: Screen | null; mission: MissionKey | null } {
@@ -77,7 +77,12 @@ interface Store {
   data: Data
   /** The logged-in person, checked against accounts.json; null on the login page. */
   user: User | null
-  logIn: (crewId: string, pin: string) => Promise<LoginResult>
+  /**
+   * Checks the PIN and starts the session. With `goTo`, a correct PIN loads that URL straight away
+   * and the logged-in person on this page is left as they were: a tour link on a page the new
+   * person may not open would otherwise be overtaken by RequireUser sending them home.
+   */
+  logIn: (crewId: string, pin: string, goTo?: string) => Promise<LoginResult>
   logOut: () => void
   /** The views this person may take on this page (viewsFor). */
   views: Role[]
@@ -145,7 +150,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  if (error) return <p className="boot">Could not load the data files ({error}). Run <code>npm run data</code>.</p>
+  if (error)
+    return (
+      <div className="boot" role="alert">
+        <h1 className="boot-title">Shipshape could not load its data</h1>
+        <p>The connection may have dropped while the page was loading.</p>
+        <p className="boot-actions">
+          <button type="button" className="btn btn-primary" onClick={() => window.location.reload()}>
+            Try again
+          </button>
+        </p>
+        <p className="fine boot-detail">
+          {error}. Running from source? <code>public/data/</code> is committed; <code>npm run data</code> rebuilds it.
+        </p>
+      </div>
+    )
   if (!data) return <p className="boot">Loading…</p>
   return <Ready data={data}>{children}</Ready>
 }
@@ -185,7 +204,7 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
   )
 
   const logIn = useCallback(
-    async (crewId: string, pin: string): Promise<LoginResult> => {
+    async (crewId: string, pin: string, goTo?: string): Promise<LoginResult> => {
       const now = Date.now()
       const before = attemptsFor(localStorage, crewId)
       if (before.lockedUntil > now) return { ok: false, reason: 'locked', lockedUntil: before.lockedUntil }
@@ -198,7 +217,8 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
       }
       clearFailures(localStorage, crewId)
       startSession(sessionStorage, crewId, Date.now())
-      setUser({ crewId, role: account.role })
+      if (goTo) window.location.assign(goTo)
+      else setUser({ crewId, role: account.role })
       return { ok: true }
     },
     [data],

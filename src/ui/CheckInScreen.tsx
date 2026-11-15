@@ -2,8 +2,10 @@ import { useId, useRef, useState, type KeyboardEvent } from 'react'
 import { SPEC, SYMPTOMS } from '../engine/deviation.ts'
 import type { SymptomKey } from '../engine/types.ts'
 import { vitalLines, type WearableReading } from '../data/wearable.ts'
+import { hrefOf } from '../auth/paths.ts'
 import { useStore, type ReactionResult } from '../state.tsx'
-import { Card, Mark, Origin } from './bits.tsx'
+import { INDICATOR_RISKS, SYMPTOM_RISKS, type HrpRiskKey } from '../data/hrp.ts'
+import { Card, Mark, Origin, RiskLinks } from './bits.tsx'
 import {
   formFrom,
   left,
@@ -56,7 +58,8 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
     <div className="stack checkin">
       <div className="ci-intro">
         <p>
-          About a minute. Your answers go to your flight surgeon.
+          About a minute. Sleep, fatigue, irritability and symptoms go to your crew medical officer and your flight surgeon. Mood and
+          stress stay yours, unless you are still off on day 3: then your flight surgeon is told.
           {existing?.simulated && <span className="fine"> Sending replaces the simulator's check-in for {s.nameOf(crewId)} today.</span>}
         </p>
         <button type="button" className="link ci-help-link" onClick={needHelp}>
@@ -66,6 +69,7 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
 
       <Card title="Last night" aside={<Origin kind="simulated">from your wearable</Origin>}>
         <WearableLine wearable={wearable} />
+        <RiskLinks risks={INDICATOR_RISKS.sleepHours} />
       </Card>
 
       <Card title="How you feel this morning">
@@ -78,11 +82,13 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
 
       <Card title="Symptoms since yesterday">
         <SymptomTiles value={form.symptoms} onToggle={(k) => setForm((f) => toggleSymptom(f, k))} onNone={() => setForm(noSymptoms)} />
+        <RiskLinks risks={[...new Set(SYMPTOMS.flatMap((sym) => SYMPTOM_RISKS[sym.key]))] as HrpRiskKey[]} />
       </Card>
 
       <Card title="Reaction test" aside={<Origin kind="live" />}>
         <p className="muted ci-optional">Optional.</p>
         <ReactionTest result={reaction} onResult={setReaction} />
+        <RiskLinks risks={INDICATOR_RISKS.reaction} />
       </Card>
 
       <section ref={helpRef} id="conference" className="ci-anchor">
@@ -90,15 +96,6 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
       </section>
 
       <div className="ci-bar" role="region" aria-label="Send the check-in">
-        <p className="ci-left" aria-live="polite">
-          {missing === 0 ? (
-            <Mark tone="ok">Ready to send</Mark>
-          ) : (
-            <>
-              <strong>{missing}</strong> left
-            </>
-          )}
-        </p>
         <button type="button" className="btn btn-primary ci-send" onClick={submit} disabled={missing > 0}>
           {sentLive ? 'Send changes' : 'Send check-in'}
         </button>
@@ -195,6 +192,7 @@ function RatingRow({ rating, value, onChange }: { rating: Rating; value: number 
         <span>0 {rating.lo}</span>
         <span>{rating.hi} 10</span>
       </div>
+      <RiskLinks risks={INDICATOR_RISKS[rating.key]} />
     </div>
   )
 }
@@ -342,9 +340,9 @@ function Receipt({ crewId, reaction, onChange }: { crewId: string; reaction: Rea
           </div>
         </dl>
         <div className="row">
-          <button type="button" className="btn btn-primary" onClick={() => s.setScreen('me')}>
-            See my day
-          </button>
+          <a className="btn btn-primary" href={hrefOf('dashboard', import.meta.env.BASE_URL, `?day=${s.today}`)}>
+            See my dashboard
+          </a>
           <button type="button" className="btn btn-quiet" onClick={onChange}>
             Change today's answers
           </button>

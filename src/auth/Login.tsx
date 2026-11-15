@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react'
 import type { AccountRole } from '../data/types.ts'
 import { useStore } from '../state.tsx'
-import { DEMO_PINS, TOUR } from './demo.ts'
+import { DEMO_PINS, TOUR, tourStop } from './demo.ts'
 import { appPath, hrefOf, pageOf, safeNext } from './paths.ts'
 import { isPinShaped, PIN_LENGTH } from './pin.ts'
 import { attemptsFor, homePage, mayOpen, type User } from './session.ts'
@@ -221,13 +221,14 @@ export function Login() {
               onChange={(e) => onChange(e.target.value)}
               aria-describedby="pin-msg"
             />
-            <p id="pin-msg" className="login-msg" role="status" aria-live="polite">
-              {locked ? `${message ?? 'Locked.'} Try again in ${mmss(lockedUntil - now)}.` : busy ? null : message}
+            {/* The check takes about a second (PBKDF2) and the dots have cleared by then, so it says so. */}
+            <p id="pin-msg" className={busy && !locked ? 'login-msg login-msg-busy' : 'login-msg'} role="status" aria-live="polite">
+              {locked ? `${message ?? 'Locked.'} Try again in ${mmss(lockedUntil - now)}.` : busy ? 'Checking…' : message}
             </p>
             <div className="login-keypad" role="group" aria-label="PIN keypad">
               {KEYS.map((k, i) =>
                 k === '' ? (
-                  <span key={i} aria-hidden="true" />
+                  <span key={`blank-${i}`} aria-hidden="true" />
                 ) : (
                   <button
                     key={k}
@@ -267,7 +268,7 @@ function Tour({ picked = false }: { picked?: boolean }) {
       <ol className="login-steps">
         {TOUR.map((t, i) => (
           <li key={t.title}>
-            <TourLink stop={t} className="login-step">
+            <TourLink stop={tourStop(i)} className="login-step">
               <span className="login-step-n" aria-hidden="true">
                 {i + 1}
               </span>
