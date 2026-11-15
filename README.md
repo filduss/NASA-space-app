@@ -75,14 +75,15 @@ python3 scripts/snapshot_eda.py --verify
 ## Layout
 
 ```
-src/engine/   baseline.ts  deviation.ts  shipOrMe.ts  escalation.ts  privacy.ts  config.ts  mission.ts
-src/ui/       CrewBoard  CheckInScreen  ShipAlert  Radiation  About  Medical  CrewTimeline  RoleSwitcher
-src/auth/     Login  RequireUser  pin.ts  session.ts  paths.ts
+src/engine/    baseline.ts  deviation.ts  shipOrMe.ts  escalation.ts  privacy.ts  gravity.ts  mission.ts  config.ts
+src/ui/        CrewBoard  CrewTimeline  ShipAlert  FollowUp  Radiation  Medical  CheckInScreen  ReactionTest  Challenge  RoleSwitcher  ErrorBoundary
+src/auth/      Login  TourLink  RequireUser  demo.ts  pin.ts  session.ts  paths.ts
 src/dashboard/ Dashboard  SkeletonView  ChartSheet  model.ts  history.ts
-scripts/      snapshot_eda.py  simulate_crew.py  backtest.py  make_accounts.py  engine_cli.ts  snapshots/
-public/data/  cabin.json  crew.json  backtest.json  accounts.json
-tests/        engine.test.ts  checkin.test.ts  golden.test.ts  mission.test.ts  auth.test.ts  history.test.ts
-docs/         SPEC.md  CITATIONS.md  AI_USE_LOG.md
+src/data/      types.ts  wearable.ts
+scripts/       snapshot_eda.py  simulate_crew.py  backtest.py  make_accounts.py  engine_cli.ts  snapshots/
+public/data/   cabin.json  crew.json  backtest.json  accounts.json
+tests/         engine  golden  checkin  wearable  gravity  mission  auth  dashboard  history  text  (*.test.ts)
+docs/          SPEC.md  CITATIONS.md  AI_USE_LOG.md
 ```
 
 `docs/SPEC.md` has the JSON shapes, every rule, the readings of the plan that this build chose, and the open items.

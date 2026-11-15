@@ -138,7 +138,7 @@ A routine conference request has no tier: it reaches the flight surgeon as a req
 | Urgent conference request | Yes | Never | Immediately | Immediately, with today's off indicators |
 | Routine conference request | Yes | Never | Never | Immediately, the request only |
 
-The flight surgeon sees everything the crew medical officer sees (crew board, inbox, Ship screen), plus the summaries sent to Earth. The crew board is seen only by those two: astronauts do not open the crew app.
+The flight surgeon sees everything the crew medical officer sees (crew board, inbox, Ship screen), plus the summaries sent to Earth. The inbox's table lists, per person, sleep, sleep quality, symptoms and which shared indicators are off their own usual (`boardPerson`, the board's own path); mood and stress show as "private". The crew board is seen only by those two: astronauts do not open the crew app.
 
 ## Mission setting and radiation
 
@@ -193,6 +193,12 @@ Times: on board, ship time is UTC and the check-in is at 08:00. The flight surge
 - The session is in `sessionStorage` (`shipshape.session.v1`): the crew id and an expiry 8 hours on, nothing else. The role is read from `accounts.json` on every load, never from the session. Closing the tab logs out; each tab logs in on its own.
 - Five wrong PINs in a row lock that person out for 30 s, doubling with each further wrong PIN up to 15 min. The count is in `localStorage` (`shipshape.lockout.v1`) so closing the tab does not reset it, and a correct PIN clears it.
 - **Limit:** with no server this is a privacy gate, not security. Anyone can download `accounts.json` and try all 10 000 four-digit PINs offline, or edit browser storage.
+
+## When something fails
+
+- **No WebGL.** Where the browser cannot make a WebGL context (hardware acceleration off, some remote desktops), the dashboard's 3D figure is replaced by one line of text. The answer box, the zone chips and the vitals tiles are unchanged, since they never depended on the figure.
+- **A render error.** `src/ui/ErrorBoundary.tsx` wraps every page: instead of an empty screen the person gets Reload, a link to the start page, and "Clear my saved inputs and reload", which removes `shipshape.v1` from `localStorage` (live check-ins and conference requests saved by this or an older build).
+- **Data files not loaded.** A plain message and "Try again". The files are precached by the service worker after the first visit, so this only happens on a first visit with a broken connection.
 
 ## Readings of the plan
 
@@ -315,7 +321,7 @@ One crew member never ticks a symptom and reports every slider one point better 
 
 ## Open items
 
-- **The crew board still shares sleep and symptoms.** The check-in says "Your answers go to your flight surgeon", and `CONTEXT.md` says a check-in's answers never reach crewmates. On this branch the board and the crew medical officer's inbox still follow the privacy table above (sleep and symptoms shared). That privacy change is not built yet.
+- **The crew board still shares sleep and symptoms.** `CONTEXT.md` says a check-in's answers reach the flight surgeon and never crewmates. On this branch the board and the crew medical officer's inbox still follow the privacy table above (sleep, fatigue, irritability, alertness and symptoms shared). That privacy change is not built yet. Until it is, the check-in's first line says what the build does ("Sleep, fatigue, irritability and symptoms go to your crew medical officer and your flight surgeon. Mood and stress stay yours, unless you are still off on day 3"); it used to say "Your answers go to your flight surgeon". Change the line back when the board changes.
 
 - A deploy to Vercel and the `v1.0-submission` tag.
 - README sections for the challenge map and the Antarctic case (both are in the app: Demo controls → How it answers the challenge), and the Antarctic sources in `docs/CITATIONS.md`.
