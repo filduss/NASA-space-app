@@ -153,7 +153,7 @@ function unique<T>(xs: T[]): T[] {
 //                          exists only once a summary names them, counts only on ship-summary days
 
 /** One day of one person, as a viewer may see it. "unknown": nothing about that day reached the viewer. */
-export type TimelineMark = 'ok' | 'off' | 'persist' | 'absent' | 'shield' | 'safety' | 'unknown'
+export type TimelineMark = 'ok' | 'off' | 'persist' | 'absent' | 'safety' | 'unknown'
 
 export interface TimelineCell {
   day: number
@@ -193,21 +193,20 @@ export interface TimelineInput {
   /** The days to show, oldest first. */
   window: DayResult[]
   crewIds: string[]
-  shielded: (crewId: string, day: number) => boolean
   /** Every summary sent up to the last day of the window. */
   summaries: SurgeonSummary[]
 }
 
-const SEVERITY: Record<TimelineMark, number> = { unknown: 0, ok: 1, absent: 1, shield: 1, off: 2, persist: 3, safety: 4 }
+const SEVERITY: Record<TimelineMark, number> = { unknown: 0, ok: 1, absent: 1, off: 2, persist: 3, safety: 4 }
 
 function cell(day: number, mark: TimelineMark, more: Partial<TimelineCell> = {}): TimelineCell {
   return { day, mark, keys: [], symptoms: [], co2Linked: false, ...more }
 }
 
 /** A board cell: shared indicators only, safety answers hidden, exactly as boardPerson. */
-function boardCell(status: PersonStatus, shielded: boolean): TimelineCell {
+function boardCell(status: PersonStatus): TimelineCell {
   const p = boardPerson(status)
-  if (!p.checkedIn) return cell(status.day, shielded ? 'shield' : 'absent')
+  if (!p.checkedIn) return cell(status.day, 'absent')
   if (p.off.length === 0) return cell(status.day, 'ok')
   // Day 3 of the same likely cause, the day a summary goes to Earth; a run that only straddles a
   // change of cause (ship, then "me") starts counting again.
@@ -251,7 +250,7 @@ function fromSummaries(summaries: SurgeonSummary[]) {
 }
 
 export function crewTimeline(viewer: Viewer, input: TimelineInput): Timeline {
-  const { window, crewIds, shielded } = input
+  const { window, crewIds } = input
   const crewSize = window.at(-1)?.decision.crewSize ?? crewIds.length
   const needed = Math.ceil(crewSize * RULES.crewShare)
 
@@ -279,6 +278,6 @@ export function crewTimeline(viewer: Viewer, input: TimelineInput): Timeline {
     ship: r.decision.outcome === 'ship',
   }))
   const visible = viewer.kind === 'crew' ? crewIds.filter((id) => id === viewer.crewId) : crewIds
-  const rows = visible.map((id) => ({ crewId: id, cells: window.map((r) => boardCell(r.people[id], shielded(id, r.day))) }))
+  const rows = visible.map((id) => ({ crewId: id, cells: window.map((r) => boardCell(r.people[id])) }))
   return { days, rows, crewSize, needed }
 }

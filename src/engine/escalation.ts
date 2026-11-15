@@ -17,7 +17,7 @@ import type {
  *   1 a Watch: private self-care card, only you see it
  *   2 a crew pattern, or a Watch you chose to share: crew medical officer informed
  *   3 still off on day 3: delayed summary to the flight surgeon
- *   4 a safety answer: game paused, immediate private escalation
+ *   4 a safety answer: immediate private escalation
  */
 export function tierFor(args: {
   safety: boolean

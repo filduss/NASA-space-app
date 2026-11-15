@@ -7,9 +7,6 @@ import { runEngine } from './engine/escalation.ts'
 import { MISSIONS, type MissionKey, type MissionSetting } from './engine/mission.ts'
 import type { Viewer } from './engine/privacy.ts'
 import type { CheckIn, DayResult, SurgeonSummary } from './engine/types.ts'
-import { weeklyStreak, type Streak } from './game/streak.ts'
-import type { QuestLog } from './game/quests.ts'
-import { checkInEvent, totalXp, type GameEvent } from './game/xp.ts'
 
 export type Role = Viewer
 export type Screen = 'board' | 'checkin' | 'me' | 'ship' | 'inbox' | 'summary'
@@ -32,17 +29,18 @@ function fromUrl(): { day: number; screen: Screen | null; mission: MissionKey | 
 /** What the browser keeps between visits. Reaction-test results are never in here. */
 interface Local {
   liveCheckIns: CheckIn[]
-  events: GameEvent[]
-  questLog: QuestLog
   shareWatch: Record<string, boolean>
 }
-const EMPTY: Local = { liveCheckIns: [], events: [], questLog: {}, shareWatch: {} }
+const EMPTY: Local = { liveCheckIns: [], shareWatch: {} }
 const STORE_KEY = 'shipshape.v1'
 
 function loadLocal(): Local {
   try {
     const raw = localStorage.getItem(STORE_KEY)
-    return raw ? { ...EMPTY, ...(JSON.parse(raw) as Partial<Local>) } : EMPTY
+    if (!raw) return EMPTY
+    // Only the fields this version keeps: older saves also carried XP events and quest ticks.
+    const saved = JSON.parse(raw) as Partial<Local>
+    return { liveCheckIns: saved.liveCheckIns ?? [], shareWatch: saved.shareWatch ?? {} }
   } catch {
     return EMPTY
   }
@@ -90,17 +88,10 @@ interface Store {
   todayResult: DayResult
   summaries: SurgeonSummary[]
   local: Local
-  events: GameEvent[]
-  pausedDays: ReadonlySet<string>
-  xpOf: (crewId: string) => number
-  crewXp: number
-  streakOf: (crewId: string) => Streak
   /** In memory only, gone on reload: the live reaction test is never stored. */
   liveReaction: Record<string, ReactionResult>
   submitCheckIn: (c: CheckIn, reaction: ReactionResult | null) => void
   toggleShare: (crewId: string) => void
-  doQuestStep: (questId: string, stepId: string, crewId: string) => void
-  addEvent: (e: GameEvent) => void
   reset: () => void
 }
 
@@ -233,29 +224,6 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
   const todayResult = results[results.length - 1]
   const summaries = useMemo(() => results.flatMap((r) => r.summaries).reverse(), [results])
 
-  const pausedDays = useMemo(() => {
-    const s = new Set<string>()
-    for (const c of checkIns) if (c.safetyFlag) s.add(`${c.crewId}|${c.day}`)
-    return s
-  }, [checkIns])
-
-  // Every check-in earns the same XP, simulated or live; the event carries no reading.
-  const events = useMemo(
-    () => [...checkIns.map(checkInEvent), ...local.events.filter((e) => e.day <= today)],
-    [checkIns, local.events, today],
-  )
-  const xpOf = useCallback((id: string) => totalXp(events, id, pausedDays), [events, pausedDays])
-  const crewXp = useMemo(() => totalXp(events, undefined, pausedDays), [events, pausedDays])
-
-  const streakOf = useCallback(
-    (id: string) => {
-      const mine = new Set(checkIns.filter((c) => c.crewId === id).map((c) => c.day))
-      const shields = new Set(data.crew.shieldDays.filter((s) => s.crewIds.includes(id)).map((s) => s.day))
-      return weeklyStreak(mine, shields, today, firstDay)
-    },
-    [checkIns, data, today, firstDay],
-  )
-
   const submitCheckIn = useCallback((c: CheckIn, reaction: ReactionResult | null) => {
     // The reaction result stays in memory for this session; storage only ever gets null.
     const stored: CheckIn = { ...c, reactionMs: null, simulated: false }
@@ -274,22 +242,6 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
   const toggleShare = useCallback((id: string) => {
     setLocal((l) => ({ ...l, shareWatch: { ...l.shareWatch, [id]: !l.shareWatch[id] } }))
   }, [])
-
-  const addEvent = useCallback((e: GameEvent) => setLocal((l) => ({ ...l, events: [...l.events, e] })), [])
-
-  const doQuestStep = useCallback(
-    (questId: string, stepId: string, crewId: string) => {
-      setLocal((l) => {
-        if (l.questLog[questId]?.[stepId]) return l
-        return {
-          ...l,
-          questLog: { ...l.questLog, [questId]: { ...l.questLog[questId], [stepId]: { crewId, day: today } } },
-          events: [...l.events, { type: 'action', crewId, day: today, ref: `${questId}|${stepId}` }],
-        }
-      })
-    },
-    [today],
-  )
 
   const reset = useCallback(() => {
     setLocal(EMPTY)
@@ -318,16 +270,9 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
     todayResult,
     summaries,
     local,
-    events,
-    pausedDays,
-    xpOf,
-    crewXp,
-    streakOf,
     liveReaction,
     submitCheckIn,
     toggleShare,
-    doQuestStep,
-    addEvent,
     reset,
   }
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>

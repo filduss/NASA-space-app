@@ -1,16 +1,13 @@
 import { RULES } from '../engine/config.ts'
 import type { ShipFollowUp } from '../engine/privacy.ts'
-import { clearTheAirQuest, questProgress } from '../game/quests.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark } from './bits.tsx'
 import { mmHg } from './text.ts'
 
-/** The re-check after a ship alert, closing the loop the quest's last step promises. Counts only, never names. */
+/** The re-check after a ship alert: is the air back to usual, and are the crew it touched? Counts only, never names. */
 export function FollowUpCard({ f }: { f: ShipFollowUp }) {
   const s = useStore()
   const { cabin } = s.todayResult
-  const quest = clearTheAirQuest(f.alertStart)
-  const prog = questProgress(quest, s.local.questLog)
   return (
     <Card title="Did the fix work?" aside={<span className="count">day {f.daysSince} after the ship alert</span>}>
       <ul className="checks">
@@ -41,9 +38,6 @@ export function FollowUpCard({ f }: { f: ShipFollowUp }) {
           </li>
         )}
       </ul>
-      <p className="muted">
-        Crew quest "{quest.title}": {prog.done} of {prog.total} steps done.
-      </p>
       <p className="fine">
         Ship alert of days {f.alertStart} to {f.alertEnd}. The app re-checks the air and the crew at every check-in for {RULES.followUpDays}{' '}
         days after an alert ends. Getting better after the fix does not prove the fix caused it.

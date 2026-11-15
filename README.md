@@ -1,6 +1,6 @@
 # Shipshape
 
-**Is it me, or the ship?** A daily check-in for a crew on a long mission. When several people feel off at once, Shipshape checks real ISS cabin CO₂ before blaming anyone, and tells each astronaut whether a bad day is likely them or the ship. It rewards honest reporting, never the reading.
+**Is it me, or the ship?** A daily check-in for a crew on a long mission. When several people feel off at once, Shipshape checks real ISS cabin CO₂ before blaming anyone, and tells each astronaut whether a bad day is likely them or the ship.
 
 Built for the NASA Space Apps Challenge 2026, "Create Health Monitoring Software for Astronauts on Space Missions". It grew from the team's [plan v0.1](docs/plan-v0.1.md), now superseded by [docs/SPEC.md](docs/SPEC.md).
 
@@ -33,7 +33,7 @@ Not a medical device: it says "likely", never diagnoses, and supports the flight
 ```bash
 npm install
 npm run dev        # http://localhost:5173  (login; then /dashboard and /app)
-npm test           # unit tests for the rules and the game
+npm test           # unit tests for the rules
 npm run build      # production build, installable and offline-capable
 ```
 
@@ -49,7 +49,7 @@ The start page opens with a **judge's tour**: four links that walk the demo (day
 | Dana | Medical officer | 4444 |
 | Mira | Flight surgeon, Mission Control (Earth) | 5555 |
 
-Every crew member gets their own dashboard and nobody else's. Everyone can open the crew app at /app, in their own view: astronauts as themselves (check-in, reaction test, quests), Dana as the crew medical officer or as herself. Nobody can view as another crew member. Mira is not crew, so has no dashboard; that login opens /app fixed to the flight surgeon's view, which shows only what was sent to Earth. The challenge page at /challenge needs no login.
+Every crew member gets their own dashboard and nobody else's. Everyone can open the crew app at /app, in their own view: astronauts as themselves (check-in, reaction test), Dana as the crew medical officer or as herself. Nobody can view as another crew member. Mira is not crew, so has no dashboard; that login opens /app fixed to the flight surgeon's view, which shows only what was sent to Earth. The challenge page at /challenge needs no login.
 
 The login is a privacy gate for a demo, not security: there is no server, so anyone can read `public/data/accounts.json` and try all 10 000 PINs offline. It stores a salted PBKDF2 hash per person, never the PIN. A session lasts until the tab closes (at most 8 hours); five wrong PINs lock that person out for 30 s, doubling each time.
 
@@ -75,13 +75,12 @@ python3 scripts/snapshot_eda.py --verify
 
 ```
 src/engine/   baseline.ts  deviation.ts  shipOrMe.ts  escalation.ts  privacy.ts  config.ts  mission.ts
-src/game/     xp.ts  streak.ts  quests.ts
 src/ui/       CrewBoard  CheckInScreen  MeView  ShipAlert  Radiation  About  Medical  CrewTimeline  RoleSwitcher
 src/auth/     Login  RequireUser  pin.ts  session.ts  paths.ts
 src/dashboard/ Dashboard  SkeletonView  ChartSheet  model.ts  history.ts
 scripts/      snapshot_eda.py  simulate_crew.py  backtest.py  make_accounts.py  engine_cli.ts  snapshots/
 public/data/  cabin.json  crew.json  backtest.json  accounts.json
-tests/        engine.test.ts  game.test.ts  mission.test.ts  auth.test.ts  history.test.ts
+tests/        engine.test.ts  golden.test.ts  mission.test.ts  auth.test.ts  history.test.ts
 docs/         SPEC.md  CITATIONS.md  AI_USE_LOG.md
 ```
 

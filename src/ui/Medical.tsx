@@ -2,7 +2,6 @@ import { cabinLevel } from '../dashboard/model.ts'
 import { cmoInbox, type CmoItem } from '../engine/privacy.ts'
 import { SPEC } from '../engine/deviation.ts'
 import type { SurgeonSummary } from '../engine/types.ts'
-import { clearTheAirQuest, questProgress } from '../game/quests.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
 import { checkInAt, houstonTime, shipTime } from './clock.ts'
@@ -130,15 +129,6 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
     : 'No usable cabin CO₂ data for this day.'
   const title =
     sum.kind === 'ship' ? `Ship alert, day ${sum.episodeDay} of the alert` : sum.kind === 'safety' ? `Safety answer: ${name}` : `${name}: off own usual for ${sum.episodeDay} days`
-  let quest: string | null = null
-  if (sum.kind === 'ship') {
-    const start = sum.day - sum.episodeDay + 1
-    // Only steps that were done by the time this summary was sent.
-    const q = clearTheAirQuest(start)
-    const asSent = Object.fromEntries(Object.entries(s.local.questLog[q.id] ?? {}).filter(([, v]) => v.day <= sum.day))
-    const p = questProgress(q, { [q.id]: asSent })
-    quest = `Crew quest "Clear the air": ${p.done} of ${p.total} steps done.`
-  }
   return (
     <article className={`doc doc-${sum.kind === 'ship' && cabinLevel(sum.cabin) !== 'alert' ? 'watch' : 'alert'}`}>
       <header>
@@ -157,7 +147,6 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
               : 'No crew member shows CO₂-linked changes today; the alert is held because the cabin is still above its baseline.'}{' '}
             Likely cause by the ship-or-me rule: cabin air.
           </p>
-          {quest && <p>{quest}</p>}
         </>
       )}
       {sum.kind === 'person' && (
@@ -182,7 +171,7 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
       {sum.kind === 'safety' && (
         <>
           <p>{name} ticked "I am not safe, or I need to talk to someone now" at check-in. The crew medical officer was told at the same time.</p>
-          <p className="fine">The game is paused for {name}. Nothing is shown on the crew board.</p>
+          <p className="fine">Nothing is shown on the crew board.</p>
         </>
       )}
     </article>

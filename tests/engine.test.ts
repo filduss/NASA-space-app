@@ -376,7 +376,6 @@ describe('crew timeline', () => {
     crewTimeline(viewer, {
       window: results.slice(-14),
       crewIds: CREW,
-      shielded: () => false,
       summaries: results.flatMap((r) => r.summaries),
     })
   // Anna sleeps badly on days 18-20: day 20 is day 3, so a summary goes to the flight surgeon.

@@ -5,9 +5,7 @@ import type { DayResult } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
 import { CrewTimeline } from './CrewTimeline.tsx'
-import { QuestCard } from './QuestCard.tsx'
 import { boardWords, mmHg } from './text.ts'
-import { XpStrip } from './XpStrip.tsx'
 
 export function ShipBanner({ r, onOpen, followUp }: { r: DayResult; onOpen?: () => void; followUp?: ShipFollowUp | null }) {
   const { cabin, decision } = r
@@ -52,7 +50,7 @@ export function ShipBanner({ r, onOpen, followUp }: { r: DayResult; onOpen?: () 
       </div>
       {onOpen && (
         <button type="button" className={tone === 'ok' || tone === 'idle' ? 'btn' : 'btn btn-primary'} onClick={onOpen}>
-          {decision.outcome === 'ship' ? 'Why, and what to do' : 'Cabin air'}
+          {decision.outcome === 'ship' ? 'Why the app says this' : 'Cabin air'}
         </button>
       )}
     </section>
@@ -63,7 +61,6 @@ export function ShipBanner({ r, onOpen, followUp }: { r: DayResult; onOpen?: () 
 function TodayOnBoard({ me }: { me: string }) {
   const s = useStore()
   const r = s.todayResult
-  const shields = s.data.crew.shieldDays.filter((d) => d.day === s.today)
   return (
     <section className="today" aria-label="Today on the crew board">
       <h3>Today on the board</h3>
@@ -71,7 +68,6 @@ function TodayOnBoard({ me }: { me: string }) {
         {s.data.crew.crew.map((c) => {
           const p = boardPerson(r.people[c.id])
           const words = boardWords(p.off, p.symptoms)
-          const shield = shields.find((d) => d.crewIds.includes(c.id))
           return (
             <li key={c.id} className={p.checkedIn && words.length ? 'today-watch' : undefined}>
               <span className="tl-person">
@@ -80,7 +76,7 @@ function TodayOnBoard({ me }: { me: string }) {
               </span>
               <span className="today-words">
                 {!p.checkedIn ? (
-                  <Mark tone="idle">{shield ? `${shield.label} day, shielded` : 'No check-in yet'}</Mark>
+                  <Mark tone="idle">No check-in yet</Mark>
                 ) : words.length === 0 ? (
                   <Mark tone="ok">OK</Mark>
                 ) : (
@@ -119,8 +115,6 @@ export function CrewBoard() {
         </p>
       </Card>
 
-      <QuestCard />
-      <XpStrip crewId={me} />
     </div>
   )
 }

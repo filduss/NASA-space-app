@@ -1,6 +1,6 @@
 # Shipshape MVP spec (v0.1)
 
-Shipshape is a crew check-in game for long missions. It compares each person with their own normal, checks the cabin air before blaming anyone, and rewards reporting, never the reading.
+Shipshape is a crew check-in for long missions. It compares each person with their own normal and checks the cabin air before blaming anyone.
 
 This file describes what the code on this branch does. Where the plan left room, the section "Readings of the plan" says which reading was built, so the team can steer.
 
@@ -9,8 +9,8 @@ This file describes what the code on this branch does. Where the plan left room,
 | # | Decision | Built |
 | --- | --- | --- |
 | 1 | Name | Shipshape |
-| 2 | Hooks | Both: "Is it me, or the ship?" in the header, "rewards honesty, not perfection" in the footer and on check-in |
-| 3 | Game depth | Full rules as tested functions; UI shows XP, weekly streak and one quest card |
+| 2 | Hooks | "Is it me, or the ship?" in the header. The second hook, "rewards honesty, not perfection", went with the game |
+| 3 | Game depth | None. XP, the weekly streak, shield days, quests and kudos were built and then removed (15 Nov 2026): the check-in stands on its own |
 | 4 | Mission setting | ISS, lunar surface, Mars transit (default) or an Antarctic station, chosen in the demo controls. It changes the comm delay and the radiation card only. The CO₂ source (ISS) is stated on every screen |
 | 5 | Board default | Sleep and symptoms shared; mood and stress private, shown as a count with no names |
 | 6 | Live input | Live 30-second reaction test, kept in memory only |
@@ -53,7 +53,7 @@ ISS telemetry for the Rodent Research 7 payload from the NASA OSDR Environmental
 }
 ```
 
-Sliders run 0-10. `symptoms` is any of `headache`, `dizziness`, `nausea`, `congestion`, `eye_strain`. `exerciseMin` is the day before's exercise in minutes; the simulator draws it from a stream of its own, so adding it changed no other value. A live check-in has `simulated: false`, `reactionMs: null`, may leave out `exerciseMin` and may carry `safetyFlag: true`.
+`shieldDays` is still written by the simulator and committed, but the app no longer reads it: a shielded day shows as a missed check-in. Sliders run 0-10. `symptoms` is any of `headache`, `dizziness`, `nausea`, `congestion`, `eye_strain`. `exerciseMin` is the day before's exercise in minutes; the simulator draws it from a stream of its own, so adding it changed no other value. A live check-in has `simulated: false`, `reactionMs: null`, may leave out `exerciseMin` and may carry `safetyFlag: true`.
 
 ### `backtest.json` (simulated crews on real traces)
 
@@ -119,7 +119,7 @@ The air is a suspect when it is above baseline or its 24 h mean is over 3 mmHg. 
 | 1 | Any drift, or a slow change against your starting normal: a private Watch card | You |
 | 2 | A ship alert or shared pattern, or a Watch you chose to share | Crew medical officer |
 | 3 | Still off on day 3 of the same likely cause; again every 3 days | Flight surgeon, with the comm delay |
-| 4 | The safety answer | Crew medical officer and flight surgeon, immediately; game paused |
+| 4 | The safety answer | Crew medical officer and flight surgeon, immediately |
 
 ### Privacy
 
@@ -129,12 +129,12 @@ The air is a suspect when it is above baseline or its 24 h mean is over 3 mmHg. 
 | --- | --- | --- | --- | --- |
 | Mood and stress | Everything | Count only, no names | Only if you share | In tier 3 summaries |
 | Sleep and symptoms | Everything | Yes | Yes | In tier 3 summaries |
-| Ship alerts and quests | Yes | Yes | Yes | In summaries |
+| Ship alerts | Yes | Yes | Yes | In summaries |
 | Safety answer | Yes | Never | Immediately | Immediately |
 
 ## Mission setting and radiation
 
-`src/engine/mission.ts` holds the three settings. The setting never changes the rules, the tiers or the game, and the cabin CO₂ is the same ISS replay in every setting.
+`src/engine/mission.ts` holds the three settings. The setting never changes the rules or the tiers, and the cabin CO₂ is the same ISS replay in every setting.
 
 | Setting | One-way delay to Earth | Radiation dose a day | Source of the rate |
 | --- | --- | --- | --- |
@@ -149,7 +149,7 @@ The radiation card on the Ship screen shows the dose rate, the dose so far (rate
 
 ### Crew timeline
 
-The crew board and the flight surgeon's screen share one chart: the last 14 days of cabin CO₂ (24 h mean, with the cabin's usual level and the 3 mmHg limit), how many crew drift on CO₂-linked indicators (with the rule's threshold), and one row per person. Each cell is a symbol and a word: ● within own usual, ▲ off own usual, ◆ day 3 or later, ○ no check-in, a shield for a shielded day, ■ safety answer, – nothing received. `crewTimeline` in `privacy.ts` fills it per viewer, inside the privacy table above:
+The crew board and the flight surgeon's screen share one chart: the last 14 days of cabin CO₂ (24 h mean, with the cabin's usual level and the 3 mmHg limit), how many crew drift on CO₂-linked indicators (with the rule's threshold), and one row per person. Each cell is a symbol and a word: ● within own usual, ▲ off own usual, ◆ day 3 or later, ○ no check-in, ■ safety answer, – nothing received. `crewTimeline` in `privacy.ts` fills it per viewer, inside the privacy table above:
 
 | Part | Crew member | Crew medical officer | Flight surgeon |
 | --- | --- | --- | --- |
@@ -192,31 +192,17 @@ These are the places where the plan could be read two ways, or where the build g
 - **Day 3 counts per likely cause.** When a ship alert ends and someone is still off, their count restarts at day 1 as "me". This is what makes the golden path's "day 3" land two days after the air clears.
 - **One person drifting under high CO₂ is "me".** The card says the cabin is above its usual level and that the rule does not blame the air yet.
 - **Headache is the only symptom that counts toward a ship alert.** It is the one with a published dose-response. Other ticks open a private Watch.
-- **Check-in sliders start unset.** A slider that starts at the person's usual lets a rushed check-in report "as usual" without anyone choosing it, which is the under-reporting the game is meant to counter. Built: each slider starts unset and is rated before the usual is shown, or set to the usual with one explicit tap ("Set them to my usual"). Submit waits until every slider is set.
+- **Check-in sliders start unset.** A slider that starts at the person's usual lets a rushed check-in report "as usual" without anyone choosing it, which is the under-reporting the check-in is meant to counter. Built: each slider starts unset and is rated before the usual is shown, or set to the usual with one explicit tap ("Set them to my usual"). Submit waits until every slider is set.
 - **The reaction test counts a lapse at 355 ms**, as PVT-B, the brief test behind the ISS Reaction Self-Test, does (Basner, Mollicone and Dinges 2011).
 - **The live reaction test is shown, not compared.** The presenter has no baseline, and the result is never stored, so it does not feed the rules.
-- **Quest steps are illustrative,** not a flight procedure, and say so.
-- **Did the fix work?** For 7 days after a ship alert ends, the board and the Ship screen say whether the air is back to its usual level and how many of the crew it touched are back to theirs. Counts only, judged on shared indicators as the board does (`shipFollowUp` in `src/engine/privacy.ts`). Anyone still off is already "likely you" with a new 3-day count. This is the re-check the quest's last step asks for; it does not claim the fix caused the recovery.
+- **Did the fix work?** For 7 days after a ship alert ends, the board and the Ship screen say whether the air is back to its usual level and how many of the crew it touched are back to theirs. Counts only, judged on shared indicators as the board does (`shipFollowUp` in `src/engine/privacy.ts`). Anyone still off is already "likely you" with a new 3-day count. It does not claim the fix caused the recovery.
 - **The limit check uses the 24 h mean.** NASA writes the limit as a 1-hour average, but a single 1-hour peak would make the air a suspect on many quiet days. In the backtest the 24 h mean raised fewer false ship alarms (table under "Evidence"). The highest 1-hour average is still shown on the Ship screen and in summaries.
 - **Bone and muscle are shown, not judged.** The gravity hazard is covered through its countermeasure, exercise: a check-in can log the day before's exercise, and the personal dashboard shows how many of the last 7 logged days reached 120 minutes. Below target on 3 of them turns the core (hip and spine) and limbs zones orange, never red. Like radiation it has no tier, no card on the crew board, nothing for the crew medical officer and no part in ship or me. The 120-minute target follows NASA's figure of about two hours of exercise a day on the ISS; the 3-of-7 count is a demo parameter. The panel quotes NASA's average bone loss in spaceflight, 1 to 1.5% of mineral density a month in weight-bearing bones (`docs/CITATIONS.md`).
 - **Radiation is shown, not judged.** It has no tier, no card per person and no part in ship or me: the whole crew gets about the same dose and nobody can feel it at everyday levels. A solar-storm warning would be a second "ship" cause; that is not built.
 - **The flight surgeon has a login.** The plan names the flight surgeon as a reader of summaries; the build gives the role a login (Mira, on Earth) so the Earth view can be shown on its own. It adds no access: the login sees what the "Flight surgeon" column of the privacy table allows.
 - **The flight surgeon's timeline is rebuilt from summaries.** Nothing reaches Earth between summaries, so a row's cells come only from what a summary states: a day-3 summary covers the days each listed indicator has been off; a ship summary names who had CO₂-linked changes that day and how long the alert has run.
 - **The medical officer is one of the crew.** The plan's crew medical officer is a role, not a person; the build gives it to Dana. Her login opens her own dashboard like anyone's, plus the crew app as the crew medical officer or as herself. She cannot view as another crew member, because that would show their private mood and stress; the judge's tour opens the other people's screens with their own logins.
-- **Astronauts use the crew app too.** The check-in, the reaction test, the quest steps, the share toggle and the safety question live in the crew app, so every crew member opens it, in their own view only.
-
-## Game
-
-Rules are in `src/game/`. Nothing there can read a check-in's values: `checkInEvent` accepts only who and when.
-
-| Mechanic | Rule |
-| --- | --- |
-| XP | Check-in 10, quest step 15, kudos 3. Repeats earn nothing. The Learn tab and its cards were removed |
-| Streak | Weekly, 5 of 7 days. Spacewalk, comm-blackout and heavy-workload days are shielded |
-| Quests | "Clear the air" opens with a ship alert; otherwise "Everyone logs sleep 5 nights" |
-| Kudos | Thank a crewmate for a quest step they did |
-| Not built | Leaderboards, rewards for readings, celebrations on alerts |
-| Safety answer | No XP that day; the XP strip is hidden for that person |
+- **Astronauts use the crew app too.** The check-in, the reaction test, the share toggle and the safety question live in the crew app, so every crew member opens it, in their own view only.
 
 ## Golden path
 
@@ -225,11 +211,11 @@ The "Golden path" control jumps between the four days of the demo, and the perso
 | Mission day | Real date | What the app shows |
 | --- | --- | --- |
 | 212 | 2018-08-20 | Everyone OK. CO₂ has started to climb; a 1-hour average is above 3 mmHg |
-| 213 | 2018-08-21 | CO₂ 4.3 mmHg against a usual 2.4. Anna, Ben and Dana drift. "Likely the ship, not you". Quest opens |
+| 213 | 2018-08-21 | CO₂ 4.3 mmHg against a usual 2.4. Anna, Ben and Dana drift. "Likely the ship, not you" |
 | 221 | 2018-08-29 | CO₂ back to 2.3 mmHg. Chen is still short on sleep: a private card, "likely you". The board and the Ship screen show the re-check: the air is back to usual, 3 of the 4 crew who felt it are back to theirs |
 | 223 | 2018-08-31 | Chen's day 3: a summary goes to the flight surgeon and Chen is told |
 
-The real rise lasts from day 213 to day 220; the quest cannot shorten a recording. Chen's sleep loss (days 219-226) and Ben's stress dip (days 188-192) are scripted events, listed in `crew.json`.
+The real rise lasts from day 213 to day 220; nothing in the app can shorten a recording. Chen's sleep loss (days 219-226) and Ben's stress dip (days 188-192) are scripted events, listed in `crew.json`.
 
 Chen's sleep loss starts on day 219, while the ship alert is still on, so the app puts it down to the ship on days 219-220 and his day 3 counts from day 221, when the air is back to normal. Day 223 is the fifth day of his problem. This is the masking measured under "Evidence".
 
@@ -241,7 +227,7 @@ Chen's sleep loss starts on day 219, while the ship alert is still on, so the ap
 - Thresholds were set on seeds 5000-5199; the reported seeds are 1000-1199.
 - Each crew runs over one whole real trace (27-73 days), not 90 days: real data is never stitched or looped.
 - The 10 traces contain 3 distinct CO₂ rises of 1 mmHg or more. That is a small sample, replayed for many crews.
-- Unit tests in `tests/` cover every rule, including "XP never depends on a reading" and "mood never decides ship or me".
+- Unit tests in `tests/` cover every rule, including "mood never decides ship or me".
 
 ### Alert load against one alert per person
 
@@ -295,7 +281,7 @@ In the base case the check leaves accuracy at 0.903 (0.904 before) and raises ne
 
 ### One crew member under-reports
 
-One crew member never ticks a symptom and reports every slider one point better than it is. CO₂ rises missed go from 23% to 30%, and personal events missed from 8% to 12%. The rule needs half the crew, so one silent person makes a ship alert harder to reach. The game rewards the report, not the reading, to make silence less likely; whether it does is not measured here.
+One crew member never ticks a symptom and reports every slider one point better than it is. CO₂ rises missed go from 23% to 30%, and personal events missed from 8% to 12%. The rule needs half the crew, so one silent person makes a ship alert harder to reach. Nothing in the app makes silence less likely; the check-in only makes reporting quick.
 
 ## Limits
 

@@ -382,8 +382,7 @@ input {
 }
 .card,
 .banner,
-.doc,
-.xp {
+.doc {
   position: relative;
   background: var(--surface);
   border: 1px solid var(--line);
@@ -801,8 +800,7 @@ input {
 .tl-sym-safety {
   fill: var(--alert);
 }
-.tl-sym-absent,
-.tl-sym-shield {
+.tl-sym-absent {
   fill: none;
   stroke: var(--ink-3);
   stroke-width: 1.4;
@@ -904,89 +902,17 @@ input {
   color: var(--ink-2);
 }
 
-/* ---------- quest, xp ---------- */
-.steps {
-  display: flex;
-  flex-direction: column;
-}
-.steps li {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  border-top: 1px solid var(--line);
-}
-.steps label,
 .tick {
   display: flex;
   gap: 10px;
   align-items: center;
   cursor: pointer;
 }
-.steps input,
 .tick input {
   width: 20px;
   height: 20px;
   flex: 0 0 auto;
   accent-color: var(--accent);
-}
-.step-done label span {
-  color: var(--ink-2);
-}
-.step-meta {
-  display: flex;
-  gap: 10px;
-  font-size: 13px;
-  color: var(--ink-3);
-}
-.habit li {
-  display: grid;
-  grid-template-columns: 5em 1fr auto;
-  gap: 12px;
-  align-items: center;
-  padding: 6px 0;
-}
-.pips {
-  display: flex;
-  gap: 4px;
-}
-.pip {
-  width: 22px;
-  height: 8px;
-  border-radius: 4px;
-  background: var(--fill-2);
-}
-.pip-on {
-  background: var(--series);
-}
-.xp {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px 16px;
-}
-.xp strong {
-  display: block;
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-}
-.xp-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--ink-3);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.xp-rule {
-  grid-column: 1 / -1;
-}
-.xp-earned {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
 }
 
 /* ---------- check-in ---------- */
@@ -1419,15 +1345,13 @@ details[open] > summary {
   }
   .card,
   .banner,
-  .doc,
-  .xp {
+  .doc {
     padding: 16px;
   }
   .banner h2 {
     font-size: 21px;
   }
-  .stats,
-  .xp {
+  .stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .sliders,

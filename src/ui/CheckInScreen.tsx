@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { SPEC, SYMPTOMS } from '../engine/deviation.ts'
 import type { CheckIn, SymptomKey } from '../engine/types.ts'
-import { XP } from '../game/xp.ts'
 import { useStore, type ReactionResult } from '../state.tsx'
 import { Card, Origin } from './bits.tsx'
 import { ReactionTest } from './ReactionTest.tsx'
@@ -64,12 +63,11 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
               Your crew medical officer has been told privately, right now. The flight surgeon has been sent a message; it takes{' '}
               {delayText(s.commDelaySec)} to reach Earth.
             </p>
-            <p>Nothing about this appears on the crew board. The game is paused for you today.</p>
+            <p>Nothing about this appears on the crew board.</p>
           </Card>
         ) : (
           <Card title="Checked in">
-            <p className="xp-earned">+{XP.checkin} XP: honest report</p>
-            <p className="muted">The same XP whatever you answered. Your readings are compared with your own normal, not with anyone else's.</p>
+            <p className="muted">Your readings are compared with your own normal, not with anyone else's.</p>
             <div className="row">
               <button type="button" className="btn" onClick={() => s.setScreen('me')}>
                 See my day
@@ -92,7 +90,7 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
       >
         <p className="muted">
           About a minute. {existing?.simulated ? `Submitting replaces ${s.nameOf(crewId)}'s simulated check-in for today with yours. ` : ''}
-          You earn the same XP on a bad day as on a good one. Rate each slider before you see your usual; if one is as usual, say so.
+          Rate each slider before you see your usual; if one is as usual, say so.
         </p>
         <div className="sliders">
           {SLIDERS.map((sl) => {

@@ -6,7 +6,6 @@ import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
 import { LineChart } from './charts.tsx'
 import { delayText, fmt, indicatorLine } from './text.ts'
-import { XpStrip } from './XpStrip.tsx'
 
 const TREND_DAYS = 28
 
@@ -35,7 +34,7 @@ function StatusCard({ me }: { me: PersonStatus }) {
     return (
       <Card title="You asked to talk to someone" tone="alert">
         <p>Your crew medical officer was told privately as soon as you checked in, and a message is on its way to the flight surgeon ({delayText(s.commDelaySec)} to Earth).</p>
-        <p className="muted">Nothing about this is on the crew board. The game is paused for you today.</p>
+        <p className="muted">Nothing about this is on the crew board.</p>
       </Card>
     )
   }
@@ -123,7 +122,6 @@ export function MeView({ crewId }: { crewId: string }) {
   return (
     <div className="stack">
       <StatusCard me={me} />
-      <XpStrip crewId={crewId} />
       <Card
         title="My trends against my own normal"
         aside={

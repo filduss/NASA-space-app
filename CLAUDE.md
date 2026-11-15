@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Shipshape is a NASA Space Apps Challenge entry: a crew check-in game for long missions that says whether a bad day is "likely you" or "likely the ship". It is a static Vite + React + TypeScript web app, installable and offline-capable, with no backend and no AI model in the product. A PIN login runs entirely in the browser.
+Shipshape is a NASA Space Apps Challenge entry: a crew check-in for long missions that says whether a bad day is "likely you" or "likely the ship". It is a static Vite + React + TypeScript web app, installable and offline-capable, with no backend and no AI model in the product. A PIN login runs entirely in the browser.
 
 `docs/SPEC.md` is the source of truth for the rules, the JSON shapes, and the "Readings of the plan" (places where the build chose one interpretation of the plan). Read it before changing engine behavior, and update it in the same change.
 
@@ -50,10 +50,6 @@ Pure functions with no React and no I/O. `runEngine(input)` in `escalation.ts` r
 
 Every threshold lives in `config.ts` as `RULES`, each either cited or labeled a "demo parameter". Do not put rule numbers anywhere else.
 
-### Game (`src/game/`)
-
-XP, weekly streak with shield days, quests. Game functions cannot read check-in values by construction (`checkInEvent` takes only who and when), because the product rewards reporting, never the reading. Tests enforce this.
-
 ### One rules implementation, shared with Python
 
 `scripts/shipshape_sim.py:run_engine` shells out to `npx tsx scripts/engine_cli.ts`, so the demo-crew seed search (`simulate_crew.py`) and the backtest (`backtest.py`) run the real TypeScript engine. Consequences:
@@ -96,6 +92,6 @@ These come from the plan and are easy to break by accident:
 - **The app says "likely" and never diagnoses.** No AI-generated text in decisions or summaries; summaries come from fixed templates.
 - **Each dashboard shows only the logged-in person.** In the crew app (`/app`) crew see only their own view; the crew medical officer's view is the medical officer's only extra access, and everyone else's data reaches it through `privacy.ts`.
 - **Mood and stress are private.** They appear on the crew board only as a count with no names, and never count toward a ship alert. Only headache among symptoms counts toward one.
-- **No leaderboards, no reward tied to a reading, no celebration on an alert.**
+- **No game.** XP, streaks and quests were removed. Do not add points, rankings, rewards or celebrations.
 - **Sources:** `docs/CITATIONS.md` tracks whether a human has opened each source. Do not mark one as checked or add a sourced claim to UI text unless it has been verified. Log AI contributions in `docs/AI_USE_LOG.md`.
 - Charts follow one-series, one-axis conventions with status shown by shape and word as well as color, and need to work at 390 px width. Every page is dark only, with `/dashboard` as the colour reference: `src/styles.css` (crew app) uses the same values as the `--d-*` tokens in `dashboard.css`.

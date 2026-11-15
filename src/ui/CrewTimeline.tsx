@@ -22,14 +22,13 @@ const DRIFT_H = 46
 const ROWS_Y = DRIFT_Y + DRIFT_H + 14
 const ROW_H = 30
 
-const TONE: Record<TimelineMark, Tone> = { ok: 'ok', off: 'watch', persist: 'alert', absent: 'idle', shield: 'idle', safety: 'alert', unknown: 'idle' }
+const TONE: Record<TimelineMark, Tone> = { ok: 'ok', off: 'watch', persist: 'alert', absent: 'idle', safety: 'alert', unknown: 'idle' }
 
 const LEGEND: { mark: TimelineMark; word: string }[] = [
   { mark: 'ok', word: 'Within own usual' },
   { mark: 'off', word: 'Off own usual' },
   { mark: 'persist', word: `Day ${RULES.persistDays} or later` },
   { mark: 'absent', word: 'No check-in' },
-  { mark: 'shield', word: 'Shielded day' },
   { mark: 'safety', word: 'Safety answer' },
   { mark: 'unknown', word: 'Nothing received' },
 ]
@@ -46,13 +45,6 @@ function Sym({ mark, x, y, s }: { mark: TimelineMark; x: number; y: number; s: n
       return <path className={cls} d={`M${x},${y - s}L${x + s},${y}L${x},${y + s}L${x - s},${y}Z`} />
     case 'absent':
       return <circle className={cls} cx={x} cy={y} r={s * 0.55} />
-    case 'shield':
-      return (
-        <path
-          className={cls}
-          d={`M${x},${y - s * 0.85}L${x + s * 0.72},${y - s * 0.55}V${y}C${x + s * 0.72},${y + s * 0.5} ${x + s * 0.35},${y + s * 0.75} ${x},${y + s * 0.9}C${x - s * 0.35},${y + s * 0.75} ${x - s * 0.72},${y + s * 0.5} ${x - s * 0.72},${y}V${y - s * 0.55}Z`}
-        />
-      )
     case 'safety':
       return <rect className={cls} x={x - s * 0.72} y={y - s * 0.72} width={s * 1.44} height={s * 1.44} rx={1.5} />
     default:
@@ -68,14 +60,12 @@ function LegendSym({ mark }: { mark: TimelineMark }) {
   )
 }
 
-function cellWords(c: TimelineCell, shieldLabel: string | null): string {
+function cellWords(c: TimelineCell): string {
   switch (c.mark) {
     case 'ok':
       return 'Within own usual on what is shared'
     case 'absent':
       return 'No check-in'
-    case 'shield':
-      return `${shieldLabel ?? 'Shielded'} day, no check-in needed`
     case 'safety':
       return 'Safety answer: medical officer and flight surgeon told at once'
     case 'unknown':
@@ -105,17 +95,15 @@ export function CrewTimeline({ viewer }: { viewer: Viewer }) {
     return () => ro.disconnect()
   }, [])
 
-  const shieldDays = s.data.crew.shieldDays
   const t = useMemo(
     () =>
       crewTimeline(viewer, {
         window: s.results.slice(-DAYS),
         crewIds: s.data.crew.crew.map((c) => c.id),
-        shielded: (id, day) => shieldDays.some((x) => x.day === day && x.crewIds.includes(id)),
         summaries: s.summaries,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [viewerKey, s.results, s.summaries, s.data, shieldDays],
+    [viewerKey, s.results, s.summaries, s.data],
   )
 
   const cols = t.days.length
@@ -159,7 +147,6 @@ export function CrewTimeline({ viewer }: { viewer: Viewer }) {
 
   const every = cw < 22 ? 3 : cw < 34 ? 2 : 1
   const name = (id: string) => s.nameOf(id)
-  const shieldLabel = (id: string, d: number) => shieldDays.find((x) => x.day === d && x.crewIds.includes(id))?.label ?? null
 
   const onKey = (e: KeyboardEvent) => {
     if (e.key === 'ArrowLeft') setSel(Math.max(0, at - 1))
@@ -332,7 +319,7 @@ export function CrewTimeline({ viewer }: { viewer: Viewer }) {
                 return (
                   <li key={row.crewId}>
                     <span className="tl-person">{name(row.crewId)}</span>
-                    <Mark tone={TONE[c.mark]}>{cellWords(c, shieldLabel(row.crewId, c.day))}</Mark>
+                    <Mark tone={TONE[c.mark]}>{cellWords(c)}</Mark>
                   </li>
                 )
               })}

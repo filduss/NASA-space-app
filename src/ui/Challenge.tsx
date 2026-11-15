@@ -38,7 +38,7 @@ const QUESTIONS: { q: string; a: string; jump: string; stop: TourStop }[] = [
   },
   {
     q: 'What actions can prevent a critical condition?',
-    a: 'A ship alert opens the crew quest "Clear the air", and afterwards the app re-checks whether the air and the crew recovered. A private card carries a self-care idea. The radiation card says when to go to the storm shelter. Anything still off on day 3 reaches the flight surgeon.',
+    a: 'After a ship alert the app re-checks whether the air and the crew recovered. A private card carries a self-care idea. The radiation card says when to go to the storm shelter. Anything still off on day 3 reaches the flight surgeon.',
     jump: 'See day 213 on the Ship screen',
     stop: { as: 'dana', page: 'app', search: '?day=213&screen=ship' },
   },
