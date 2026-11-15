@@ -510,6 +510,7 @@ body.dash-body {
   left: 14px;
   right: 14px;
   bottom: 14px;
+  align-items: stretch;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
@@ -520,6 +521,8 @@ body.dash-body {
   align-items: center;
   column-gap: 7px;
   width: 100%;
+  height: 100%;
+  align-content: center;
   padding: 10px 12px;
   border-radius: 14px;
   border: 1px solid var(--d-stroke);
@@ -538,20 +541,19 @@ body.dash-body {
 .zone:active {
   transform: scale(0.98);
 }
+/* Names and reasons wrap instead of cutting off ("Head & s…"): the reason is the point of the chip. */
 .zone-name {
   font-size: 13px;
   font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 .zone-why {
   grid-column: 2;
   font-size: 12px;
+  line-height: 1.25;
   color: var(--d-ink-2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 .zone-watch {
   border-color: rgba(255, 159, 10, 0.35);
