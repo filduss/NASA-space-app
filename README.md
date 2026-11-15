@@ -7,7 +7,7 @@ Built for the NASA Space Apps Challenge 2026, "Create Health Monitoring Software
 ## For judges
 
 - **Live demo: [shipshape-rho.vercel.app](https://shipshape-rho.vercel.app/)**, installable and offline-capable.
-- **The start page is a judge's tour.** One click per step, no PIN to type: day 213 "likely the ship" (as Dana, the medical officer), day 221 "likely you" (Chen's own dashboard), day 223 "day 3 reaches Earth" (Mira, the flight surgeon).
+- **The start page has a judge's tour beside the login.** One click per step, no PIN to type: day 213 "likely the ship" (as Dana, the medical officer), day 221 "likely you" (Chen's own dashboard), day 223 "day 3 reaches Earth" (Mira, the flight surgeon).
 - **How it answers the challenge:** the `/challenge` page, no login: the five questions, the evidence and the limits.
 
 | Real | Simulated | Estimated |
@@ -39,7 +39,7 @@ npm run build      # production build, installable and offline-capable
 
 ### Log in
 
-The start page opens with a **judge's tour**: four links that walk the demo (day 213 as Dana, day 221 as Chen, day 223 as Mira on Earth, and the challenge page). Each logs in with that person's demo PIN for you. To log in by hand, pick a person and enter their PIN on the on-screen keypad (or type it); it is printed on their card. These are demo PINs:
+Beside the login, the start page has a **judge's tour**: four links that walk the demo (day 213 as Dana, day 221 as Chen, day 223 as Mira on Earth, and the challenge page). Each logs in with that person's demo PIN for you. To log in by hand, pick a person and enter their PIN on the on-screen keypad (or type it); it is printed on their card. These are demo PINs:
 
 | Person | Role | PIN |
 | --- | --- | --- |

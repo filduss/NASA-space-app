@@ -69,6 +69,31 @@ body.login-body {
   display: grid;
   gap: 16px;
 }
+/* Wide screens: the login is the main card; the tour is help in a narrower column to its right. */
+@media (min-width: 960px) {
+  .login-main {
+    max-width: 900px;
+    grid-template-columns: minmax(0, 480px) minmax(0, 340px);
+    justify-content: center;
+    align-items: start;
+    gap: 40px;
+  }
+  .login-tour {
+    padding: 4px 0 4px 32px;
+    border-left: 1px solid var(--l-stroke);
+  }
+}
+@media (max-width: 959px) {
+  .login-tour {
+    padding: 8px 8px 0;
+  }
+}
+/* On a phone the keypad would sit under the tour: the tour steps aside once a person is picked. */
+@media (max-width: 959px) {
+  .login-tour-picked {
+    display: none;
+  }
+}
 
 .login-card {
   background: var(--l-surface);
@@ -88,20 +113,23 @@ body.login-body {
   margin-top: 2px;
 }
 
+/* One compact row per person: avatar, name and role, then the demo PIN on the right. */
 .login-crew {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 18px;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
 }
 .login-person {
   width: 100%;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px;
-  padding: 18px 8px 16px;
-  border-radius: 18px;
+  gap: 12px;
+  padding: 10px 14px 10px 10px;
+  border-radius: 14px;
+  text-align: left;
   border: 1px solid var(--l-stroke);
   background: var(--l-surface-2);
   color: inherit;
@@ -115,9 +143,21 @@ body.login-body {
   border-color: var(--l-stroke-2);
   background: rgba(58, 58, 60, 0.7);
 }
+.login-person-who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-width: 0;
+}
 .login-person-name {
   font-weight: 600;
   font-size: 16px;
+}
+.login-crew .login-avatar {
+  width: 40px;
+  height: 40px;
+  font-size: 17px;
 }
 
 .login-avatar {
@@ -348,22 +388,48 @@ body.login-body {
   white-space: nowrap;
 }
 
-/* Judge's tour: one row per step, number + title + one line + who it opens as. */
+/* Judge's tour: help beside the login, not a card of its own. Quiet text, outlined numbers,
+   a surface only on hover. */
+.login-tour h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--l-ink);
+}
+.login-tour-mark {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(10, 132, 255, 0.5);
+  background: rgba(10, 132, 255, 0.14);
+  font-size: 13px;
+  font-weight: 700;
+  color: #64b5ff;
+}
+.login-tour-sub {
+  margin-top: 4px;
+  color: var(--l-ink-3);
+  font-size: 13px;
+}
 .login-steps {
   display: grid;
-  gap: 8px;
-  margin: 14px 0 0;
+  gap: 2px;
+  margin: 10px 0 0;
   padding: 0;
   list-style: none;
 }
 .login-step {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-start;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid var(--l-stroke);
-  background: var(--l-surface-2);
+  margin: 0 -10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid transparent;
   color: inherit;
   text-decoration: none;
   transition:
@@ -371,8 +437,10 @@ body.login-body {
     background 0.15s;
 }
 .login-step:hover {
-  border-color: var(--l-stroke-2);
-  background: rgba(58, 58, 60, 0.7);
+  border-color: var(--l-stroke);
+  background: var(--l-surface-2);
+  /* The site-wide link underline would run under every line of the step. */
+  text-decoration: none;
 }
 .login-step:focus-visible {
   outline: 2px solid var(--l-blue);
@@ -382,13 +450,18 @@ body.login-body {
   flex: none;
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
   border-radius: 50%;
-  background: var(--l-blue);
-  color: #fff;
-  font-weight: 700;
-  font-size: 13px;
+  border: 1px solid var(--l-stroke-2);
+  color: var(--l-ink-2);
+  font-weight: 600;
+  font-size: 12px;
+}
+.login-step:hover .login-step-n {
+  border-color: var(--l-blue);
+  color: var(--l-blue);
 }
 .login-step-text {
   display: grid;
@@ -396,10 +469,15 @@ body.login-body {
 }
 .login-step-title {
   font-weight: 600;
+  font-size: 14px;
+  color: var(--l-ink-2);
+}
+.login-step:hover .login-step-title {
+  color: var(--l-ink);
 }
 .login-step-body {
-  color: var(--l-ink-2);
-  font-size: 14px;
+  color: var(--l-ink-3);
+  font-size: 13px;
 }
 .login-step-as {
   color: var(--l-ink-3);
@@ -412,7 +490,16 @@ body.login-body {
   font-size: 13px;
 }
 .login-pin-hint {
-  font-size: 12px;
+  display: grid;
+  justify-items: end;
+  font-size: 11px;
+  line-height: 1.25;
   color: var(--l-ink-3);
   font-variant-numeric: tabular-nums;
+}
+.login-pin-hint strong {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--l-ink-2);
 }
