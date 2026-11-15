@@ -12,7 +12,7 @@ Built for the NASA Space Apps Challenge 2026, "Create Health Monitoring Software
 
 | Real | Simulated | Estimated |
 | --- | --- | --- |
-| ISS cabin CO₂, temperature and humidity from NASA's Open Science Data Repository (mission RR-7; source, API URL and SHA-256 on screen), and the NASA-STD-3001 3 mmHg limit | The four-person crew, seeded and labelled as simulated on every screen | Radiation dose for the mission setting, from published measurements, against NASA's 600 mSv career limit |
+| ISS cabin CO₂, temperature and humidity from NASA's Open Science Data Repository (mission RR-7; source, API URL and SHA-256 on screen), and the NASA-STD-3001 3 mmHg limit | The four-person crew and their wrist-wearable readings (sleep, exercise, heart rate, HRV, blood oxygen, breathing, skin temperature), seeded and labelled as simulated on every screen | Radiation dose for the mission setting, from published measurements, against NASA's 600 mSv career limit |
 
 **Evidence**: 200 simulated crews over 10 real ISS CO₂ traces, run through the app's own rules ([SPEC, "Evidence"](docs/SPEC.md#evidence)):
 
@@ -57,7 +57,7 @@ The login is a privacy gate for a demo, not security: there is no server, so any
 
 - **/dashboard**: the logged-in person's dashboard on a 3D skeleton. Zones turn orange when something drifts from their own normal and red when it lasts to day 3 or cabin CO₂ is over the limit. Its demo days are the crew app's: 212 (CO₂ starts to climb), 213 (cabin high, Chen fine), 221 (air normal, Chen still off) and 223 (day 3); `?day=221` opens a specific day. Chen (PIN 3333) is the one to follow. Tap a vital tile to open it larger, with ranges from one day to the whole mission so far and the flagged days marked.
 - **/challenge** (no login): how the demo answers the challenge's five questions, the backtest evidence and the Antarctic case. Each answer has a button that opens the screen that shows it.
-- **/checkin**: the logged-in crew member's morning check-in and their Me screen (status, XP, streak, quest, trends against their own normal).
+- **/checkin**: the logged-in crew member's morning check-in and their Me screen (status, XP, streak, quest, trends against their own normal). The check-in takes under a minute: a simulated wrist wearable fills in sleep, sleep quality and exercise, and the person rates how they feel. The watch's heart rate, HRV, blood oxygen, breathing and skin temperature are shown for information on the check-in and the dashboard; no rule uses them yet.
 - **/app**: the crew app, for Dana and Mira. Use the **Golden path** control: day 212 (all OK), 213 (CO₂ rises, "Likely the ship, not you"), 221 (air back to normal, one person still off), 223 (day 3, summary to the flight surgeon). **Mission** switches between the ISS, the lunar surface, Mars transit and an Antarctic station; it changes the delay to Earth and the radiation card on the Ship screen, never the rules. The crew board's **crew timeline** shows 14 days of cabin CO₂, how many crew drift, and a row per person; tap a day to read it. Log in as Mira for the same screens plus **Summaries**: on day 223 Chen's day-3 summary arrives, with times in Houston.
 
 ## Rebuild the data

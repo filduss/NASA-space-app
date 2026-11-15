@@ -86,6 +86,12 @@ EXERCISE_NONE_P = 0.02
 EXERCISE_SHORT_P = 0.08
 EXERCISE_SHORT = [30, 45, 60, 75, 90]
 EXERCISE_FULL = [120, 135, 150]
+# The wrist wearable's vitals, shown for information and never judged. Demo parameters: each person's own
+# level plus day-to-day wobble; a short night, a sleep-loss or a stress day nudges heart rate and
+# breathing up and HRV down. A stream of its own, like exercise.
+WATCH_PERSON = {"resting_hr": (52, 66), "hrv_ms": (35, 75), "spo2": (96, 99), "resp_rate": (13, 16)}
+WATCH_SD = {"resting_hr": 2.0, "hrv_rel": 0.12, "spo2": 0.8, "resp_rate": 0.5, "skin_temp": 0.15}
+WATCH_STRAIN = {"resting_hr": 4.0, "hrv_factor": 0.8, "resp_rate": 0.5}
 
 SD = {"sleep_hours": 0.55, "sleep_quality": 0.9, "fatigue": 0.9, "irritability": 0.8, "stress": 0.9, "mood": 0.8, "reaction_ms": 11.0}
 EVENT_KINDS = [("sleep_loss", 0.4), ("symptom_run", 0.3), ("stress", 0.3)]
@@ -155,6 +161,8 @@ def simulate(
     for person in people:
         prng = random.Random(f"{seed}:{person.crew_id}")
         erng = random.Random(f"{seed}:{person.crew_id}:exercise")
+        wrng = random.Random(f"{seed}:{person.crew_id}:watch")
+        own = {k: wrng.uniform(*span) for k, span in WATCH_PERSON.items()}
         latent = 0.0
         active_until = -1
         for day in days:
@@ -208,6 +216,15 @@ def simulate(
             if short:
                 z["stress"] += 0.4
             reaction = (person.reaction_ms + SD["reaction_ms"] * z["reaction_ms"]) * (1 + (p.short_sleep_rt_penalty if short else 0))
+            g = [wrng.gauss(0, 1) for _ in range(5)]
+            strain = short or "sleep_loss" in kinds or "stress" in kinds
+            watch = {
+                "restingHr": round(own["resting_hr"] + WATCH_SD["resting_hr"] * g[0] + (WATCH_STRAIN["resting_hr"] if strain else 0)),
+                "hrvMs": round(own["hrv_ms"] * (1 + WATCH_SD["hrv_rel"] * g[1]) * (WATCH_STRAIN["hrv_factor"] if strain else 1)),
+                "spo2": int(clamp(round(own["spo2"] + WATCH_SD["spo2"] * g[2]), 94, 100)),
+                "respRate": round(own["resp_rate"] + WATCH_SD["resp_rate"] * g[3] + (WATCH_STRAIN["resp_rate"] if strain else 0), 1),
+                "skinTempDelta": round(WATCH_SD["skin_temp"] * g[4], 1) + 0.0,
+            }
 
             def slider(name: str) -> int:
                 base = getattr(person, name)
@@ -238,6 +255,7 @@ def simulate(
                 "symptoms": symptoms,
                 "reactionMs": round(reaction),
                 "exerciseMin": exercise,
+                "watch": watch,
                 "simulated": True,
             }
             if person.crew_id == silent:

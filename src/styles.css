@@ -438,6 +438,32 @@ input {
 .unset-note {
   text-align: center;
 }
+/* What the (simulated) wrist wearable measured, at the top of the check-in. */
+.watch {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 10px;
+}
+.watch dt {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.watch dd {
+  margin: 2px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+.from-watch {
+  color: var(--real-ink);
+  font-size: 12px;
+  font-weight: 500;
+}
+@media (max-width: 720px) {
+  .watch {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .fine {
   font-size: 13px;
   color: var(--ink-3);

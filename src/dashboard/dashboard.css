@@ -833,6 +833,40 @@ body.dash-body {
   vector-effect: non-scaling-stroke;
 }
 
+/* From your watch: the simulated wearable's vitals, for information only; no rule reads them. */
+.watch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 12px;
+  margin-bottom: 12px;
+}
+.watch-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--d-ink-3);
+}
+.watch-value {
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.watch-trends {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.watch-trend .spark {
+  width: 100%;
+}
+.watch-note {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--d-ink-3);
+}
+
 /* ---------- expandable charts ---------- */
 
 .expand {
