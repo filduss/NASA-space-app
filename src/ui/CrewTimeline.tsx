@@ -185,7 +185,7 @@ export function CrewTimeline({ viewer }: { viewer: Viewer }) {
             Cabin CO₂
           </text>
           <text className="tl-sub" x={0} y={CO2_Y + 26}>
-            mmHg · real
+            mmHg
           </text>
           <line className="tl-ref-limit" x1={LABEL_W} x2={width - PAD_R} y1={sy(RULES.co2LimitMmHg)} y2={sy(RULES.co2LimitMmHg)} />
           <text className="tl-ref-label" x={LABEL_W + 4} y={sy(RULES.co2LimitMmHg) - 4}>

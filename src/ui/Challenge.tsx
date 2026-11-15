@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import type { TourStop } from '../auth/demo.ts'
+import { tourStop, type TourStop } from '../auth/demo.ts'
 import { hrefOf } from '../auth/paths.ts'
 import { homePage } from '../auth/session.ts'
 import { TourLink } from '../auth/TourLink.tsx'
@@ -439,9 +439,10 @@ export function ChallengePage() {
           <h1>How it answers the challenge</h1>
         </div>
         <nav className="toolbar" aria-label="Pages">
-          <a className="tbtn tbtn-text" href={hrefOf('login', base)}>
+          {/* The login page has no tour, so this starts the tour at its first stop. */}
+          <TourLink stop={tourStop(0)} className="tbtn tbtn-text">
             Judge's tour
-          </a>
+          </TourLink>
           {s.user && (
             <a className="tbtn tbtn-text" href={hrefOf(homePage(s.user), base)}>
               Back to the demo

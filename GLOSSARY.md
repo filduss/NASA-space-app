@@ -1,4 +1,4 @@
-# Shipshape
+# Ship Or Me? (Guide terms)
 
 A crew check-in for long missions that says whether a bad day is likely the person or likely the ship.
 

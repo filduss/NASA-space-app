@@ -1,19 +1,29 @@
 # Ship Or Me?
 
-**Is it me, or the ship?** A daily check-in for a crew on a long mission. When several people feel off at once, Ship Or Me? checks the real ISS cabin air (CO₂, temperature and humidity) before blaming anyone, and tells each astronaut whether a bad day is likely them or the ship.
+When several crew members sleep badly or get headaches at once, the cause may not be them. It may be the ship: on the ISS, reported headaches rose with cabin CO₂ ([Law et al. 2014](https://pubmed.ncbi.nlm.nih.gov/24806559/)).
+
+The app compares each astronaut's check-in and wearable readings with their own normal, checks real ISS cabin telemetry (from NASA's Open Science Data Repository) against NASA-STD-3001 limits, and answers one question: is it me, or the ship?
+
+We tested the rules on 200 simulated crews over 10 real ISS cabin traces:
+
+- On days with a CO₂ rise, 74% of alerts named the ship.
+- 95% of one person's own problems were correctly not put down to the ship.
+- During CO₂ rises it opened 72% fewer personal cases than an app with one alert per person.
+
+The app works offline with no server and no AI model. It says "likely" and never diagnoses. The same approach carries over to Antarctic winter stations, submarines and other closed habitats.
 
 Built for the NASA Space Apps Challenge 2026, "Create Health Monitoring Software for Astronauts on Space Missions". It grew from the team's [plan v0.1](docs/plan-v0.1.md), now superseded by [docs/SPEC.md](docs/SPEC.md).
 
 ## For judges
 
-- **Live demo: [shipshape-rho.vercel.app](https://shipshape-rho.vercel.app/)**, installable and offline-capable.
+- **Live demo: [ship-or-me.vercel.app](https://ship-or-me.vercel.app/)**, installable and offline-capable.
 - **The challenge page opens each screen in one click,** no PIN to type, logged in as the person who would see it. The golden path: day 213 "likely the ship" (as Dana, the medical officer), day 221 "likely you" (Chen's own dashboard), day 223 "day 3 reaches Earth" (Mira, the flight surgeon), then the crew's Guide (Chen).
 - **How it answers the challenge:** the `/challenge` page, no login: the five questions, the evidence and the limits.
 - **The crew's Guide** (`/guide`, the book button on the dashboard): plain explanations of every reading, why it matters in space and NASA's limit, with a search that understands everyday words ("head hurts"). Its sources are not shown to the crew; every one is listed in [docs/CITATIONS.md](docs/CITATIONS.md), and a sentence appears only after a person on the team has opened its source.
 
 | Real | Simulated | Estimated |
 | --- | --- | --- |
-| ISS cabin CO₂, temperature and humidity from NASA's Open Science Data Repository (mission RR-7 in the demo, 10 missions in the backtest; source, API URL and SHA-256 on screen), NASA-STD-3001's 3 mmHg CO₂ limit and its temperature and humidity ranges, and published results for real ISS crews (sleep, headaches) set beside the simulated crew | The four-person crew and their wrist-wearable readings (sleep, exercise, heart rate, HRV, blood oxygen, breathing, skin temperature), seeded and simulated (stated in the demo dock's "About the data", not labelled on each screen) | Radiation dose for the mission setting, from published measurements, against NASA's 600 mSv career limit |
+| ISS cabin CO₂, temperature and humidity from NASA's Open Science Data Repository (mission RR-7 in the demo, 10 missions in the backtest; source in the demo dock's "About the data", SHA-256 in `scripts/snapshots/SHA256SUMS`), NASA-STD-3001's 3 mmHg CO₂ limit and its temperature and humidity ranges, and published results for real ISS crews (sleep, headaches) set beside the simulated crew | The four-person crew and their wrist-wearable readings (sleep, exercise, heart rate, HRV, blood oxygen, breathing, skin temperature), seeded and simulated (stated in the demo dock's "About the data", not labelled on each screen) | Radiation dose for the mission setting, from published measurements, against NASA's 600 mSv career limit |
 
 **Evidence**: 200 simulated crews over 10 real ISS cabin traces, run through the app's own rules ([SPEC, "Evidence"](docs/SPEC.md#evidence)):
 
@@ -27,7 +37,7 @@ Built for the NASA Space Apps Challenge 2026, "Create Health Monitoring Software
 
 | | |
 | --- | --- |
-| ![The judge's tour on the start page](docs/screenshots/tour.png) | ![Day 213: likely the ship, with the real ISS CO₂ trace](docs/screenshots/ship-day-213.png) |
+| ![The login: pick a person, demo PINs on each card](docs/screenshots/login.png) | ![Day 213: likely the ship, with the real ISS CO₂ trace](docs/screenshots/ship-day-213.png) |
 | ![Day 221: Chen's dashboard, likely him](docs/screenshots/dashboard-day-221.png) | ![Day 223: Chen's day-3 summary reaches the flight surgeon on Earth](docs/screenshots/earth-day-223.png) |
 
 Not a medical device: it says "likely", never diagnoses, and supports the flight surgeon rather than replacing one. No AI model runs in the product, there is no leaderboard and no backend; the PIN login runs in the browser only (see below). AI use during development is in [docs/AI_USE_LOG.md](docs/AI_USE_LOG.md).
@@ -43,7 +53,7 @@ npm run build      # production build, installable and offline-capable
 
 ### Log in
 
-The start page is only the login. The **judge's tour** (`TOUR` in `src/auth/demo.ts`) is still built but no longer linked from it: five stops that walk the demo (day 213 as Dana, day 221 as Chen, day 223 as Mira on Earth, the Guide as Chen, and the challenge page). Each logs in with that person's demo PIN for you. To log in by hand, pick a person and enter their PIN on the on-screen keypad (or type it); it is printed on their card. These are demo PINs:
+The start page is the login: pick a person and enter their PIN on the on-screen keypad (or type it); it is printed on their card. The **judge's tour** starts from the "Judge's tour" button on [/challenge](https://ship-or-me.vercel.app/challenge): five stops that walk the demo (day 213 as Dana, day 221 as Chen, day 223 as Mira on Earth, the Guide as Chen, and the challenge page), each logging in with that person's demo PIN for you. These are demo PINs:
 
 | Person | Role | PIN |
 | --- | --- | --- |
@@ -97,6 +107,7 @@ docs/          SPEC.md  CITATIONS.md  AI_USE_LOG.md  adr/  research/
 
 - Filip Kolar
 - Frantisek Kares
+- Ales Struhar
 
 ## License
 
