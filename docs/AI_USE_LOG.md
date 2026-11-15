@@ -31,6 +31,10 @@
 | 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `checkin-cta`: one shared page toolbar (`src/ui/Toolbar.tsx`, `src/ui/toolbar.css`) on `/dashboard`, `/checkin` and `/app`, replacing the text links in the check-in and crew app header; the person's name and role beside it | Team review pending |
 | 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `checkin-cta`: the check-in's opening text (who receives the answers, and that sending replaces the simulator's check-in) removed at the team's request; SPEC notes it | Team review pending |
 | 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `checkin-cta`: the crew app's "Demo controls" fold replaced by the dashboard's demo dock (now shared, `src/ui/DemoDock.tsx` and `demodock.css`), with a settings popover for the mission, comm delay, challenge link and reset; the check-in page keeps the fold | Team review pending |
+| 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `checkin-cta`: a one-step tutorial for judges (`src/ui/DemoTip.tsx`): on the first visit the page dims around the demo dock and a card says what it does; shown once per browser, again from the dock's "?" | Team review pending |
+| 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `checkin-cta`: the dashboard's check-in card shows the last check-in and the last 7 days as boxes with a count (a streak was asked for and replaced by the count, per the no-game rule, with the team's agreement); the wearable panel's "rules don't use these yet" note removed | Team review pending |
+| 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `checkin-cta`: the check-in page's "Demo controls" fold replaced by the demo dock, the Send bar kept above it; `RoleSwitcher` reduced to the dock's settings (`src/ui/DemoSettings.tsx`) and the unused stepper and chip styles removed | Team review pending |
+| 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `checkin-cta`: the check-in's Send button floats alone as a large capsule (grey until every answer is in, then blue), without the empty panel around it | Team review pending |
 
 ## What AI does not do in the product
 

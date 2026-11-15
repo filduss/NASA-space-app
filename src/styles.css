@@ -114,13 +114,18 @@ input {
   --col: 1032px;
   padding-bottom: 48px;
 }
-/* The crew app leaves room under the page for the demo dock (src/ui/DemoDock.tsx). */
+/* Room for the demo dock (src/ui/DemoDock.tsx) under the page, and under the check-in's sticky
+   Send bar, so the dock never covers either. --dock-room is the dock's height plus its margin. */
 .app:has(> .demo) {
-  padding-bottom: 92px;
+  --dock-room: 76px;
+  padding-bottom: calc(16px + var(--dock-room));
+}
+.app:has(> .demo-folded) {
+  --dock-room: 60px;
 }
 @media (max-width: 900px) {
-  .app:has(> .demo) {
-    padding-bottom: 136px;
+  .app:has(> .demo:not(.demo-folded)) {
+    --dock-room: 124px;
   }
 }
 /* The check-in page is one centred column, the width of the form. */
@@ -303,23 +308,7 @@ input {
   gap: 6px;
 }
 
-/* ---------- demo controls ---------- */
-.controls {
-  margin-bottom: 20px;
-  padding: 12px 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-}
-.controls summary {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
-}
+/* ---------- demo settings (in the demo dock's settings popover) ---------- */
 .switcher {
   display: flex;
   flex-wrap: wrap;
@@ -334,8 +323,7 @@ input {
   font-weight: 500;
   color: var(--ink-2);
 }
-.field select,
-.stepper {
+.field select {
   height: 34px;
   border: 1px solid var(--line);
   border-radius: 9px;
@@ -354,61 +342,6 @@ input {
   font-size: 0.95rem;
   color: var(--ink);
 }
-.stepper {
-  display: inline-flex;
-  align-items: center;
-  overflow: hidden;
-}
-.stepper button {
-  width: 34px;
-  height: 100%;
-  border: 0;
-  background: transparent;
-  font-size: 1.2rem;
-  cursor: pointer;
-}
-.stepper button:hover:not(:disabled) {
-  background: var(--fill);
-}
-.stepper button:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-.stepper output {
-  min-width: 44px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-}
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.chip {
-  height: 34px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--fill);
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s;
-}
-.chip:hover {
-  background: var(--fill-2);
-}
-.chip-on,
-.chip-on:hover {
-  background: var(--accent);
-  color: var(--accent-ink);
-  box-shadow: none;
-  font-weight: 600;
-}
-
 /* ---------- layout pieces ---------- */
 .stack {
   display: flex;
@@ -1256,26 +1189,49 @@ input {
 .btn-urgent:hover:not(:disabled) {
   background: var(--alert);
 }
-/* The send bar stays in reach at the bottom of the screen while the person scrolls. */
+/* The Send button floats on its own at the bottom of the screen while the person scrolls: no panel
+   around it, a large capsule as in Apple's apps. Grey until every answer is in, then blue. */
 .ci-bar {
   position: sticky;
-  bottom: 12px;
+  bottom: calc(12px + var(--dock-room, 0px));
   z-index: 5;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  align-items: center;
-  padding: 12px 12px 12px 18px;
-  border: 1px solid var(--line-2);
-  border-radius: 18px;
-  background: rgba(28, 28, 30, 0.9);
+  justify-content: center;
+  /* The space beside the button is see-through to clicks. */
+  pointer-events: none;
+}
+.ci-send {
+  pointer-events: auto;
+  min-width: 280px;
+  min-height: 52px;
+  padding: 0 32px;
+  border-radius: 999px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  box-shadow:
+    0 10px 30px rgba(10, 132, 255, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition:
+    background 0.25s ease,
+    box-shadow 0.25s ease,
+    color 0.25s ease,
+    transform 0.12s ease;
+}
+.ci-send:disabled {
+  opacity: 1;
+  background: rgba(58, 58, 60, 0.92);
+  color: var(--ink-3);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px var(--line-2);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
 }
-.ci-send {
-  margin-left: auto;
-  min-height: 46px;
-  padding: 0 22px;
+@media (prefers-reduced-motion: reduce) {
+  .ci-send {
+    transition: none;
+  }
 }
 @media (max-width: 480px) {
   .ci-scale {
@@ -1294,6 +1250,7 @@ input {
   }
   .ci-send {
     flex: 1 1 100%;
+    min-width: 0;
   }
 }
 .rt-pad {

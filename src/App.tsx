@@ -7,7 +7,7 @@ import { CheckInScreen } from './ui/CheckInScreen.tsx'
 import { CrewBoard } from './ui/CrewBoard.tsx'
 import { CmoInbox, SurgeonView } from './ui/Medical.tsx'
 import { DemoDock } from './ui/DemoDock.tsx'
-import { RoleSwitcher } from './ui/RoleSwitcher.tsx'
+import { DemoSettings } from './ui/DemoSettings.tsx'
 import { ShipAlert } from './ui/ShipAlert.tsx'
 import { Toolbar } from './ui/Toolbar.tsx'
 
@@ -102,14 +102,6 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
         </span>
       </section>
 
-      {/* The crew app's demo controls float in the dock, as on the dashboard. The check-in page keeps
-          them in a fold: its Send bar sits where the dock would. */}
-      {page === 'checkin' && (
-        <details className="controls">
-          <summary>Demo controls</summary>
-          <RoleSwitcher />
-        </details>
-      )}
 
       {/* Keyed by person and day so forms start fresh when either changes. */}
       <main key={`${crewId ?? s.role.kind}-${s.today}`}>
@@ -120,7 +112,7 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
         {screen === 'summary' && <SurgeonView />}
       </main>
 
-      {page === 'app' && <DemoDock settings={<RoleSwitcher days={false} />} />}
+      <DemoDock settings={<DemoSettings />} />
 
       <footer className="foot">
         <p>

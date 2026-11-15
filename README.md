@@ -79,7 +79,7 @@ python3 scripts/snapshot_eda.py --verify
 
 ```
 src/engine/    baseline.ts  deviation.ts  shipOrMe.ts  escalation.ts  privacy.ts  gravity.ts  mission.ts  config.ts
-src/ui/        CrewBoard  CrewTimeline  ShipAlert  FollowUp  Radiation  Medical  CheckInScreen  ReactionTest  Challenge  RoleSwitcher  DemoDock  Toolbar  ErrorBoundary
+src/ui/        CrewBoard  CrewTimeline  ShipAlert  FollowUp  Radiation  Medical  CheckInScreen  ReactionTest  Challenge  DemoSettings  DemoDock  Toolbar  ErrorBoundary
 src/auth/      Login  TourLink  RequireUser  demo.ts  pin.ts  session.ts  paths.ts
 src/dashboard/ Dashboard  SkeletonView  ChartSheet  model.ts  history.ts
 src/data/      types.ts  wearable.ts

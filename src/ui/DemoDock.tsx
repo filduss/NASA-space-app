@@ -1,5 +1,6 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useStore } from '../state.tsx'
+import { DemoTip, tipSeen } from './DemoTip.tsx'
 import './demodock.css'
 
 // The demo's own controls, kept apart from the page itself (the dashboard and the crew app): a floating dock at the bottom
@@ -57,6 +58,22 @@ export function DemoDock({ settings }: { settings?: ReactNode }) {
 
   const toggle = (p: Pop) => setPop((cur) => (cur === p ? null : p))
 
+  // The one-step tutorial: the first visit shows it after a beat, so the page is seen first.
+  const dockRef = useRef<HTMLElement>(null)
+  const [tip, setTip] = useState(false)
+  useEffect(() => {
+    if (tipSeen()) return
+    const t = window.setTimeout(() => {
+      setFolded(false)
+      setTip(true)
+    }, 700)
+    return () => window.clearTimeout(t)
+  }, [])
+  const showTip = () => {
+    setPop(null)
+    setTip(true)
+  }
+
   if (folded) {
     return (
       <div className="demo demo-folded">
@@ -72,11 +89,12 @@ export function DemoDock({ settings }: { settings?: ReactNode }) {
   }
 
   return (
-    <aside className="demo" aria-label="Demo controls, not part of Shipshape">
+    <aside ref={dockRef} className="demo" aria-label="Demo controls, not part of Shipshape">
+      {tip && <DemoTip anchor={dockRef} hasSettings={Boolean(settings)} onClose={() => setTip(false)} />}
       <div className="demo-head">
-        <span className="demo-mark" aria-hidden="true">
+        <button type="button" className="demo-mark demo-mark-btn" onClick={showTip} aria-label="What is this bar?" title="What is this bar?">
           ?
-        </span>
+        </button>
         <div className="demo-head-text">
           <p className="demo-title">Demo</p>
           <p className="demo-sub">Not part of the app</p>

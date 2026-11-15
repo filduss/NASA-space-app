@@ -20,38 +20,68 @@ import './dashboard.css'
 const TREND_DAYS = 14
 
 type CheckInState = 'todo' | 'simulated' | 'done'
+type DayMark = 'done' | 'missed' | 'pending'
 
-const CHECK_IN_TEXT: Record<CheckInState, { title: string; sub: string }> = {
-  todo: { title: 'Check in', sub: 'Not done today · about a minute' },
-  simulated: { title: 'Check in', sub: 'Today’s came from the simulator' },
-  done: { title: 'Checked in today', sub: 'View or change your answers' },
+const WEEK = 7
+
+/** When the last check-in was, in words: "today", "yesterday", "3 days ago (day 218)". */
+function lastCheckInText(last: number | null, today: number): string {
+  if (last === null) return 'No check-in yet'
+  const ago = today - last
+  if (ago === 0) return 'Last check-in today'
+  if (ago === 1) return 'Last check-in yesterday'
+  return `Last check-in ${ago} days ago (day ${last})`
 }
 
+const MARK_WORD: Record<DayMark, string> = { done: 'checked in', missed: 'no check-in', pending: 'not yet' }
+
 /** The daily check-in, the one thing the dashboard asks of the person: a large card in the left
- *  column, filled blue until today's is sent, then quiet with a done mark. */
-function CheckInCard({ state, day }: { state: CheckInState; day: number }) {
-  const text = CHECK_IN_TEXT[state]
+ *  column, filled blue until today's is sent, then quiet with a done mark. Under it, the last 7
+ *  mission days, checked in or not, as a plain count (no streak: docs/SPEC.md). */
+function CheckInCard({ state, day, last, week }: { state: CheckInState; day: number; last: number | null; week: { day: number; mark: DayMark }[] }) {
+  const done = week.filter((w) => w.mark === 'done').length
+  const lastText = lastCheckInText(last, day)
+  const title = state === 'done' ? 'Checked in today' : 'Check in'
+  const sub = state === 'simulated' ? `${lastText} (simulator)` : state === 'done' ? 'View or change your answers' : lastText
   return (
     <a className={`cta cta-${state}`} href={hrefOf('checkin', import.meta.env.BASE_URL, `?day=${day}`)}>
-      <span className="cta-icon" aria-hidden="true">
-        {state === 'done' ? (
-          <svg width="22" height="22" viewBox="0 0 22 22">
-            <path d="M5.5 11.5l3.8 3.8 7.2-8" />
-          </svg>
-        ) : (
-          <svg width="22" height="22" viewBox="0 0 18 18">
-            <rect x="3.25" y="2.75" width="11.5" height="13" rx="2.5" />
-            <path d="M6.5 2.75v-.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v.5M6.25 9.4l1.8 1.8 3.7-3.9" />
-          </svg>
-        )}
+      <span className="cta-row">
+        <span className="cta-icon" aria-hidden="true">
+          {state === 'done' ? (
+            <svg width="22" height="22" viewBox="0 0 22 22">
+              <path d="M5.5 11.5l3.8 3.8 7.2-8" />
+            </svg>
+          ) : (
+            <svg width="22" height="22" viewBox="0 0 18 18">
+              <rect x="3.25" y="2.75" width="11.5" height="13" rx="2.5" />
+              <path d="M6.5 2.75v-.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v.5M6.25 9.4l1.8 1.8 3.7-3.9" />
+            </svg>
+          )}
+        </span>
+        <span className="cta-text">
+          <span className="cta-title">{title}</span>
+          <span className="cta-sub">{sub}</span>
+        </span>
+        <svg className="cta-chev" width="10" height="16" viewBox="0 0 10 16" aria-hidden="true">
+          <path d="M2 2l6 6-6 6" />
+        </svg>
       </span>
-      <span className="cta-text">
-        <span className="cta-title">{text.title}</span>
-        <span className="cta-sub">{text.sub}</span>
+      <span className="cta-week">
+        <span className="cta-days" role="img" aria-label={`Checked in on ${done} of the last ${WEEK} days`}>
+          {week.map((w) => (
+            <span key={w.day} className={`cta-day cta-day-${w.mark}`} title={`Day ${w.day}: ${MARK_WORD[w.mark]}`}>
+              {w.mark === 'done' && (
+                <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                  <path d="M2.2 5.3l1.9 1.9 3.8-4.2" />
+                </svg>
+              )}
+            </span>
+          ))}
+        </span>
+        <span className="cta-count" aria-hidden="true">
+          {done} of the last {WEEK} days
+        </span>
       </span>
-      <svg className="cta-chev" width="10" height="16" viewBox="0 0 10 16" aria-hidden="true">
-        <path d="M2 2l6 6-6 6" />
-      </svg>
     </a>
   )
 }
@@ -149,6 +179,13 @@ export function Dashboard() {
   const vitalsToday = todaysCheckIn?.watch ?? null
   // Today's check-in: still to do, sent by the person, or filled in by the crew simulator.
   const checkInState: CheckInState = !todaysCheckIn ? 'todo' : todaysCheckIn.simulated ? 'simulated' : 'done'
+  const checkInDays = useMemo(() => new Set(history.map((c) => c.day)), [history])
+  const lastCheckIn = history.reduce<number | null>((m, c) => (c.day <= today && (m === null || c.day > m) ? c.day : m), null)
+  const week = Array.from({ length: WEEK }, (_, i) => {
+    const d = today - (WEEK - 1) + i
+    const mark: DayMark = checkInDays.has(d) ? 'done' : d === today ? 'pending' : 'missed'
+    return { day: d, mark }
+  })
   const zones = useMemo(() => zoneStates(me, exercise), [me, exercise])
   const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise), [me, cabin, s.commDelaySec, exercise])
   const tiles = useMemo(() => vitals(me, history, today, TREND_DAYS), [me, history, today])
@@ -228,7 +265,7 @@ export function Dashboard() {
             </ul>
           </div>
 
-          <CheckInCard state={checkInState} day={today} />
+          <CheckInCard state={checkInState} day={today} last={lastCheckIn} week={week} />
 
           <div className="panel watchp">
             <h2 className="panel-title watch-title">From your wearable</h2>
@@ -245,7 +282,6 @@ export function Dashboard() {
             ) : (
               <p className="watch-note">No wearable reading today</p>
             )}
-            <p className="watch-note">Shipshape's rules don't use these yet. Next, each will be compared with your own normal once a real device feeds them.</p>
           </div>
 
         </section>

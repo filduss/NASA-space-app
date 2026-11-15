@@ -307,8 +307,8 @@ body.dash-body {
    the strongest surface on the page; once sent it turns quiet, with a green done mark. */
 
 .cta {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   padding: 16px 18px 16px 16px;
   border-radius: var(--d-radius);
@@ -338,6 +338,11 @@ body.dash-body {
 .cta:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 3px;
+}
+.cta-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 .cta-icon {
   flex: none;
@@ -380,6 +385,63 @@ body.dash-body {
 }
 .cta:hover .cta-chev {
   transform: translateX(3px);
+}
+
+/* The last 7 mission days: a filled box with a tick for a check-in, an empty outline for none, a
+   dashed one for today while it is still to do. Shape carries the state; colour only supports it. */
+.cta-week {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+.cta-days {
+  display: flex;
+  gap: 5px;
+}
+.cta-day {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+}
+.cta-day-done {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.92);
+  color: #0a6bd6;
+}
+.cta-day-done svg {
+  stroke-width: 2;
+}
+.cta-day-pending {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.7);
+}
+.cta-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cta-done .cta-week {
+  border-top-color: var(--d-stroke);
+}
+.cta-done .cta-day {
+  border-color: var(--d-stroke-2);
+}
+.cta-done .cta-day-done {
+  border-color: transparent;
+  background: var(--d-green);
+  color: #000;
+}
+.cta-done .cta-count {
+  color: var(--d-ink-2);
 }
 
 .cta-done {
