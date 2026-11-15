@@ -1,7 +1,7 @@
 {
  "meta": {
   "simulated": true,
-  "generatedAt": "2026-11-15T03:22:22Z",
+  "generatedAt": "2026-11-15T03:42:21Z",
   "generator": "scripts/backtest.py",
   "engine": "src/engine (the app's own rules, run through scripts/engine_cli.ts)",
   "crews": 200,

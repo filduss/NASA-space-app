@@ -1,16 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { hrefOf } from '../auth/paths.ts'
 import { mayOpen, type User } from '../auth/session.ts'
-import { vitalLines } from '../data/watch.ts'
+import { vitalLines } from '../data/wearable.ts'
 import { exerciseWeek } from '../engine/gravity.ts'
-import type { CabinFactor } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
-import { delayText, shipBecause, symptomLabel } from '../ui/text.ts'
+import { symptomLabel } from '../ui/text.ts'
 import { ChartSheet, type ChartTarget } from './ChartSheet.tsx'
 import { Sparkline } from './charts.tsx'
 import type { RangeKey } from './history.ts'
 import { LEVEL_WORD, LevelIcon } from './LevelIcon.tsx'
-import { airLevel, cabinLevel, notices, vitals, worst, zoneStates, ZONES, type Level, type Notice, type Vital, type ZoneKey } from './model.ts'
+import { notices, verdict, vitals, zoneStates, ZONES, type Notice, type Vital, type VerdictSide, type ZoneKey } from './model.ts'
 import { SkeletonView } from './SkeletonView.tsx'
 import './dashboard.css'
 
@@ -87,44 +86,15 @@ function VitalTile({ v, onOpen, reference }: { v: Vital; onOpen: () => void; ref
   )
 }
 
-/** A 14-day line of one watch reading, with its value under the pointer. No usual line: these are not judged. */
-function WatchTrend({ label, unit, series }: { label: string; unit: string; series: { day: number; v: number | null }[] }) {
-  const [hover, setHover] = useState<string | null>(null)
+/** One side of the answer: a level by shape, colour and word. The detail is a tooltip. */
+function HeroChip({ label, side }: { label: string; side: VerdictSide }) {
   return (
-    <div className="watch-trend">
-      <span className="watch-label">
-        {label}, {TREND_DAYS} days{hover ? ` · ${hover}` : ''}
-      </span>
-      <Sparkline series={series} usual={null} level="ok" format={(v) => `${Math.round(v)} ${unit}`} onHover={setHover} />
-    </div>
-  )
-}
-
-function NoticeCard({ n, onOpen }: { n: Notice; onOpen?: () => void }) {
-  return (
-    <li className={`note note-${n.level}`}>
-      <span className="note-icon">
-        <LevelIcon level={n.level} size={18} />
-      </span>
-      <div className="note-text">
-        <p className="note-title">{n.title}</p>
-        <p className="note-body">{n.body}</p>
-      </div>
-      {onOpen && (
-        <button type="button" className="note-go" onClick={onOpen} aria-label={`Show ${n.title} on the body`}>
-          ›
-        </button>
-      )}
+    <li className={`hero-chip hero-chip-${side.level}`} title={side.detail}>
+      <LevelIcon level={side.level} size={14} />
+      <span className="hero-chip-label">{label}</span>
+      <span className="hero-chip-word">{LEVEL_WORD[side.level]}</span>
     </li>
   )
-}
-
-const NOTICE_ZONE = (id: string): ZoneKey | null => {
-  if (id === 'co2' || id === 'ship') return 'chest'
-  if (id === 'ind-fatigue') return 'limbs'
-  if (id === 'exercise') return 'core'
-  if (id.startsWith('ind-') || id === 'safety') return 'head'
-  return null
 }
 
 export function Dashboard() {
@@ -143,23 +113,15 @@ export function Dashboard() {
 
   const history = useMemo(() => s.checkIns.filter((c) => c.crewId === crewId), [s.checkIns, crewId])
   const exercise = useMemo(() => exerciseWeek(history, today), [history, today])
-  // The (simulated) wrist wearable's vitals: shown for information, never judged.
+  // The (simulated) wearable's vitals: shown for information, never judged.
   const vitalsToday = history.find((c) => c.day === today)?.watch ?? null
-  const vitalTrend = (pick: (c: { restingHr: number; hrvMs: number }) => number) =>
-    Array.from({ length: TREND_DAYS }, (_, i) => {
-      const d = today - TREND_DAYS + 1 + i
-      const w = history.find((c) => c.day === d)?.watch
-      return { day: d, v: w ? pick(w) : null }
-    })
-  const zones = useMemo(() => zoneStates(me, cabin, exercise), [me, cabin, exercise])
-  const causes = s.todayResult.decision.causes
-  // A published figure for real ISS crews, shown beside the person's own usual sleep (backtest.json).
-  const issSleep = s.data.backtest?.meta.issCrews?.sleepHours
-  const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise, causes), [me, cabin, s.commDelaySec, exercise, causes])
+  const zones = useMemo(() => zoneStates(me, exercise), [me, exercise])
+  const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise), [me, cabin, s.commDelaySec, exercise])
   const tiles = useMemo(() => vitals(me, history, today, TREND_DAYS), [me, history, today])
   const chartVital = chart ? tiles.find((t) => t.key === chart.key) : undefined
-  const overall = worst(...ZONES.map((z) => zones[z.key].level))
-  const co2Level = worst(cabinLevel(cabin), airLevel(cabin))
+  const v = verdict(me, cabin)
+  // A published figure for real ISS crews, shown beside the person's own usual sleep (backtest.json).
+  const issSleep = s.data.backtest?.meta.issCrews?.sleepHours
 
   // An iOS-style banner drops in when a day brings something new to look at.
   const [banner, setBanner] = useState<Notice | null>(null)
@@ -200,8 +162,6 @@ export function Dashboard() {
       </p>
     </>
   )
-
-  const hero = heroText(overall, me.attribution, me.tier, me.episodeDay, me.assessment.checkedIn, co2Level, { causes, suspects: cabin.suspects })
 
   return (
     <div className="dash">
@@ -267,45 +227,31 @@ export function Dashboard() {
 
       <main className="grid">
         <section className="col col-left">
-          <div className={`hero hero-${overall}`}>
-            <div className="hero-top">
-              <LevelIcon level={overall} size={28} />
-              <span className={`pill pill-${overall}`}>{LEVEL_WORD[overall]}</span>
-            </div>
-            <h1>{hero.title}</h1>
-            <p>{hero.body}</p>
-            <dl className="hero-facts">
-              <div>
-                <dt>Check-in UTC</dt>
-                <dd>{me.assessment.checkedIn ? '08:00' : 'Not yet'}</dd>
-              </div>
-              <div>
-                <dt>Flagged</dt>
-                <dd>{me.assessment.off.length + (co2Level === 'ok' ? 0 : 1)}</dd>
-              </div>
-              <div>
-                <dt>Earth delay</dt>
-                <dd>{delayText(s.commDelaySec)}</dd>
-              </div>
-            </dl>
+          <div className={`hero hero-${v.tint}`}>
+            <h1>{v.title}</h1>
+            {v.note && <p>{v.note}</p>}
+            <ul className="hero-chips">
+              <HeroChip label="You" side={v.you} />
+              <HeroChip label="Cabin air" side={v.ship} />
+            </ul>
           </div>
 
-          <div className="panel">
-            <h2 className="panel-title">
-              Notifications <span className="badge">{list.length}</span>
-            </h2>
-            {list.length === 0 ? (
-              <ul className="notices">
-                <NoticeCard n={{ id: 'clear', level: 'ok', title: 'Nothing needs your attention', body: 'Everything you logged today sits inside your own usual range, and the cabin air is normal.' }} />
-              </ul>
+          <div className="panel watchp">
+            <h2 className="panel-title watch-title">From your wearable</h2>
+            <p className="watch-sub">Simulated · for information</p>
+            {vitalsToday ? (
+              <dl className="watch-list">
+                {vitalLines(vitalsToday).map((l) => (
+                  <div key={l.label} className="watch-row">
+                    <dt>{l.label}</dt>
+                    <dd>{l.value}</dd>
+                  </div>
+                ))}
+              </dl>
             ) : (
-              <ul className="notices">
-                {list.map((n) => {
-                  const z = NOTICE_ZONE(n.id)
-                  return <NoticeCard key={n.id} n={n} onOpen={z ? () => setFocus(z) : undefined} />
-                })}
-              </ul>
+              <p className="watch-note">No wearable reading today</p>
             )}
+            <p className="watch-note">Shipshape's rules don't use these yet. Next, each will be compared with your own normal once a real device feeds them.</p>
           </div>
 
           <footer className="dash-foot dash-foot-side">{credits}</footer>
@@ -342,7 +288,7 @@ export function Dashboard() {
         <section className="col col-right">
           <div className="panel">
             <h2 className="panel-title">
-              Vitals <span className="panel-note">vs. your own normal · {TREND_DAYS} days · sleep from your watch</span>
+              Vitals <span className="panel-note">vs. your own normal · {TREND_DAYS} days · sleep from your wearable</span>
             </h2>
             <div className="tiles">
               {tiles.map((v) => (
@@ -369,29 +315,6 @@ export function Dashboard() {
               </article>
             </div>
           </div>
-
-          <div className="panel watchp">
-            <h2 className="panel-title">
-              From your watch <span className="panel-note">simulated · for information</span>
-            </h2>
-            {vitalsToday ? (
-              <div className="watch-grid">
-                {vitalLines(vitalsToday).map((l) => (
-                  <div key={l.label}>
-                    <span className="watch-label">{l.label}</span>
-                    <p className="watch-value">{l.value}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="watch-note">No watch data today</p>
-            )}
-            <div className="watch-trends">
-              <WatchTrend label="Resting heart rate" unit="bpm" series={vitalTrend((w) => w.restingHr)} />
-              <WatchTrend label="HRV" unit="ms" series={vitalTrend((w) => w.hrvMs)} />
-            </div>
-            <p className="watch-note">Shipshape's rules don't use these yet. Next, each will be compared with your own normal once a real device feeds them.</p>
-          </div>
         </section>
       </main>
 
@@ -408,32 +331,4 @@ export function Dashboard() {
       <footer className="dash-foot dash-foot-end">{credits}</footer>
     </div>
   )
-}
-
-function heroText(
-  overall: Level,
-  attribution: string,
-  tier: number,
-  episodeDay: number,
-  checkedIn: boolean,
-  co2: Level,
-  cabin: { causes: CabinFactor[]; suspects: CabinFactor[] },
-): { title: string; body: string } {
-  if (!checkedIn) return { title: 'Good morning', body: 'No check-in yet today. Your trends run up to your last one.' }
-  if (tier === 4) return { title: 'Help is on the way', body: 'Your crew medical officer was told privately. The game is paused for you today.' }
-  if (tier === 3) return { title: `Still off your usual, day ${episodeDay}`, body: 'A short summary went to the flight surgeon. It lists what changed, never a diagnosis.' }
-  if (attribution === 'ship') return { title: 'Likely the ship, not you', body: `Most of the crew show the same change while ${shipBecause(cabin.causes)}.` }
-  if (attribution === 'me') {
-    return {
-      title: 'Likely you, not the ship',
-      body:
-        cabin.suspects.length === 0
-          ? 'Cabin CO₂, temperature and humidity are all at their usual levels, so the rule does not blame the ship. Only you see this. Take it easy today and check in again tomorrow.'
-          : 'The cabin air is off its usual too, but most of the crew are fine, so the rule does not blame it yet. Only you see this.',
-    }
-  }
-  if (attribution === 'shared') return { title: 'Something is off your usual', body: 'Only you see this. Take it easy today and check in again tomorrow.' }
-  if (co2 !== 'ok') return { title: 'You are within your normal', body: 'Your body is steady. The cabin air is flagged in your notifications.' }
-  if (overall === 'ok') return { title: 'All within your normal', body: 'Everything you logged today sits inside your own usual range.' }
-  return { title: 'Worth a look', body: 'Something is flagged below.' }
 }

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Shipshape is a NASA Space Apps Challenge entry: a crew check-in game for long missions that says whether a bad day is "likely you" or "likely the ship". It is a static Vite + React + TypeScript web app, installable and offline-capable, with no backend and no AI model in the product. A PIN login runs entirely in the browser.
+Shipshape is a NASA Space Apps Challenge entry: a crew check-in for long missions that says whether a bad day is "likely you" or "likely the ship". It is a static Vite + React + TypeScript web app, installable and offline-capable, with no backend and no AI model in the product. A PIN login runs entirely in the browser.
 
 `docs/SPEC.md` is the source of truth for the rules, the JSON shapes, and the "Readings of the plan" (places where the build chose one interpretation of the plan). Read it before changing engine behavior, and update it in the same change.
 
@@ -50,10 +50,6 @@ Pure functions with no React and no I/O. `runEngine(input)` in `escalation.ts` r
 
 Every threshold lives in `config.ts` as `RULES`, each either cited or labeled a "demo parameter". Do not put rule numbers anywhere else.
 
-### Game (`src/game/`)
-
-XP, weekly streak with shield days, quests. Game functions cannot read check-in values by construction (`checkInEvent` takes only who and when), because the product rewards reporting, never the reading. Tests enforce this.
-
 ### One rules implementation, shared with Python
 
 `scripts/shipshape_sim.py:run_engine` shells out to `npx tsx scripts/engine_cli.ts`, so the demo-crew seed search (`simulate_crew.py`) and the backtest (`backtest.py`) run the real TypeScript engine. Consequences:
@@ -64,14 +60,14 @@ XP, weekly streak with shield days, quests. Game functions cannot read check-in 
 
 ### State and UI
 
-`src/state.tsx` (`StoreProvider` / `useStore`) loads the four JSON files (including `accounts.json`), holds the logged-in `user`, merges live check-ins, runs the engine, and holds the demo controls (role, mission day, comm delay). Live check-ins persist only in `localStorage` under `shipshape.v1`; live reaction-test results stay in memory and are never stored. The check-in's simulated wrist wearable (`src/data/watch.ts`) reads the simulated crew record for that person and day: it fills in sleep and exercise, and its vitals (`CheckIn.watch`: heart rate, HRV, blood oxygen, breathing, skin temperature) are shown for information. No rule may read `watch`; a test checks it. `src/data/hrp.ts` links every reading to the NASA Human System Risk it informs (titles and pages as on nasa.gov); it is shown on the check-in and the challenge page, and no rule reads it either.
+`src/state.tsx` (`StoreProvider` / `useStore`) loads the four JSON files (including `accounts.json`), holds the logged-in `user`, merges live check-ins, runs the engine, and holds the demo controls (role, mission day, comm delay). Live check-ins and conference requests persist only in `localStorage` under `shipshape.v1`; live reaction-test results stay in memory and are never stored. The check-in's form logic is `src/ui/checkInForm.ts` (answers start unset). The simulated wearable (`src/data/wearable.ts`) reads the simulated crew record for that person and day: sleep duration and exercise come from it, never from the form, and its vitals (`CheckIn.watch`: heart rate, HRV, blood oxygen, breathing, skin temperature) are shown for information. No rule may read `watch`; a test checks it. `src/data/hrp.ts` links every reading to the NASA Human System Risk it informs (titles and pages as on nasa.gov); it is shown on the check-in and the challenge page, and no rule reads it either.
 
 `src/main.tsx` picks one of five pages by pathname (`src/auth/paths.ts`), without a router:
 
-- `/` → `src/auth/Login.tsx`: the judge's tour (`TOUR` in `src/auth/demo.ts`: one-click links that log in with a public demo PIN, via `auth/TourLink.tsx`), then pick a crew member and enter a 4-digit PIN on the on-screen keypad or a keyboard; the fourth digit submits.
+- `/` → `src/auth/Login.tsx`: pick a crew member and enter a 4-digit PIN on the on-screen keypad or a keyboard; the fourth digit submits. Beside the login sits the judge's tour as help (`TOUR` in `src/auth/demo.ts`: one-click links that log in with a public demo PIN, via `auth/TourLink.tsx`).
 - `/challenge` → `src/ui/Challenge.tsx`: the public challenge page (five questions, backtest evidence, Antarctic case). No login; its buttons are tour links.
 - `/dashboard` → `src/dashboard/`: the logged-in person's own dashboard with a three.js skeleton point cloud (`public/models/skeleton.glb`), lazy-loaded. `dashboard/model.ts` maps engine output to body-zone levels and notices; it must not introduce rules of its own. The crew app reuses its `cabinLevel` / `indicatorLevel`, so orange (watch) and red (alert) mean the same on both pages.
-- `/checkin` → `App.tsx` + `src/ui/`: a crew member's own check-in and Me (XP, streak, quest), for astronauts and the medical officer, always as themselves.
+- `/checkin` → `App.tsx` + `src/ui/`: a crew member's own check-in (no other tabs; status lives on `/dashboard`), for astronauts and the medical officer, always as themselves.
 - `/app` → `App.tsx` + `src/ui/`: the crew app, which is the medical console, for the medical officer and the flight surgeon only. Astronauts cannot open it. Tabs depend on the view: `viewsFor(user, page)` in `auth/session.ts` gives the medical officer the crew medical officer, and the flight surgeon the flight surgeon, who sees everything the crew medical officer sees plus Summaries. Nobody views as another crew member. `?day=`, `?screen=` and `?mission=` are read once in `state.tsx`. The crew board uses `ui/CrewTimeline.tsx`, filled per viewer by `crewTimeline` in `privacy.ts`; times on the Earth side use `ui/clock.ts` (ship time UTC, Houston).
 
 The golden path the demo depends on is mission days 212 → 213 → 221 → 223, the same on both pages (table in `docs/SPEC.md`; `tests/golden.test.ts` pins it on the committed data). The crew is seed 402 with scripted events recorded in `crew.json`.
@@ -97,6 +93,6 @@ These come from the plan and are easy to break by accident:
 - **The app says "likely" and never diagnoses.** No AI-generated text in decisions or summaries; summaries come from fixed templates.
 - **Each dashboard and check-in shows only the logged-in person.** The crew app (`/app`) is for the medical officer (as the crew medical officer) and the flight surgeon (the same access, plus summaries); everyone else's data reaches it through `privacy.ts`.
 - **Mood and stress are private.** They appear on the crew board only as a count with no names, and never count toward a ship alert. Among symptoms, only headache counts toward a CO₂ alert, and only congestion and dry or sore eyes toward a humidity alert.
-- **No leaderboards, no reward tied to a reading, no celebration on an alert.**
+- **No game.** XP, streaks and quests were removed. Do not add points, rankings, rewards or celebrations.
 - **Sources:** `docs/CITATIONS.md` tracks whether a human has opened each source. Do not mark one as checked or add a sourced claim to UI text unless it has been verified. Log AI contributions in `docs/AI_USE_LOG.md`.
 - Charts follow one-series, one-axis conventions with status shown by shape and word as well as color, and need to work at 390 px width. Every page is dark only, with `/dashboard` as the colour reference: `src/styles.css` (crew app) uses the same values as the `--d-*` tokens in `dashboard.css`.

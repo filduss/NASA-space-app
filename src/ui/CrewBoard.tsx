@@ -5,9 +5,7 @@ import type { DayResult } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
 import { CrewTimeline } from './CrewTimeline.tsx'
-import { QuestCard } from './QuestCard.tsx'
 import { celsius, comfortLine, FACTOR, mmHg, rhPercent } from './text.ts'
-import { XpStrip } from './XpStrip.tsx'
 
 export function ShipBanner({ r, onOpen, followUp }: { r: DayResult; onOpen?: () => void; followUp?: ShipFollowUp | null }) {
   const { cabin, decision } = r
@@ -63,7 +61,7 @@ export function ShipBanner({ r, onOpen, followUp }: { r: DayResult; onOpen?: () 
       </div>
       {onOpen && (
         <button type="button" className={tone === 'ok' || tone === 'idle' ? 'btn' : 'btn btn-primary'} onClick={onOpen}>
-          {decision.outcome === 'ship' ? 'Why, and what to do' : 'Cabin air'}
+          {decision.outcome === 'ship' ? 'Why the app says this' : 'Cabin air'}
         </button>
       )}
     </section>
@@ -88,9 +86,6 @@ export function CrewBoard() {
           <span aria-hidden="true">🔒</span> Mood and stress: {priv.off} of {priv.of} crew are off their own usual today. Counts only, never names.
         </p>
       </Card>
-
-      <QuestCard />
-      <XpStrip crewId={null} />
     </div>
   )
 }

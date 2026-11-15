@@ -1,6 +1,6 @@
 # Shipshape MVP spec (v0.1)
 
-Shipshape is a crew check-in game for long missions. It compares each person with their own normal, checks the cabin air before blaming anyone, and rewards reporting, never the reading.
+Shipshape is a crew check-in for long missions. It compares each person with their own normal and checks the cabin air before blaming anyone.
 
 This file describes what the code on this branch does. Where the plan left room, the section "Readings of the plan" says which reading was built, so the team can steer.
 
@@ -9,12 +9,12 @@ This file describes what the code on this branch does. Where the plan left room,
 | # | Decision | Built |
 | --- | --- | --- |
 | 1 | Name | Shipshape |
-| 2 | Hooks | Both: "Is it me, or the ship?" in the header, "rewards honesty, not perfection" in the footer and on check-in |
-| 3 | Game depth | Full rules as tested functions; UI shows XP, weekly streak and one quest card |
+| 2 | Hooks | "Is it me, or the ship?" in the header. The second hook, "rewards honesty, not perfection", went with the game |
+| 3 | Game depth | None. XP, the weekly streak, shield days, quests and kudos were built and then removed (15 Nov 2026): the check-in stands on its own |
 | 4 | Mission setting | ISS, lunar surface, Mars transit (default) or an Antarctic station, chosen in the demo controls. It changes the comm delay and the radiation card only. The CO₂ source (ISS) is stated on every screen |
 | 5 | Board default | Sleep and symptoms shared; mood and stress private, shown as a count with no names |
 | 6 | Live input | Live 30-second reaction test, kept in memory only |
-| 7 | Wearable | A simulated wrist wearable, no real device: it fills in sleep, sleep quality and exercise at check-in, and shows resting heart rate, HRV, blood oxygen, breathing and skin temperature for information |
+| 7 | Wearable | Simulated, no real device. Sleep duration and exercise come from a wrist wearable, modelled on NASA's actigraph, and are shown on the check-in, never asked (15 Nov 2026). It also shows resting heart rate, HRV, blood oxygen, breathing and skin temperature, for information only. In the demo the readings are the simulated crew's own records (`src/data/wearable.ts`) |
 | 8 | AI | None. Summaries come from fixed templates |
 | 9 | Demo format | Not built here: the app has a "Golden path" control with the four days a 30-second video needs |
 | 10 | Earth use | Antarctic winter stations: Concordia's winter crew runs the base alone for three-quarters of a year (ESA). On the challenge page and as Mission → Antarctic station |
@@ -55,7 +55,9 @@ ISS telemetry for the Rodent Research 7 payload from the NASA OSDR Environmental
 }
 ```
 
-Sliders run 0-10. `symptoms` is any of `headache`, `dizziness`, `nausea`, `congestion`, `eye_strain`. `exerciseMin` is the day before's exercise in minutes. `watch` holds the wearable's vitals: resting heart rate (bpm), HRV (RMSSD, ms), blood oxygen (%), breathing rate (per minute) and skin temperature against the person's usual (°C). The simulator draws each from a stream of its own, so adding them changed no other value; its vitals are demo parameters, nudged on short-sleep, sleep-loss and stress days. A live check-in has `simulated: false`, `reactionMs: null`, may leave out `exerciseMin` and `watch`, and may carry `safetyFlag: true`.
+`shieldDays` is still written by the simulator and committed, but the app no longer reads it: a shielded day shows as a missed check-in. Ratings run 0-10. `symptoms` is any of `headache`, `dizziness`, `nausea`, `congestion`, `eye_strain`. `sleepHours` and `exerciseMin` are the wearable's readings: last night's sleep and the day before's exercise in minutes. `watch` holds the wearable's vitals: resting heart rate (bpm), HRV (RMSSD, ms), blood oxygen (%), breathing rate (per minute) and skin temperature against the person's usual (°C). The simulator draws exercise and the vitals each from a stream of its own, so adding them changed no other value; its vitals are demo parameters, nudged on short-sleep, sleep-loss and stress days. A live check-in has `simulated: false` and `reactionMs: null`, and takes `sleepHours`, `exerciseMin` and `watch` from the wearable's reading for that day: `null` when the wearable has none, which makes sleep duration "not measured" that day.
+
+Conference requests are not part of a check-in. The app keeps them in `localStorage` as `{ "crewId": "ben", "day": 213, "urgent": true }` and passes them to the engine as `EngineInput.requests`; the simulated crew never makes one. A check-in saved by an older version with `safetyFlag: true` is read as an urgent request.
 
 ### `backtest.json` (simulated crews on real traces)
 
@@ -121,10 +123,12 @@ The rule checks three cabin factors, all 24 h means from the same ISS telemetry.
 | Tier | Trigger | Who sees it |
 | --- | --- | --- |
 | 0 | Nothing off | You |
-| 1 | Any drift, or a slow change against your starting normal: a private Watch card | You |
+| 1 | Any drift, or a slow change against your starting normal: a private Watch on your own dashboard | You |
 | 2 | A ship alert or shared pattern, or a Watch you chose to share | Crew medical officer |
 | 3 | Still off on day 3 of the same likely cause; again every 3 days | Flight surgeon, with the comm delay |
-| 4 | The safety answer | Crew medical officer and flight surgeon, immediately; game paused |
+| 4 | An urgent conference request | Crew medical officer and flight surgeon, immediately |
+
+A routine conference request has no tier: it reaches the flight surgeon as a request with no readings, and nobody on board is told.
 
 ### Privacy
 
@@ -134,14 +138,15 @@ The rule checks three cabin factors, all 24 h means from the same ISS telemetry.
 | --- | --- | --- | --- | --- |
 | Mood and stress | Everything | Count only, no names | Only if you share | Only if you share, and in tier 3 summaries |
 | Sleep and symptoms | Everything | Yes | Yes | Yes |
-| Ship alerts and quests | Yes | Yes | Yes | Yes |
-| Safety answer | Yes | Never | Immediately | Immediately |
+| Ship alerts | Yes | Yes | Yes | Yes |
+| Urgent conference request | Yes | Never | Immediately | Immediately, with today's off indicators |
+| Routine conference request | Yes | Never | Never | Immediately, the request only |
 
 The flight surgeon sees everything the crew medical officer sees (crew board, inbox, Ship screen), plus the summaries sent to Earth. The crew board is seen only by those two: astronauts do not open the crew app.
 
 ## Mission setting and radiation
 
-`src/engine/mission.ts` holds the three settings. The setting never changes the rules, the tiers or the game, and the cabin CO₂ is the same ISS replay in every setting.
+`src/engine/mission.ts` holds the three settings. The setting never changes the rules or the tiers, and the cabin CO₂ is the same ISS replay in every setting.
 
 | Setting | One-way delay to Earth | Radiation dose a day | Source of the rate |
 | --- | --- | --- | --- |
@@ -156,7 +161,7 @@ The radiation card on the Ship screen shows the dose rate, the dose so far (rate
 
 ### Crew timeline
 
-The crew board shows one chart: the last 14 days of cabin CO₂ (24 h mean, with the cabin's usual level and the 3 mmHg limit), how many crew drift on CO₂-linked indicators (with the rule's threshold), and one row per person. Each cell is a symbol and a word: ● within own usual, ▲ off own usual, ◆ day 3 or later, ○ no check-in, a shield for a shielded day. `crewTimeline` in `privacy.ts` fills it per viewer, inside the privacy table above:
+The crew board shows one chart: the last 14 days of cabin CO₂ (24 h mean, with the cabin's usual level and the 3 mmHg limit), how many crew drift on CO₂-linked indicators (with the rule's threshold), and one row per person. Each cell is a symbol and a word: ● within own usual, ▲ off own usual, ◆ day 3 or later, ○ no check-in. `crewTimeline` in `privacy.ts` fills it per viewer, inside the privacy table above:
 
 | Part | Crew member | Crew medical officer and flight surgeon |
 | --- | --- | --- |
@@ -167,7 +172,7 @@ The crew board shows one chart: the last 14 days of cabin CO₂ (24 h mean, with
 
 The crew member's column is kept in `crewTimeline` for completeness; no page shows it at present, since astronauts do not open the crew board.
 
-A row cell shows ◆ when a shared indicator has been off 3 days **and** it is day 3 of the same likely cause, which is the day a summary goes to Earth. Safety answers never show in board rows.
+A row cell shows ◆ when a shared indicator has been off 3 days **and** it is day 3 of the same likely cause, which is the day a summary goes to Earth. Urgent conference requests never show in board rows.
 
 Times: on board, ship time is UTC and the check-in is at 08:00. The flight surgeon's screen gives each time also in Houston local time, where Mission Control sits, after the comm delay. The real date behind a mission day (`cabin.json` replay) decides summer or winter time.
 
@@ -179,13 +184,13 @@ Times: on board, ship time is UTC and the check-in is at 08:00. The flight surge
 | --- | --- | --- | --- |
 | Own dashboard (`/dashboard`) | Yes | Yes | None: not crew, sent to the crew app |
 | Anyone else's dashboard | No | No | No |
-| Own check-in (`/checkin`): check-in, Me (XP, streak, quest) | Yes | Yes | None: not crew |
+| Own check-in (`/checkin`): check-in, conference request | Yes | Yes | None: not crew |
 | Crew app (`/app`): crew board, inbox, Ship | No, sent to their dashboard | Yes, as the crew medical officer | Yes, the same as the crew medical officer, plus Summaries |
 | Challenge page (`/challenge`) | Yes | Yes | Yes, and with no login |
 
 `viewsFor(user, page)` in `src/auth/session.ts` gives the one view a login takes on a page: on `/checkin` the person themselves, in `/app` the crew medical officer or the flight surgeon. Nobody can view as another crew member. "Reset my inputs" is not offered to the flight surgeon. The mission day, mission setting and comm delay controls stay for the demo. The personal dashboard links to the person's own check-in.
 
-**Judge's tour.** The login page opens with four links that walk the golden path: day 213 as Dana (Ship screen), day 221 as Chen (dashboard), day 223 as Mira (the summaries sent to Earth), and the challenge page. Each link logs in with that person's demo PIN through the same check as typing it, then opens the page. The demo PINs are printed on each person's card; they are public on purpose (`src/auth/demo.ts`, the README and `scripts/make_accounts.py` list the same PINs). `?day=`, `?screen=` and `?mission=` open a page on a given mission day, screen and setting.
+**Judge's tour.** Beside the login (to its right on wide screens, below it on a phone) are four links that walk the golden path, styled as help rather than as a step to complete: day 213 as Dana (Ship screen), day 221 as Chen (dashboard), day 223 as Mira (the summaries sent to Earth), and the challenge page. Each link logs in with that person's demo PIN through the same check as typing it, then opens the page. The demo PINs are printed on each person's card; they are public on purpose (`src/auth/demo.ts`, the README and `scripts/make_accounts.py` list the same PINs). `?day=`, `?screen=` and `?mission=` open a page on a given mission day, screen and setting.
 
 - The PIN is entered on an on-screen number keypad (1 to 9, 0 and delete) or typed on a keyboard; the system keyboard is suppressed on phones so it does not cover the keypad. The fourth digit submits.
 - The PIN is checked in the browser with Web Crypto: PBKDF2-SHA256 against the salted hash in `accounts.json`, compared over every byte. The PIN is never stored, logged or kept in state after the check.
@@ -205,34 +210,26 @@ These are the places where the plan could be read two ways, or where the build g
 - **Irritability stays linked to CO₂.** NASA's CO₂ brief lists headache, fatigue, malaise, poor or decreased sleep and nausea, not irritability. Dropping it would change every CO₂ result and the seeded demo, so it stays, and the check-in says so. Nausea, in NASA's list above 4.5 mmHg, is not added: the rule keeps headache as the one symptom with a published dose-response.
 - **Day 3 counts per likely cause.** When a ship alert ends and someone is still off, their count restarts at day 1 as "me". This is what makes the golden path's "day 3" land two days after the air clears.
 - **One person drifting under high CO₂ is "me".** The card says the cabin is above its usual level and that the rule does not blame the air yet.
-- **"Likely you, not the ship" says why.** The personal dashboard's card for a "me" day names the verdict and, when CO₂, temperature and humidity are all at their usual levels, says so. Its indicators turn red on the engine's own day 3 of the current likely cause (or tier 3), the day a summary goes to Earth, as the crew board does; a run that only straddles a change of cause stays orange.
+- **The Cabin air chip names all three factors.** The personal dashboard's status box says "Likely you" or "Likely the ship"; its Cabin air chip gives CO₂, temperature and humidity, says when all three are at their usual levels, and turns orange or red for temperature and humidity outside NASA's comfort range or health limits, as it does for CO₂.
 - **Real ISS crews are a reference, never a threshold.** The sleep tile shows the published ISS figure (about 6.5 h, Jones et al. 2022) beside the person's own usual, for context. The rules still compare each person only with their own normal.
 - **Headache is the only symptom that counts toward a CO₂ ship alert.** It is the one with a published dose-response. Congestion and dry or sore eyes count toward a humidity alert ([V2 6012]); dizziness and nausea open a private Watch only.
-- **Check-in sliders start unset.** A slider that starts at the person's usual lets a rushed check-in report "as usual" without anyone choosing it, which is the under-reporting the game is meant to counter. Built: each slider starts unset and is rated before the usual is shown, or set to the usual with one explicit tap ("Set them to my usual"). Submit waits until every slider is set.
+- **Check-in answers start unset.** A rating that starts at the person's usual lets a rushed check-in report "as usual" without anyone choosing it, which is the under-reporting the check-in is meant to counter. Built: each of the five ratings is a row of 0-10 tap targets with nothing chosen, and every rating is tapped by hand: there is no "as usual" shortcut (an "As usual" chip and "Set the rest to my usual" were built and removed on 15 Nov 2026). Symptoms work the same way: "None today" is its own tile, exclusive of the five symptoms, and unticking the last symptom leaves the question unanswered rather than "none". Send waits until all six are answered. The logic is `src/ui/checkInForm.ts`.
+- **The check-in asks only what a person can tell.** Sleep duration and exercise are measured by the wearable and shown read-only; there is no way to correct them, which would bring the self-report back. The five ratings follow the domains of the ISS Reaction Self Test's 0-10 self-ratings where they overlap (sleep quality, fatigue, stress; Jones et al. 2022, not yet checked in `docs/CITATIONS.md`); irritability and mood are ours. The check-in shows no "why we ask" text: the team judged it out of scope for the MVP.
+- **A night with no wearable reading is not measured.** On a day with no reading, sleep duration is "not measured", as a skipped reaction test is, and the short-sleep rule does not count that night as short.
+- **The safety question is a conference request.** NASA crews have a weekly private medical conference with their flight surgeon and can ask for one at any time. The checkbox "I am not safe, or I need to talk to someone now" became "Ask for a conference": at the next scheduled conference (flight surgeon only, no tier) or urgent (tier 4, the old safety path). It is sent on its own, so asking for help never waits for the ratings, and it works on a day with no check-in.
+- **After sending, a receipt.** The confirmation lists what was sent, with "See my dashboard" and "Change today's answers". Answers can be changed until the mission day changes.
 - **The reaction test counts a lapse at 355 ms**, as PVT-B, the brief test behind the ISS Reaction Self-Test, does (Basner, Mollicone and Dinges 2011).
 - **The live reaction test is shown, not compared.** The presenter has no baseline, and the result is never stored, so it does not feed the rules.
-- **Quest steps are illustrative,** not a flight procedure, and say so.
-- **Did the fix work?** For 7 days after a ship alert ends, the board and the Ship screen say whether the air is back to its usual level and how many of the crew it touched are back to theirs. Counts only, judged on shared indicators as the board does (`shipFollowUp` in `src/engine/privacy.ts`). Anyone still off is already "likely you" with a new 3-day count. This is the re-check the quest's last step asks for; it does not claim the fix caused the recovery.
+- **Did the fix work?** For 7 days after a ship alert ends, the board and the Ship screen say whether the air is back to its usual level and how many of the crew it touched are back to theirs. Counts only, judged on shared indicators as the board does (`shipFollowUp` in `src/engine/privacy.ts`). Anyone still off is already "likely you" with a new 3-day count. It does not claim the fix caused the recovery.
 - **The limit check uses the 24 h mean.** NASA writes the limit as a 1-hour average, but a single 1-hour peak would make the air a suspect on many quiet days. In the backtest the 24 h mean raised fewer false ship alarms (table under "Evidence"). The highest 1-hour average is still shown on the Ship screen and in summaries.
-- **A simulated wearable fills in what a watch can measure.** At check-in, a wrist wearable has already recorded last night's sleep and its quality (on the same 0-10 scale) and the day before's exercise; in the demo these readings are the simulated crew file's values for that person and day (`src/data/watch.ts`). The person can correct sleep and exercise, and rates fatigue, irritability, stress, mood and symptoms, which no watch measures, so the check-in takes four sliders and the ticks. The rules do not change: a watch reading counts the same as a typed one. The watch also shows resting heart rate, HRV, blood oxygen, breathing and skin temperature, on the check-in and in the dashboard's "From your watch" panel with 14-day trends. They are there to show what a wearable could add: no rule reads them, no threshold, no tier, no part in ship or me. The next step would be to compare each with the person's own normal, as the check-in readings are, once a real device feeds them. Without a reading for the day, the person enters sleep by hand.
-- **Bone and muscle are shown, not judged.** The gravity hazard is covered through its countermeasure, exercise: a check-in can log the day before's exercise, and the engine counts how many of the last 7 logged days reached 120 minutes. Below target on 3 of them turns the core (hip and spine) and limbs zones of the personal dashboard orange, never red, with a notification that names the count. Like radiation it has no tier, no card on the crew board, nothing for the crew medical officer and no part in ship or me. The 120-minute target follows NASA's figure of about two hours of exercise a day on the ISS; the 3-of-7 count is a demo parameter. The check-in's "why we ask" quotes NASA's average bone loss in spaceflight, 1 to 1.5% of mineral density a month in weight-bearing bones (`docs/CITATIONS.md`).
+- **The dashboard's status box answers you or the ship.** On `/dashboard` the box is a short answer ("Likely the ship", "Likely you", "You're fine. The air isn't.", "All good" and so on, fixed templates in `verdict` in `src/dashboard/model.ts`), one line more only when someone was told (day 3, or the urgent request), and two chips, each with its own level: You (your own readings against your normal; exercise left out) and Cabin air (the cabin level the crew app uses). The box takes the colour of the side the answer points at: the air's on a likely-ship day, otherwise yours, so a box that says you are fine is never orange or red because of the air. An urgent conference request turns it red with "Help is on the way", even before a check-in. The cabin air has no body zone on the skeleton. There is no notifications list: the box, the body zones and the vitals tiles carry the same facts, and the wearable panel sits under the box.
+- **The wearable's vitals are shown, not judged.** Besides sleep and exercise, the simulated wearable reports resting heart rate, HRV, blood oxygen, breathing and skin temperature, shown on the check-in and in the dashboard's "From your wearable" panel as today's values only. They are there to show what a wearable could add: no rule reads them, no threshold, no tier, no part in ship or me. The next step would be to compare each with the person's own normal, as the check-in readings are, once a real device feeds them. Sleep quality stays the person's own rating, not a wearable reading.
+- **Bone and muscle are shown, not judged.** The gravity hazard is covered through its countermeasure, exercise: the wearable logs the day before's exercise, and the engine counts how many of the last 7 logged days reached 120 minutes. Below target on 3 of them turns the core (hip and spine) and limbs zones of the personal dashboard orange, never red, and the zone names the count. Like radiation it has no tier, no card on the crew board, nothing for the crew medical officer and no part in ship or me. The 120-minute target follows NASA's figure of about two hours of exercise a day on the ISS; the 3-of-7 count is a demo parameter.
 - **Radiation is shown, not judged.** It has no tier, no card per person and no part in ship or me: the whole crew gets about the same dose and nobody can feel it at everyday levels. A solar-storm warning would be a second "ship" cause; that is not built.
-- **The flight surgeon sees what the crew medical officer sees.** The plan names the flight surgeon as a reader of summaries; the build gives the role a login (Mira, on Earth) with the crew medical officer's access (crew board, inbox, Ship screen) plus the summaries. This goes beyond the plan, which sends only summaries to Earth.
+- **The flight surgeon sees what the crew medical officer sees.** The plan names the flight surgeon as a reader of summaries; the build gives the role a login (Mira, on Earth) with the crew medical officer's access (crew board, inbox, Ship screen) plus the summaries, which include conference requests. This goes beyond the plan, which sends only summaries to Earth.
 - **The medical officer is one of the crew.** The plan's crew medical officer is a role, not a person; the build gives it to Dana. Her login opens her own dashboard and check-in like anyone's, plus the crew app as the crew medical officer. She cannot view as another crew member, because that would show their private mood and stress; the judge's tour opens the other people's screens with their own logins.
-- **Astronauts do not open the crew app.** The check-in, the reaction test, the quest steps, the share toggle and the safety question live on `/checkin`, in the person's own view. The crew board and the Ship screen are for the crew medical officer and the flight surgeon; an astronaut sees the cabin air and a likely-ship result on their own dashboard.
-
-## Game
-
-Rules are in `src/game/`. Nothing there can read a check-in's values: `checkInEvent` accepts only who and when.
-
-| Mechanic | Rule |
-| --- | --- |
-| XP | Check-in 10, quest step 15, kudos 3. Repeats earn nothing. The Learn tab and its cards were removed |
-| Streak | Weekly, 5 of 7 days. Spacewalk, comm-blackout and heavy-workload days are shielded |
-| Quests | "Clear the air" opens with a ship alert; otherwise "Everyone logs sleep 5 nights" |
-| Kudos | Thank a crewmate for a quest step they did |
-| Not built | Leaderboards, rewards for readings, celebrations on alerts |
-| Safety answer | No XP that day; the XP strip is hidden for that person |
+- **No Me screen, no share toggle.** The check-in page used to have a Me tab (status card, self-care idea, 28-day trends, and the toggle to share private cards, mood and stress with the crew medical officer). It was removed on 15 Nov 2026: the person's status is on their dashboard. The engine still honours `shareWatch` (tier 2 for a shared Watch, mood and stress in the inbox), but no screen sets it, so in the demo nobody shares.
+- **Astronauts do not open the crew app.** The check-in, the reaction test and the conference request live on `/checkin`, in the person's own view, which has no other tabs. The crew board and the Ship screen are for the crew medical officer and the flight surgeon; an astronaut sees the cabin air and a likely-ship result on their own dashboard.
 
 ## Golden path
 
@@ -241,11 +238,11 @@ The "Golden path" control jumps between the four days of the demo, and the perso
 | Mission day | Real date | What the app shows |
 | --- | --- | --- |
 | 212 | 2018-08-20 | Everyone OK. CO₂ has started to climb; a 1-hour average is above 3 mmHg |
-| 213 | 2018-08-21 | CO₂ 4.3 mmHg against a usual 2.4. Anna, Ben and Dana drift. "Likely the ship, not you". Quest opens |
-| 221 | 2018-08-29 | CO₂ back to 2.3 mmHg. Chen is still short on sleep: a private card, "likely you". The board and the Ship screen show the re-check: the air is back to usual, 3 of the 4 crew who felt it are back to theirs |
+| 213 | 2018-08-21 | CO₂ 4.3 mmHg against a usual 2.4. Anna, Ben and Dana drift. "Likely the ship, not you" |
+| 221 | 2018-08-29 | CO₂ back to 2.3 mmHg. Chen is still short on sleep: his own dashboard says "likely you". The board and the Ship screen show the re-check: the air is back to usual, 3 of the 4 crew who felt it are back to theirs |
 | 223 | 2018-08-31 | Chen's day 3: a summary goes to the flight surgeon and Chen is told |
 
-The real rise lasts from day 213 to day 220; the quest cannot shorten a recording. Chen's sleep loss (days 219-226) and Ben's stress dip (days 188-192) are scripted events, listed in `crew.json`.
+The real rise lasts from day 213 to day 220; nothing in the app can shorten a recording. Chen's sleep loss (days 219-226) and Ben's stress dip (days 188-192) are scripted events, listed in `crew.json`.
 
 Chen's sleep loss starts on day 219, while the ship alert is still on, so the app puts it down to the ship on days 219-220 and his day 3 counts from day 221, when the air is back to normal. Day 223 is the fifth day of his problem. This is the masking measured under "Evidence".
 
@@ -257,7 +254,7 @@ Chen's sleep loss starts on day 219, while the ship alert is still on, so the ap
 - Thresholds were set on seeds 5000-5199; the reported seeds are 1000-1199.
 - Each crew runs over one whole real trace (27-73 days), not 90 days: real data is never stitched or looped.
 - The 10 traces contain 3 distinct CO₂ rises of 1 mmHg or more. That is a small sample, replayed for many crews.
-- Unit tests in `tests/` cover every rule, including "XP never depends on a reading" and "mood never decides ship or me".
+- Unit tests in `tests/` cover every rule, including "mood never decides ship or me".
 
 ### Right cause, by kind of day
 
@@ -346,7 +343,7 @@ In the base case the check leaves accuracy at 0.903 (0.904 before) and raises ne
 
 ### One crew member under-reports
 
-One crew member never ticks a symptom and reports every slider one point better than it is. CO₂ rises missed go from 23% to 30%, and personal events missed from 8% to 12%. The rule needs half the crew, so one silent person makes a ship alert harder to reach. The game rewards the report, not the reading, to make silence less likely; whether it does is not measured here.
+One crew member never ticks a symptom and reports every slider one point better than it is. CO₂ rises missed go from 23% to 30%, and personal events missed from 8% to 12%. The rule needs half the crew, so one silent person makes a ship alert harder to reach. Nothing in the app makes silence less likely; the check-in only makes reporting quick.
 
 ## NASA Human System Risks
 
@@ -384,6 +381,8 @@ One crew member never ticks a symptom and reports every slider one point better 
 - A slow change is judged against the first 14 check-ins. If those were unusually good days, a return to normal can read as a slow change.
 
 ## Open items
+
+- **The crew board still shares sleep and symptoms.** The check-in says "Your answers go to your flight surgeon", and `CONTEXT.md` says a check-in's answers never reach crewmates. On this branch the board and the crew medical officer's inbox still follow the privacy table above (sleep and symptoms shared). That privacy change is not built yet.
 
 - A deploy to Vercel and the `v1.0-submission` tag.
 - README sections for the challenge map and the Antarctic case (both are in the app: Demo controls → How it answers the challenge), and the Antarctic sources in `docs/CITATIONS.md`.

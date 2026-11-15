@@ -15,18 +15,18 @@ import type {
 /**
  * Tier ladder (docs/SPEC.md):
  *   0 everything within normal
- *   1 a Watch: private self-care card, only you see it
+ *   1 a Watch: private, shown on your own dashboard only
  *   2 a crew pattern, or a Watch you chose to share: crew medical officer informed
  *   3 still off on day 3: delayed summary to the flight surgeon
- *   4 a safety answer: game paused, immediate private escalation
+ *   4 an urgent conference request: crew medical officer and flight surgeon told at once
  */
 export function tierFor(args: {
-  safety: boolean
+  urgent: boolean
   attribution: Attribution
   episodeDay: number
   shared: boolean
 }): Tier {
-  if (args.safety) return 4
+  if (args.urgent) return 4
   if (args.attribution === 'none') return 0
   if (args.episodeDay >= RULES.persistDays) return 3
   if (args.attribution === 'ship' || args.attribution === 'shared' || args.shared) return 2
@@ -48,6 +48,11 @@ export function runEngine(input: EngineInput): DayResult[] {
   const byCrew = new Map<string, CheckIn[]>()
   for (const id of input.crewIds) byCrew.set(id, [])
   for (const c of input.checkIns) byCrew.get(c.crewId)?.push(c)
+
+  const conferenceOf = (crewId: string, day: number): PersonStatus['conference'] => {
+    const mine = (input.requests ?? []).filter((r) => r.crewId === crewId && r.day === day)
+    return mine.some((r) => r.urgent) ? 'urgent' : mine.length > 0 ? 'routine' : null
+  }
 
   const memory = new Map<string, PersonMemory>()
   const episodes = new Map<string, Episode>()
@@ -108,13 +113,14 @@ export function runEngine(input: EngineInput): DayResult[] {
       } else if (a.checkedIn) {
         episodes.delete(a.crewId)
       }
+      const conference = conferenceOf(a.crewId, day)
       const tier = tierFor({
-        safety: a.safety,
+        urgent: conference === 'urgent',
         attribution,
         episodeDay,
         shared: input.shareWatch?.[a.crewId] === true,
       })
-      people[a.crewId] = { crewId: a.crewId, day, assessment: a, attribution, episodeDay, tier }
+      people[a.crewId] = { crewId: a.crewId, day, assessment: a, attribution, episodeDay, tier, conference }
 
       const offIndicators = a.off.map((key) => ({
         key,
@@ -123,11 +129,11 @@ export function runEngine(input: EngineInput): DayResult[] {
         usual: a.indicators[key].baseline?.median ?? null,
         start: a.indicators[key].reason === 'below_start' ? (a.indicators[key].start?.median ?? null) : null,
       }))
-      if (a.safety) {
+      if (conference === 'urgent') {
         summaries.push({
-          id: `safety-${a.crewId}-${day}`,
+          id: `urgent-${a.crewId}-${day}`,
           day,
-          kind: 'safety',
+          kind: 'urgent',
           immediate: true,
           crewId: a.crewId,
           episodeDay,
@@ -135,7 +141,22 @@ export function runEngine(input: EngineInput): DayResult[] {
           indicators: offIndicators,
           cabin: cabinBrief,
         })
-      } else if (
+        continue
+      }
+      if (conference === 'routine') {
+        // The request only: the readings go to Earth on their own schedule, below.
+        summaries.push({
+          id: `conference-${a.crewId}-${day}`,
+          day,
+          kind: 'conference',
+          immediate: true,
+          crewId: a.crewId,
+          episodeDay,
+          indicators: [],
+          cabin: cabinBrief,
+        })
+      }
+      if (
         attribution !== 'none' &&
         attribution !== 'ship' &&
         episodeDay >= RULES.persistDays &&

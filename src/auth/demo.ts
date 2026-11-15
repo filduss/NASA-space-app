@@ -29,7 +29,7 @@ export const TOUR: TourStep[] = [
   },
   {
     title: 'Day 221 · Likely you, not the ship',
-    body: 'The air is back to normal, but Chen is still short on sleep: a private card only he sees.',
+    body: 'The air is back to normal, but Chen is still short on sleep: his own dashboard says likely him, and only he sees it.',
     as: 'chen',
     page: 'dashboard',
     search: '?day=221',

@@ -8,7 +8,6 @@ import { Card, Mark, Origin, RiskLinks, Stat } from './bits.tsx'
 import { LineChart } from './charts.tsx'
 import { ShipBanner } from './CrewBoard.tsx'
 import { FollowUpCard } from './FollowUp.tsx'
-import { QuestCard } from './QuestCard.tsx'
 import { RadiationCard } from './Radiation.tsx'
 import { causeWords, celsius, comfortLine, evidenceLine, FACTOR, list, mmHg, rhPercent } from './text.ts'
 
@@ -232,8 +231,6 @@ export function ShipAlert() {
           </p>
         )}
       </Card>
-
-      {decision.outcome === 'ship' && <QuestCard />}
 
       <RadiationCard />
 

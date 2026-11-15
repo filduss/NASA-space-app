@@ -128,7 +128,6 @@ export function Login() {
   if (s.user) {
     return (
       <Shell>
-        <Tour />
         <section className="login-card">
           <h2>Signed in as {s.nameOf(s.user.crewId)}</h2>
           <p className="login-sub">{ROLE_LABEL[s.user.role]}</p>
@@ -141,6 +140,7 @@ export function Login() {
             </button>
           </div>
         </section>
+        <Tour />
       </Shell>
     )
   }
@@ -156,9 +156,15 @@ export function Login() {
               <span className={`login-avatar${role === 'surgeon' ? ' login-avatar-earth' : ''}`} aria-hidden="true">
                 {c.name.slice(0, 1)}
               </span>
-              <span className="login-person-name">{c.name}</span>
-              <span className={`login-role login-role-${role}`}>{ROLE_LABEL[role]}</span>
-              {DEMO_PINS[c.id] && <span className="login-pin-hint">Demo PIN {DEMO_PINS[c.id]}</span>}
+              <span className="login-person-who">
+                <span className="login-person-name">{c.name}</span>
+                <span className={`login-role login-role-${role}`}>{ROLE_LABEL[role]}</span>
+              </span>
+              {DEMO_PINS[c.id] && (
+                <span className="login-pin-hint">
+                  Demo PIN <strong>{DEMO_PINS[c.id]}</strong>
+                </span>
+              )}
             </button>
           </li>
         )
@@ -167,7 +173,6 @@ export function Login() {
   )
   return (
     <Shell>
-      {!picked && <Tour />}
       {!picked ? (
         <section className="login-card" aria-labelledby="who">
           <h2 id="who">Who is logging in?</h2>
@@ -240,17 +245,25 @@ export function Login() {
           </form>
         </section>
       )}
+      {/* The tour is help beside the login. Wide screens keep it next to the keypad so nothing
+          jumps; on a phone it steps aside once a person is picked. */}
+      <Tour picked={picked !== null} />
     </Shell>
   )
 }
 
-/** For judges: the golden path in one click per step, each logging in with that person's public demo PIN. */
-function Tour() {
+/** Help for judges, beside the login: the golden path in one click per step, each logging in with that person's public demo PIN. */
+function Tour({ picked = false }: { picked?: boolean }) {
   const { nameOf } = useStore()
   return (
-    <section className="login-card login-tour" aria-labelledby="tour">
-      <h2 id="tour">Judge's tour</h2>
-      <p className="login-sub">One click each. It logs in with the public demo PIN shown on each card below.</p>
+    <aside className={`login-tour${picked ? ' login-tour-picked' : ''}`} aria-labelledby="tour">
+      <h2 id="tour">
+        <span className="login-tour-mark" aria-hidden="true">
+          ?
+        </span>
+        Judging? Take the tour
+      </h2>
+      <p className="login-tour-sub">Four one-click stops through the demo. Each logs in with that person's demo PIN for you.</p>
       <ol className="login-steps">
         {TOUR.map((t, i) => (
           <li key={t.title}>
@@ -267,7 +280,7 @@ function Tour() {
           </li>
         ))}
       </ol>
-    </section>
+    </aside>
   )
 }
 
@@ -285,7 +298,7 @@ function Shell({ children }: { children: ReactNode }) {
       <main className="login-main">{children}</main>
       <footer className="login-foot">
         <p>
-          <span className="login-tag">Simulated crew</span> No real person's data. The demo PINs are on each card.
+          <span className="login-tag">Simulated crew</span> No real person's data. The demo PINs are shown next to each name.
         </p>
         <p>
           Your session ends when you close this tab. Shipshape says "likely" and never diagnoses.

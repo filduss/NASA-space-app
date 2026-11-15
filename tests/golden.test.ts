@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import type { CabinFile, CrewFile } from '../src/data/types.ts'
+import { verdict } from '../src/dashboard/model.ts'
 import { runEngine, shipFollowUp } from '../src/engine/index.ts'
 
 // The demo's golden path (docs/SPEC.md, "Golden path") on the committed data files. The 30-second
@@ -43,6 +44,17 @@ describe('golden path on the demo data', () => {
   it("223: Chen's day 3 goes to the flight surgeon", () => {
     expect(day(223).people.chen.tier).toBe(3)
     expect(day(223).summaries.map((s) => [s.kind, s.crewId])).toEqual([['person', 'chen']])
+  })
+
+  it("Chen's dashboard box on the four days says what its colour says", () => {
+    const chen = (d: number) => verdict(day(d).people.chen, day(d).cabin)
+    expect(chen(212)).toMatchObject({ tint: 'ok', title: "You're fine. The air isn't.", ship: { level: 'watch' } })
+    expect(chen(213)).toMatchObject({ tint: 'ok', title: "You're fine. The air isn't.", ship: { level: 'alert' } })
+    expect(chen(221)).toMatchObject({ tint: 'alert', title: 'Likely you', ship: { level: 'ok' } })
+    expect(chen(223)).toMatchObject({ tint: 'alert', title: 'Likely you · day 3' })
+    for (const d of [212, 213, 221, 223]) {
+      if (/fine|all good/i.test(chen(d).title)) expect(chen(d).tint).toBe('ok')
+    }
   })
 
   it('the demo crew is seed 402 and nobody shows a slow change', () => {

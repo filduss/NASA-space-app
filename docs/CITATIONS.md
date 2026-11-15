@@ -78,3 +78,13 @@ Added with the mission setting and the radiation card on the Ship screen.
 
 - The Moon delay (1.3 s) is the Earth-Moon distance divided by the speed of light. The ISS delay is shown as "less than a second", not as a measured figure.
 - Dose so far is the rate times the mission day. It leaves out solar storms and earlier missions, and the Moon and Mars rates are dose equivalent while the limit is effective dose, so the card labels every number an estimate.
+
+## Found for the check-in redesign
+
+Found by web search on 15 Nov 2026 and read by an AI subagent. They shaped the check-in (which fields stay, sleep from a wearable, the conference request); none of their claims is on screen.
+
+| Used for | Claim (docs only) | Source | Checked |
+| --- | --- | --- | --- |
+| Ratings | ISS crews rated sleep quality (morning), workload (evening), stress, mental fatigue, physical exhaustion, tiredness and sleepiness on 11-point scales before each PVT-B, every 4th day in flight; sleep duration was self-reported | Jones CW et al. Sleep deficiency in spaceflight is associated with degraded neurobehavioral functions and elevated stress in astronauts on six-month missions aboard the ISS. *Sleep* 2022;45(3):zsac006, [PMC8919197](https://pmc.ncbi.nlm.nih.gov/articles/PMC8919197/) (already listed above for the sleep rule) | No |
+| Wearable | Spaceflight Standard Measures: a wrist actigraph records sleep timing, latency, awakenings, efficiency, light and activity in 14-day blocks; sleep logs and end-of-day surveys are self-reported; collection is about 87% complete | [Spaceflight Standard Measures, *npj Microgravity* 2025;11:78, PMC12612093](https://pmc.ncbi.nlm.nih.gov/articles/PMC12612093/) | No |
+| Conference request | ISS crews have a weekly private medical conference with the flight surgeon, also on request, and a private psychological conference every two weeks | [NASA podcast: Mission Control crew health consoles](https://www.nasa.gov/podcasts/houston-we-have-a-podcast/mission-control-crew-health-consoles); [NTRS 20170003866](https://ntrs.nasa.gov/api/citations/20170003866/downloads/20170003866.pdf) | No |
