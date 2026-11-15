@@ -17,36 +17,36 @@ const shortSleep = (ids: string[]) => (all: CheckIn[]) =>
 describe('dashboard status box: likely you or likely the ship', () => {
   it('steady while the air is up: the box is green, the cabin row carries the colour', () => {
     const r = today(2.95)
-    const v = verdict(r.people.anna, r.cabin, r.decision)
+    const v = verdict(r.people.anna, r.cabin)
     expect(r.cabin.elevated).toBe(true)
     expect(v.tint).toBe('ok')
     expect(v.you.level).toBe('ok')
     expect(v.ship.level).toBe('watch')
-    expect(v.title).toBe("You're steady. The air isn't.")
+    expect(v.title).toBe("You're fine. The air isn't.")
   })
 
   it('most of the crew changed while the air is up: likely the ship, coloured by the air', () => {
     const r = today(3.6, shortSleep(CREW))
-    const v = verdict(r.people.anna, r.cabin, r.decision)
+    const v = verdict(r.people.anna, r.cabin)
     expect(r.people.anna.attribution).toBe('ship')
-    expect(v.title).toBe('Likely the ship, not you')
+    expect(v.title).toBe('Likely the ship')
     expect(v.tint).toBe(cabinLevel(r.cabin))
     expect(v.you.level).toBe('watch')
   })
 
   it('one person changed while the air is usual: likely you', () => {
     const r = today(null, shortSleep(['chen']))
-    const v = verdict(r.people.chen, r.cabin, r.decision)
+    const v = verdict(r.people.chen, r.cabin)
     expect(r.people.chen.attribution).toBe('me')
     expect(v.title).toBe('Likely you')
     expect(v.tint).toBe('watch')
     expect(v.ship.level).toBe('ok')
   })
 
-  it('one person changed while the air is up: likely you, for now', () => {
+  it('one person changed while the air is up: still likely you', () => {
     const r = today(3.6, shortSleep(['chen']))
     expect(r.people.chen.attribution).toBe('me')
-    expect(verdict(r.people.chen, r.cabin, r.decision).title).toBe('Likely you, for now')
+    expect(verdict(r.people.chen, r.cabin).title).toBe('Likely you')
   })
 
   it('the cabin air never colours a body zone', () => {

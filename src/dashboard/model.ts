@@ -6,7 +6,7 @@
 import { RULES } from '../engine/config.ts'
 import { SPEC } from '../engine/deviation.ts'
 import type { ExerciseWeek } from '../engine/gravity.ts'
-import type { CabinStatus, CheckIn, Decision, IndicatorKey, PersonStatus, SymptomKey } from '../engine/types.ts'
+import type { CabinStatus, CheckIn, IndicatorKey, PersonStatus, SymptomKey } from '../engine/types.ts'
 import { delayText, indicatorLine, symptomLabel } from '../ui/text.ts'
 
 /** ok = within own normal, watch = orange, alert = red. */
@@ -133,7 +133,8 @@ export interface VerdictSide {
 export interface Verdict {
   tint: Level
   title: string
-  body: string
+  /** One short line, only when someone was told (tier 3 and 4). */
+  note: string | null
   you: VerdictSide
   ship: VerdictSide
 }
@@ -165,34 +166,21 @@ function shipDetail(cabin: CabinStatus): string {
   return `${mean}, at its usual level`
 }
 
-export function verdict(me: PersonStatus, cabin: CabinStatus, decision: Pick<Decision, 'held'>): Verdict {
+export function verdict(me: PersonStatus, cabin: CabinStatus): Verdict {
   const a = me.assessment
   const you: VerdictSide = { level: youLevel(me), detail: '' }
   you.detail = youDetail(me, you.level)
   const ship: VerdictSide = { level: cabinLevel(cabin), detail: shipDetail(cabin) }
-  const airSuspect = cabin.elevated || cabin.overLimit
-  const pick = (tint: Level, title: string, body: string): Verdict => ({ tint, title, body, you, ship })
+  const pick = (tint: Level, title: string, note: string | null = null): Verdict => ({ tint, title, note, you, ship })
 
-  if (me.tier === 4) return pick('alert', 'Help is on the way', 'Your crew medical officer was told privately.')
-  if (!a.checkedIn) return pick(you.level, 'Good morning', 'Check in to see whether today is likely you or likely the ship.')
-  if (me.tier === 3) return pick(you.level, `Still off your usual, day ${me.episodeDay}`, 'A short summary went to the flight surgeon. It lists what changed, never a diagnosis.')
-  if (me.attribution === 'ship') {
-    return pick(
-      worst(ship.level, 'watch'),
-      'Likely the ship, not you',
-      decision.held
-        ? 'The cabin air is not back to its usual level yet, so the ship stays the likely cause.'
-        : 'Most of the crew show the same kind of change while cabin CO₂ is up.',
-    )
-  }
-  if (me.attribution === 'me') {
-    if (!cabin.hasData) return pick(you.level, 'Likely you', 'There is no cabin data today, so the air could not be checked. Only you see this.')
-    if (airSuspect) return pick(you.level, 'Likely you, for now', 'The air is up, but you are the only one showing a change, so the rule does not blame it yet.')
-    return pick(you.level, 'Likely you', 'The cabin air is at its usual level and the rest of the crew is steady. Only you see this.')
-  }
-  if (me.attribution === 'shared') return pick(you.level, 'Not just you, but not the air', 'Others are off their usual too, but the rule cannot blame the cabin air.')
-  if (ship.level !== 'ok') return pick(you.level, "You're steady. The air isn't.", 'Everything you logged sits inside your own usual range. The cabin CO₂ is flagged below.')
-  return pick(you.level, 'All within your normal', 'Everything you logged today sits inside your own usual range.')
+  if (me.tier === 4) return pick('alert', 'Help is on the way', 'Your crew medical officer was told.')
+  if (!a.checkedIn) return pick(you.level, 'Check in first')
+  if (me.tier === 3) return pick(you.level, `Likely you · day ${me.episodeDay}`, 'The flight surgeon was told.')
+  if (me.attribution === 'ship') return pick(worst(ship.level, 'watch'), 'Likely the ship')
+  if (me.attribution === 'me') return pick(you.level, 'Likely you')
+  if (me.attribution === 'shared') return pick(you.level, 'Not just you')
+  if (ship.level !== 'ok') return pick(you.level, "You're fine. The air isn't.")
+  return pick(you.level, 'All good')
 }
 
 /** Where a notification comes from: your readings, the cabin air, or your exercise. */
