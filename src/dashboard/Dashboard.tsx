@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { hrefOf } from '../auth/paths.ts'
 import { mayOpen, type User } from '../auth/session.ts'
+import { vitalLines } from '../data/watch.ts'
 import { exerciseWeek } from '../engine/gravity.ts'
 import { useStore } from '../state.tsx'
 import { delayText, symptomLabel } from '../ui/text.ts'
@@ -73,6 +74,19 @@ function VitalTile({ v, onOpen }: { v: Vital; onOpen: () => void }) {
   )
 }
 
+/** A 14-day line of one watch reading, with its value under the pointer. No usual line: these are not judged. */
+function WatchTrend({ label, unit, series }: { label: string; unit: string; series: { day: number; v: number | null }[] }) {
+  const [hover, setHover] = useState<string | null>(null)
+  return (
+    <div className="watch-trend">
+      <span className="watch-label">
+        {label}, {TREND_DAYS} days{hover ? ` · ${hover}` : ''}
+      </span>
+      <Sparkline series={series} usual={null} level="ok" format={(v) => `${Math.round(v)} ${unit}`} onHover={setHover} />
+    </div>
+  )
+}
+
 function NoticeCard({ n, onOpen }: { n: Notice; onOpen?: () => void }) {
   return (
     <li className={`note note-${n.level}`}>
@@ -116,6 +130,14 @@ export function Dashboard() {
 
   const history = useMemo(() => s.checkIns.filter((c) => c.crewId === crewId), [s.checkIns, crewId])
   const exercise = useMemo(() => exerciseWeek(history, today), [history, today])
+  // The (simulated) wrist wearable's vitals: shown for information, never judged.
+  const vitalsToday = history.find((c) => c.day === today)?.watch ?? null
+  const vitalTrend = (pick: (c: { restingHr: number; hrvMs: number }) => number) =>
+    Array.from({ length: TREND_DAYS }, (_, i) => {
+      const d = today - TREND_DAYS + 1 + i
+      const w = history.find((c) => c.day === d)?.watch
+      return { day: d, v: w ? pick(w) : null }
+    })
   const zones = useMemo(() => zoneStates(me, cabin, exercise), [me, cabin, exercise])
   const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise), [me, cabin, s.commDelaySec, exercise])
   const tiles = useMemo(() => vitals(me, history, today, TREND_DAYS), [me, history, today])
@@ -304,7 +326,7 @@ export function Dashboard() {
         <section className="col col-right">
           <div className="panel">
             <h2 className="panel-title">
-              Vitals <span className="panel-note">vs. your own normal · {TREND_DAYS} days</span>
+              Vitals <span className="panel-note">vs. your own normal · {TREND_DAYS} days · sleep from your watch</span>
             </h2>
             <div className="tiles">
               {tiles.map((v) => (
@@ -320,6 +342,28 @@ export function Dashboard() {
             </div>
           </div>
 
+          <div className="panel watchp">
+            <h2 className="panel-title">
+              From your watch <span className="panel-note">simulated · for information</span>
+            </h2>
+            {vitalsToday ? (
+              <div className="watch-grid">
+                {vitalLines(vitalsToday).map((l) => (
+                  <div key={l.label}>
+                    <span className="watch-label">{l.label}</span>
+                    <p className="watch-value">{l.value}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="watch-note">No watch data today</p>
+            )}
+            <div className="watch-trends">
+              <WatchTrend label="Resting heart rate" unit="bpm" series={vitalTrend((w) => w.restingHr)} />
+              <WatchTrend label="HRV" unit="ms" series={vitalTrend((w) => w.hrvMs)} />
+            </div>
+            <p className="watch-note">Shipshape's rules don't use these yet. Next, each will be compared with your own normal once a real device feeds them.</p>
+          </div>
         </section>
       </main>
 

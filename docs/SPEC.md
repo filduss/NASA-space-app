@@ -14,7 +14,7 @@ This file describes what the code on this branch does. Where the plan left room,
 | 4 | Mission setting | ISS, lunar surface, Mars transit (default) or an Antarctic station, chosen in the demo controls. It changes the comm delay and the radiation card only. The CO₂ source (ISS) is stated on every screen |
 | 5 | Board default | Sleep and symptoms shared; mood and stress private, shown as a count with no names |
 | 6 | Live input | Live 30-second reaction test, kept in memory only |
-| 7 | Wearable | None |
+| 7 | Wearable | A simulated wrist wearable, no real device: it fills in sleep, sleep quality and exercise at check-in, and shows resting heart rate, HRV, blood oxygen, breathing and skin temperature for information |
 | 8 | AI | None. Summaries come from fixed templates |
 | 9 | Demo format | Not built here: the app has a "Golden path" control with the four days a 30-second video needs |
 | 10 | Earth use | Antarctic winter stations: Concordia's winter crew runs the base alone for three-quarters of a year (ESA). On the challenge page and as Mission → Antarctic station |
@@ -49,11 +49,12 @@ ISS telemetry for the Rodent Research 7 payload from the NASA OSDR Environmental
   "crew": [{ "id": "anna", "name": "Anna" }],
   "shieldDays": [{ "day": 200, "kind": "eva", "crewIds": ["anna", "dana"], "label": "Spacewalk" }],
   "checkIns": [{ "crewId": "anna", "day": 213, "sleepHours": 7, "sleepQuality": 7, "fatigue": 3, "irritability": 2,
-                 "stress": 3, "mood": 7, "symptoms": ["headache"], "reactionMs": 262, "exerciseMin": 135, "simulated": true }]
+                 "stress": 3, "mood": 7, "symptoms": ["headache"], "reactionMs": 262, "exerciseMin": 135,
+                 "watch": { "restingHr": 61, "hrvMs": 36, "spo2": 98, "respRate": 15.9, "skinTempDelta": -0.2 }, "simulated": true }]
 }
 ```
 
-Sliders run 0-10. `symptoms` is any of `headache`, `dizziness`, `nausea`, `congestion`, `eye_strain`. `exerciseMin` is the day before's exercise in minutes; the simulator draws it from a stream of its own, so adding it changed no other value. A live check-in has `simulated: false`, `reactionMs: null`, may leave out `exerciseMin` and may carry `safetyFlag: true`.
+Sliders run 0-10. `symptoms` is any of `headache`, `dizziness`, `nausea`, `congestion`, `eye_strain`. `exerciseMin` is the day before's exercise in minutes. `watch` holds the wearable's vitals: resting heart rate (bpm), HRV (RMSSD, ms), blood oxygen (%), breathing rate (per minute) and skin temperature against the person's usual (°C). The simulator draws each from a stream of its own, so adding them changed no other value; its vitals are demo parameters, nudged on short-sleep, sleep-loss and stress days. A live check-in has `simulated: false`, `reactionMs: null`, may leave out `exerciseMin` and `watch`, and may carry `safetyFlag: true`.
 
 ### `backtest.json` (simulated crews on real traces)
 
@@ -203,6 +204,7 @@ These are the places where the plan could be read two ways, or where the build g
 - **Quest steps are illustrative,** not a flight procedure, and say so.
 - **Did the fix work?** For 7 days after a ship alert ends, the board and the Ship screen say whether the air is back to its usual level and how many of the crew it touched are back to theirs. Counts only, judged on shared indicators as the board does (`shipFollowUp` in `src/engine/privacy.ts`). Anyone still off is already "likely you" with a new 3-day count. This is the re-check the quest's last step asks for; it does not claim the fix caused the recovery.
 - **The limit check uses the 24 h mean.** NASA writes the limit as a 1-hour average, but a single 1-hour peak would make the air a suspect on many quiet days. In the backtest the 24 h mean raised fewer false ship alarms (table under "Evidence"). The highest 1-hour average is still shown on the Ship screen and in summaries.
+- **A simulated wearable fills in what a watch can measure.** At check-in, a wrist wearable has already recorded last night's sleep and its quality (on the same 0-10 scale) and the day before's exercise; in the demo these readings are the simulated crew file's values for that person and day (`src/data/watch.ts`). The person can correct sleep and exercise, and rates fatigue, irritability, stress, mood and symptoms, which no watch measures, so the check-in takes four sliders and the ticks. The rules do not change: a watch reading counts the same as a typed one. The watch also shows resting heart rate, HRV, blood oxygen, breathing and skin temperature, on the check-in and in the dashboard's "From your watch" panel with 14-day trends. They are there to show what a wearable could add: no rule reads them, no threshold, no tier, no part in ship or me. The next step would be to compare each with the person's own normal, as the check-in readings are, once a real device feeds them. Without a reading for the day, the person enters sleep by hand.
 - **Bone and muscle are shown, not judged.** The gravity hazard is covered through its countermeasure, exercise: a check-in can log the day before's exercise, and the engine counts how many of the last 7 logged days reached 120 minutes. Below target on 3 of them turns the core (hip and spine) and limbs zones of the personal dashboard orange, never red, with a notification that names the count. Like radiation it has no tier, no card on the crew board, nothing for the crew medical officer and no part in ship or me. The 120-minute target follows NASA's figure of about two hours of exercise a day on the ISS; the 3-of-7 count is a demo parameter. The check-in's "why we ask" quotes NASA's average bone loss in spaceflight, 1 to 1.5% of mineral density a month in weight-bearing bones (`docs/CITATIONS.md`).
 - **Radiation is shown, not judged.** It has no tier, no card per person and no part in ship or me: the whole crew gets about the same dose and nobody can feel it at everyday levels. A solar-storm warning would be a second "ship" cause; that is not built.
 - **The flight surgeon sees what the crew medical officer sees.** The plan names the flight surgeon as a reader of summaries; the build gives the role a login (Mira, on Earth) with the crew medical officer's access (crew board, inbox, Ship screen) plus the summaries. This goes beyond the plan, which sends only summaries to Earth.

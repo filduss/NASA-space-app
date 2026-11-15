@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { hrefOf } from '../auth/paths.ts'
+import { vitalLines, watchReading } from '../data/watch.ts'
 import { SPEC, SYMPTOMS } from '../engine/deviation.ts'
 import type { CheckIn, SymptomKey } from '../engine/types.ts'
 import { XP } from '../game/xp.ts'
@@ -18,18 +19,24 @@ const SLIDERS: Slider[] = [
   { key: 'stress', min: 0, max: 10, step: 1, lo: 'Low', hi: 'High' },
   { key: 'mood', min: 0, max: 10, step: 1, lo: 'Low', hi: 'Good' },
 ]
+/** The sliders the wrist wearable fills in. The rest are feelings only the person can rate. */
+type WatchKey = 'sleepHours' | 'sleepQuality'
+const fromWatch = (k: SliderKey): k is WatchKey => k === 'sleepHours' || k === 'sleepQuality'
 
 export function CheckInScreen({ crewId }: { crewId: string }) {
   const s = useStore()
   const existing = s.checkIns.find((c) => c.crewId === crewId && c.day === s.today)
+  const sentBefore = existing && !existing.simulated ? existing : null
   const status = s.todayResult.people[crewId]
+  // The simulated wrist wearable: last night's sleep and its quality, yesterday's exercise, and vitals.
+  const watch = watchReading(s.data.crew.checkIns, crewId, s.today)
 
-  // Sliders start unset, never at the person's usual: a rushed check-in must not report "as usual" by
-  // default, so each one is rated before the usual is shown, or explicitly set as usual. A check-in
-  // already sent today starts from what was sent.
+  // The watch fills in what it measures; the person can correct it. The other sliders start unset, never
+  // at the person's usual: a rushed check-in must not report "as usual" by default, so each one is rated
+  // before the usual is shown, or explicitly set as usual. A check-in already sent today starts from it.
   const [values, setValues] = useState<Record<SliderKey, number | null>>(() => {
     const v = {} as Record<SliderKey, number | null>
-    for (const sl of SLIDERS) v[sl.key] = existing && !existing.simulated ? existing[sl.key] : null
+    for (const sl of SLIDERS) v[sl.key] = sentBefore ? sentBefore[sl.key] : watch && fromWatch(sl.key) ? watch[sl.key] : null
     return v
   })
   const set = (key: SliderKey, value: number) => setValues((v) => ({ ...v, [key]: value }))
@@ -42,7 +49,9 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
     setValues((v) => Object.fromEntries(SLIDERS.map((sl) => [sl.key, v[sl.key] ?? usualOf(sl)])) as Record<SliderKey, number>)
   const [symptoms, setSymptoms] = useState<SymptomKey[]>(existing && !existing.simulated ? existing.symptoms : [])
   // Optional; shown on the person's own dashboard only, never judged (engine/gravity.ts).
-  const [exercise, setExercise] = useState<number | null>(existing && !existing.simulated ? (existing.exerciseMin ?? null) : null)
+  const [exercise, setExercise] = useState<number | null>(sentBefore ? (sentBefore.exerciseMin ?? null) : (watch?.exerciseMin ?? null))
+  // Measured, not rated, so not editable; shown for information, never judged.
+  const vitals = sentBefore ? (sentBefore.watch ?? null) : (watch?.vitals ?? null)
   const [safety, setSafety] = useState(existing?.safetyFlag === true)
   const [reaction, setReaction] = useState<ReactionResult | null>(s.liveReaction[`${crewId}|${s.today}`] ?? null)
   const [sent, setSent] = useState(false)
@@ -50,7 +59,7 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
   const submit = () => {
     if (unset.length > 0) return
     const rated = values as Record<SliderKey, number>
-    const c: CheckIn = { crewId, day: s.today, ...rated, symptoms, reactionMs: null, exerciseMin: exercise, safetyFlag: safety || undefined, simulated: false }
+    const c: CheckIn = { crewId, day: s.today, ...rated, symptoms, reactionMs: null, exerciseMin: exercise, watch: vitals, safetyFlag: safety || undefined, simulated: false }
     s.submitCheckIn(c, reaction)
     setSent(true)
     window.scrollTo({ top: 0 })
@@ -87,13 +96,48 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
 
   return (
     <div className="stack">
+      <Card title="From your watch" aside={<Origin kind="simulated">wearable</Origin>}>
+        {watch ? (
+          <>
+            <dl className="watch">
+              <div>
+                <dt>Sleep</dt>
+                <dd>{watch.sleepHours.toFixed(1)} h</dd>
+              </div>
+              <div>
+                <dt>Sleep quality</dt>
+                <dd>{watch.sleepQuality}/10</dd>
+              </div>
+              <div>
+                <dt>Exercise yesterday</dt>
+                <dd>{watch.exerciseMin === null ? '–' : `${watch.exerciseMin} min`}</dd>
+              </div>
+              {watch.vitals &&
+                vitalLines(watch.vitals).map((l) => (
+                  <div key={l.label}>
+                    <dt>{l.label}</dt>
+                    <dd>{l.value}</dd>
+                  </div>
+                ))}
+            </dl>
+            <p className="why">
+              Sleep and exercise are already filled in below; move a slider if the watch got it wrong. Heart rate, HRV, blood oxygen, breathing
+              and skin temperature are shown for information: the rules don't use them yet.
+            </p>
+          </>
+        ) : (
+          <p className="muted">No watch data for last night: enter your sleep below.</p>
+        )}
+      </Card>
+
       <Card
         title={`Morning check-in, day ${s.today}`}
         aside={existing ? <Origin kind={existing.simulated ? 'simulated' : 'live'}>{existing.simulated ? 'today is pre-filled by the simulator' : 'you already checked in'}</Origin> : undefined}
       >
         <p className="muted">
-          About a minute. {existing?.simulated ? `Submitting replaces ${s.nameOf(crewId)}'s simulated check-in for today with yours. ` : ''}
-          You earn the same XP on a bad day as on a good one. Rate each slider before you see your usual; if one is as usual, say so.
+          Under a minute: {watch ? 'your watch has filled in your sleep, and you rate how you feel.' : 'rate how you slept and how you feel.'}{' '}
+          {existing?.simulated ? `Submitting replaces ${s.nameOf(crewId)}'s simulated check-in for today with yours. ` : ''}
+          You earn the same XP on a bad day as on a good one. Rate each feeling before you see your usual; if one is as usual, say so.
         </p>
         <div className="sliders">
           {SLIDERS.map((sl) => {
@@ -105,6 +149,7 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
                   <span>
                     {spec.label}
                     {spec.privacy === 'private' && <span className="lock" title="Private: only you see this"> 🔒 private</span>}
+                    {watch && !sentBefore && fromWatch(sl.key) && <span className="from-watch"> · from your watch</span>}
                   </span>
                   <output>{v === null ? 'Not set' : sl.key === 'sleepHours' ? `${v.toFixed(1)} h` : v}</output>
                 </label>
@@ -149,7 +194,9 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
       <Card title="Exercise yesterday">
         <div className={exercise === null ? 'slider slider-unset' : 'slider'}>
           <label htmlFor="sl-exercise">
-            <span>Minutes</span>
+            <span>
+              Minutes{watch?.exerciseMin != null && !sentBefore && <span className="from-watch"> · from your watch</span>}
+            </span>
             <output>{exercise === null ? 'Not logged' : `${exercise} min`}</output>
           </label>
           <input
