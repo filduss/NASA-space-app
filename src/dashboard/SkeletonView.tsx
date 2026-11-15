@@ -87,7 +87,15 @@ export function SkeletonView({ zones, focus, onFocus }: Props) {
     let disposed = false
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' })
+    // No WebGL (remote desktops, hardware acceleration off): the constructor throws. The page must
+    // not go down with it, since the zone chips under the stage carry every status.
+    let renderer: THREE.WebGLRenderer
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' })
+    } catch {
+      setStatus('error')
+      return
+    }
     el.appendChild(renderer.domElement)
 
     const scene = new THREE.Scene()
@@ -302,7 +310,7 @@ export function SkeletonView({ zones, focus, onFocus }: Props) {
     <div className="sk">
       <div ref={host} className="sk-canvas" aria-hidden="true" />
       {status === 'loading' && <div className="sk-status">Loading skeleton…</div>}
-      {status === 'error' && <div className="sk-status">The 3D model could not load. Every status is still listed beside it.</div>}
+      {status === 'error' && <div className="sk-status">The 3D body view is not available in this browser. Every status is listed below it.</div>}
       <div className="sk-labels">
         {ZONES.map((z) => {
           const st = zones[z.key]
