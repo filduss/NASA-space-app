@@ -47,3 +47,15 @@ export const TOUR: TourStep[] = [
     page: 'challenge',
   },
 ]
+
+/** A tour stop as a link: the same stop, marked with its place in the tour so the page can offer the next one (TourBar). */
+export function tourStop(index: number): TourStop {
+  const { as, page, search } = TOUR[index]
+  return { as, page, search: `${search ? `${search}&` : '?'}tour=${index + 1}` }
+}
+
+/** The stop a page was opened at: `?tour=2` is the second stop. Null when the page was not opened from the tour. */
+export function tourIndex(search: string): number | null {
+  const n = Number(new URLSearchParams(search).get('tour'))
+  return Number.isInteger(n) && n >= 1 && n <= TOUR.length ? n - 1 : null
+}

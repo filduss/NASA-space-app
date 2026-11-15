@@ -17,19 +17,19 @@ import { list } from './text.ts'
 const QUESTIONS: { q: string; a: string; jump: string; stop: TourStop }[] = [
   {
     q: 'Which measurements can be performed in space?',
-    a: "A morning check-in: sliders for sleep, fatigue, irritability, stress and mood, symptom ticks, and a 30-second reaction test (a short version of the ISS Reaction Self-Test). The ship's sensors add cabin CO₂, temperature and humidity, here real ISS telemetry. Each reading links to the NASA Human System Risk it informs (below).",
+    a: "A one-minute morning check-in: five 0-10 ratings (sleep quality, fatigue, irritability, stress and mood), symptom ticks and an optional 30-second reaction test (a short version of the ISS Reaction Self-Test). A wrist wearable measures sleep and exercise, so nobody types them in (simulated here). The ship's sensors add cabin CO₂, temperature and humidity (real ISS data). Each reading links to the NASA Human System Risk it informs (below).",
     jump: 'Open the check-in, as Anna',
     stop: { as: 'anna', page: 'checkin' },
   },
   {
     q: 'Why is an exam needed?',
-    a: "Every check-in item says why it is asked. Each reading is compared with that person's own normal rather than a population range, because people differ and spaceflight changes the body.",
+    a: "One reading on its own says little: people differ and spaceflight changes the body. So each reading is compared with that person's own normal rather than a population range, and a change is only called the ship's when the cabin air and the rest of the crew agree. The dashboard shows each reading beside the person's usual.",
     jump: "See Chen's readings against his own normal",
     stop: { as: 'chen', page: 'dashboard', search: '?day=212' },
   },
   {
     q: 'How do spaceflight hazards affect these indicators?',
-    a: "Closed environment: cabin CO₂, temperature and humidity are checked every day against NASA's limits, and each has its own readings: CO₂ headaches, poor sleep and fatigue, temperature sleep, dry air a stuffy nose and sore eyes. The rule blames the factor whose changes half the crew share. Space radiation: a dose budget against NASA's career limit. Distance from Earth: the mission setting sets the delay to the flight surgeon. Gravity: without it bones and muscles carry no load, so each check-in can log yesterday's exercise, and the dashboard flags the hip, spine and muscles when it falls short; and since microgravity fluid shifts cause headaches too, one headache never blames the air. Isolation and confinement: mood and stress are tracked privately, against the person's usual and against their starting normal, so a slow slide is caught too.",
+    a: "Closed environment: cabin CO₂, temperature and humidity are checked every day against NASA's limits, and each has its own readings: CO₂ headaches, poor sleep and fatigue, temperature sleep, dry air a stuffy nose and sore eyes. The rule blames the factor whose changes half the crew share. Space radiation: a dose budget against NASA's career limit. Distance from Earth: the mission setting sets the delay to the flight surgeon. Gravity: without it bones and muscles carry no load, so the wearable logs each day's exercise against a daily target, and the dashboard turns the core and muscle zones orange when it falls short; and since microgravity fluid shifts cause headaches too, one headache never blames the air. Isolation and confinement: mood and stress are tracked privately, against the person's usual and against their starting normal, so a slow slide is caught too.",
     jump: 'Open the Ship screen on day 213',
     stop: { as: 'dana', page: 'app', search: '?day=213&screen=ship' },
   },
@@ -41,7 +41,7 @@ const QUESTIONS: { q: string; a: string; jump: string; stop: TourStop }[] = [
   },
   {
     q: 'What actions can prevent a critical condition?',
-    a: 'After a ship alert the app re-checks whether the air and the crew recovered. The radiation card says when to go to the storm shelter. Anything still off on day 3 reaches the flight surgeon.',
+    a: 'During a ship alert the Ship screen lists what to do now: check the air first, before anyone is treated as a patient. After the alert the app re-checks whether the air and the crew recovered. The radiation card says when to go to the storm shelter. Anything still off on day 3 reaches the flight surgeon.',
     jump: 'See day 213 on the Ship screen',
     stop: { as: 'dana', page: 'app', search: '?day=213&screen=ship' },
   },
@@ -107,6 +107,11 @@ function Evidence() {
             )}
             . It missed <strong>{pct(base.ship.missedShareRise2Plus)}</strong> of CO₂ rises of 2 mmHg or more ({pct(base.ship.missedShare)} of all
             rises from 1 mmHg).
+          </p>
+          <p className="muted">
+            Read these as a stress test, not a validation. The simulated crews feel CO₂ through the same indicators the rule reads, so the
+            figures show how the rule copes with noise, missed check-ins and weaker or stronger effects. They do not show how real crews
+            behave; that needs real crew data, which is medical and not public.
           </p>
           {base.shipByCause && (
             <p>

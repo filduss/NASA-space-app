@@ -58,7 +58,8 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
     <div className="stack checkin">
       <div className="ci-intro">
         <p>
-          About a minute. Your answers go to your flight surgeon.
+          About a minute. Sleep, fatigue, irritability and symptoms go to your crew medical officer and your flight surgeon. Mood and
+          stress stay yours, unless you are still off on day 3: then your flight surgeon is told.
           {existing?.simulated && <span className="fine"> Sending replaces the simulator's check-in for {s.nameOf(crewId)} today.</span>}
         </p>
         <button type="button" className="link ci-help-link" onClick={needHelp}>

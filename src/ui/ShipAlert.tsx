@@ -25,6 +25,44 @@ function shipVerdict(causes: CabinFactor[], cabin: CabinStatus): string {
 
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
+/**
+ * The steps while a ship alert is on. A fixed template: one thing for the crew to do, and what the app
+ * does by itself. These are ours, not a NASA procedure, and the card says so.
+ */
+/** What to look at first for each cabin factor the alert blames. */
+const CHECK_FIRST: Record<CabinFactor, string> = {
+  co2: 'the CO₂ removal system and the airflow where people sleep and work',
+  temp: 'the temperature control and the airflow at the sleep stations',
+  rh: 'the humidity control',
+}
+
+function WhatNow({ alertDay, causes }: { alertDay: number; causes: CabinFactor[] }) {
+  return (
+    <Card title="What to do now" aside={<span className="count">day {alertDay} of the alert</span>}>
+      <ol className="lines steps">
+        <li>
+          <strong>Check the air before anyone's health.</strong> Look at {list((causes.length ? causes : (['co2'] as CabinFactor[])).map((f) => CHECK_FIRST[f]))},
+          and compare a second sensor if there is one.
+        </li>
+        <li>
+          <strong>Nobody is singled out.</strong> Each affected person's own dashboard already says "Likely the ship", so a bad day is not put down
+          to them.
+        </li>
+        <li>
+          <strong>Earth hears about the cabin, not about people.</strong> A crew-level summary goes to the flight surgeon on day{' '}
+          {RULES.persistDays} of an alert and every {RULES.persistDays} days while it lasts. Anyone can still ask for a private conference
+          from their check-in.
+        </li>
+        <li>
+          <strong>The app keeps checking.</strong> The alert is re-checked at every check-in. Once the air is back to usual, this screen
+          shows for {RULES.followUpDays} days whether the crew recovered too, and anyone still off is told privately it is now likely them.
+        </li>
+      </ol>
+      <p className="fine">Suggested steps by this demo, not a NASA procedure. The crew's own flight rules come first.</p>
+    </Card>
+  )
+}
+
 export function ShipAlert() {
   const s = useStore()
   const r = s.todayResult
@@ -120,6 +158,8 @@ export function ShipAlert() {
         </details>
       </Card>
 
+      {/* After the chart: the real CO₂ trace stays right under the banner, and the steps follow the evidence. */}
+      {decision.outcome === 'ship' && <WhatNow alertDay={r.shipEpisodeDay} causes={decision.causes} />}
       <Card title="Cabin temperature and humidity" aside={<Origin kind="real">{meta.mission}, NASA OSDR</Origin>}>
         <div className="stats">
           <Stat

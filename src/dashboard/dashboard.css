@@ -14,7 +14,7 @@ body.dash-body {
   --d-stroke-2: rgba(255, 255, 255, 0.14);
   --d-ink: #f5f5f7;
   --d-ink-2: rgba(235, 235, 245, 0.62);
-  --d-ink-3: rgba(235, 235, 245, 0.38);
+  --d-ink-3: rgba(235, 235, 245, 0.5);
   --d-blue: #0a84ff;
   --d-green: #30d158;
   --d-orange: #ff9f0a;
@@ -359,6 +359,8 @@ body.dash-body {
 }
 .stage {
   position: relative;
+  /* The zone chips below ask how wide the stage is, not the window. */
+  container-type: inline-size;
   height: min(calc(100dvh - 112px), 860px);
   min-height: 560px;
   overflow: hidden;
@@ -510,6 +512,7 @@ body.dash-body {
   left: 14px;
   right: 14px;
   bottom: 14px;
+  align-items: stretch;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
@@ -520,6 +523,8 @@ body.dash-body {
   align-items: center;
   column-gap: 7px;
   width: 100%;
+  height: 100%;
+  align-content: center;
   padding: 10px 12px;
   border-radius: 14px;
   border: 1px solid var(--d-stroke);
@@ -538,20 +543,27 @@ body.dash-body {
 .zone:active {
   transform: scale(0.98);
 }
+/* Names and reasons wrap instead of cutting off ("Head & s…"): the reason is the point of the chip. */
 .zone-name {
   font-size: 13px;
   font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.2;
+  overflow-wrap: break-word;
 }
 .zone-why {
   grid-column: 2;
   font-size: 12px;
+  line-height: 1.25;
   color: var(--d-ink-2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: break-word;
+}
+/* A narrow stage (a 1280 px window gives it about 430 px) cannot seat four chips side by side
+   without breaking words. Two rows, as on a phone; SkeletonView already lifts the body clear of
+   two rows whenever the stage is under 600 px wide. */
+@container (max-width: 599px) {
+  .zones {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .zone-watch {
   border-color: rgba(255, 159, 10, 0.35);
@@ -1224,6 +1236,13 @@ body.dash-body {
     padding-top: 14px;
     font-size: 11px;
     overflow-wrap: anywhere;
+  }
+}
+
+/* The judge's tour strip (styles.css) sits above the page; the one-screen layout gives it room. */
+@media (min-width: 1241px) {
+  body:has(.tourbar) .dash {
+    height: calc(100dvh - 44px);
   }
 }
 
