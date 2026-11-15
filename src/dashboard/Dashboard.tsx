@@ -3,6 +3,8 @@ import { hrefOf } from '../auth/paths.ts'
 import type { User } from '../auth/session.ts'
 import { vitalLines } from '../data/wearable.ts'
 import { exerciseWeek } from '../engine/gravity.ts'
+import { ENTRY_FOR, entryById } from '../guide/entries.ts'
+import { GuideLink } from '../guide/Guide.tsx'
 import { useStore } from '../state.tsx'
 import { symptomLabel } from '../ui/text.ts'
 import { DemoDock } from '../ui/DemoDock.tsx'
@@ -138,7 +140,20 @@ function VitalTile({ v, onOpen, reference }: { v: Vital; onOpen: () => void; ref
         )}
       </p>
       <Sparkline series={v.series} usual={usualNum} level={v.level} format={fmt} onHover={setHover} />
+      {v.level !== 'ok' && <WhatItMeans id={ENTRY_FOR[v.key]} label={v.label} />}
     </article>
+  )
+}
+
+/** Opens the Guide entry for something that is off today, in a sheet over the dashboard. */
+function WhatItMeans({ id, label, text = 'What this means' }: { id: string; label: string; text?: string }) {
+  return (
+    <GuideLink id={id} label={label} className="guide-more" toGuide>
+      <span className="guide-more-q" aria-hidden="true">
+        ?
+      </span>
+      {text}
+    </GuideLink>
   )
 }
 
@@ -196,6 +211,7 @@ export function Dashboard() {
   const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise), [me, cabin, s.commDelaySec, exercise])
   const tiles = useMemo(() => vitals(me, history, today, TREND_DAYS), [me, history, today])
   const chartVital = chart ? tiles.find((t) => t.key === chart.key) : undefined
+  const symptomGuides = [...new Set(me.assessment.symptoms.map((k) => ENTRY_FOR[k]))]
   const v = verdict(me, cabin)
   // A published figure for real ISS crews, shown beside the person's own usual sleep (backtest.json).
   const issSleep = s.data.backtest?.meta.issCrews?.sleepHours
@@ -257,7 +273,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        <Toolbar user={user} pages={['app']} day={today} onLogOut={s.logOut} />
+        <Toolbar user={user} pages={['guide', 'app']} day={today} onLogOut={s.logOut} />
       </header>
 
       <main className="grid">
@@ -346,6 +362,9 @@ export function Dashboard() {
                 </header>
                 <p className="tile-value tile-value-sm">{me.assessment.symptoms.length ? me.assessment.symptoms.length : 'None'}</p>
                 <p className="tile-sub">{me.assessment.symptoms.length ? me.assessment.symptoms.map(symptomLabel).join(', ') : 'Nothing reported today'}</p>
+                {symptomGuides.map((id) => (
+                  <WhatItMeans key={id} id={id} label={id} text={symptomGuides.length > 1 ? `${entryById(id)?.title}: what it means` : undefined} />
+                ))}
               </article>
             </div>
           </div>

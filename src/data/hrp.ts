@@ -119,7 +119,7 @@ export const INDICATOR_RISKS: Record<IndicatorKey, HrpRiskKey[]> = {
 }
 
 export const SYMPTOM_RISKS: Record<SymptomKey, HrpRiskKey[]> = {
-  headache: ['co2', 'sans'],
+  headache: ['co2', 'medical'],
   dizziness: ['sensorimotor'],
   nausea: ['sensorimotor'],
   congestion: ['medical'],
@@ -168,7 +168,7 @@ export const HRP_MAP: HrpRow[] = [
   {
     item: 'Headache',
     kind: 'Check-in',
-    risks: ['co2', 'sans'],
+    risks: ['co2', 'medical'],
     nasa: '19 of 49 ISS astronauts reported headaches, and the odds doubled for each 1 mmHg of CO₂. Fluid shift in microgravity causes similar headaches (NASA OCHMO-TB-004).',
   },
   {

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { AccountRole } from './data/types.ts'
 import { cabinLevel } from './dashboard/model.ts'
+import { Guide } from './guide/Guide.tsx'
 import { useStore, type Role, type Screen } from './state.tsx'
 import { CheckInScreen } from './ui/CheckInScreen.tsx'
 import { CrewBoard } from './ui/CrewBoard.tsx'
@@ -29,9 +30,9 @@ const TABS: Record<Role['kind'], Screen[]> = {
 }
 
 /** The person's other pages, offered in the toolbar when they may open them. */
-const OTHER_PAGES = ['dashboard', 'checkin', 'app'] as const
+const OTHER_PAGES = ['dashboard', 'checkin', 'guide', 'app'] as const
 
-export function App({ page }: { page: 'checkin' | 'app' }) {
+export function App({ page }: { page: 'checkin' | 'guide' | 'app' }) {
   const s = useStore()
   const tabs = TABS[s.role.kind]
   const screen = tabs.includes(s.screen) ? s.screen : tabs[0]
@@ -42,9 +43,12 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
   const me = s.user ? s.nameOf(s.user.crewId) : ''
   const myRole = s.user ? ROLE_WORD[s.user.role] : ''
 
+  const guide = page === 'guide'
+  const heading = guide ? 'Guide' : LABELS[screen]
+
   useEffect(() => {
-    document.title = `${LABELS[screen]} · Ship Or Me?`
-  }, [screen])
+    document.title = `${heading} · Ship Or Me?`
+  }, [heading])
 
   return (
     <div className={page === 'checkin' ? 'app app-narrow' : 'app'}>
@@ -59,7 +63,7 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
           </div>
         </div>
 
-        {tabs.length > 1 && (
+        {!guide && tabs.length > 1 && (
           <nav className="tabs" aria-label="Screens" data-tour="screens">
             {tabs.map((t) => (
               <button key={t} type="button" className={t === screen ? 'tab tab-on' : 'tab'} aria-current={t === screen ? 'page' : undefined} onClick={() => s.setScreen(t)}>
@@ -90,24 +94,29 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
 
       <section className="intro">
         <div>
-          <p className="intro-eyebrow">
-            {s.mission.label} · mission day {s.today} · {who}
-          </p>
-          <h1>{LABELS[screen]}</h1>
+          <p className="intro-eyebrow">{guide ? 'What your readings mean, and why they matter in space' : `${s.mission.label} · mission day ${s.today} · ${who}`}</p>
+          <h1>{heading}</h1>
         </div>
       </section>
 
 
-      {/* Keyed by person and day so forms start fresh when either changes. */}
-      <main key={`${crewId ?? s.role.kind}-${s.today}`}>
-        {screen === 'board' && <CrewBoard />}
-        {screen === 'checkin' && crewId && <CheckInScreen crewId={crewId} />}
-        {screen === 'ship' && <ShipAlert />}
-        {screen === 'inbox' && <CmoInbox />}
-        {screen === 'summary' && <SurgeonView />}
-      </main>
+      {guide ? (
+        <main>
+          <Guide />
+        </main>
+      ) : (
+        // Keyed by person and day so forms start fresh when either changes.
+        <main key={`${crewId ?? s.role.kind}-${s.today}`}>
+          {screen === 'board' && <CrewBoard />}
+          {screen === 'checkin' && crewId && <CheckInScreen crewId={crewId} />}
+          {screen === 'ship' && <ShipAlert />}
+          {screen === 'inbox' && <CmoInbox />}
+          {screen === 'summary' && <SurgeonView />}
+        </main>
+      )}
 
-      <DemoDock settings={<DemoSettings />} page={page} surgeon={s.role.kind === 'surgeon'} />
+      {/* The Guide shows no mission day or person's data, so it has no demo controls or walkthrough. */}
+      {!guide && <DemoDock settings={<DemoSettings />} page={page} surgeon={s.role.kind === 'surgeon'} />}
 
       <footer className="foot">
         <p>

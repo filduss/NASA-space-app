@@ -7,8 +7,9 @@ Built for the NASA Space Apps Challenge 2026, "Create Health Monitoring Software
 ## For judges
 
 - **Live demo: [shipshape-rho.vercel.app](https://shipshape-rho.vercel.app/)**, installable and offline-capable.
-- **The start page has a judge's tour beside the login.** One click per step, no PIN to type: day 213 "likely the ship" (as Dana, the medical officer), day 221 "likely you" (Chen's own dashboard), day 223 "day 3 reaches Earth" (Mira, the flight surgeon).
+- **The start page has a judge's tour beside the login.** One click per step, no PIN to type: day 213 "likely the ship" (as Dana, the medical officer), day 221 "likely you" (Chen's own dashboard), day 223 "day 3 reaches Earth" (Mira, the flight surgeon), then the crew's Guide (Chen).
 - **How it answers the challenge:** the `/challenge` page, no login: the five questions, the evidence and the limits.
+- **The crew's Guide** (`/guide`, the book button on the dashboard): plain explanations of every reading, why it matters in space and NASA's limit, with a search that understands everyday words ("head hurts"). Its sources are not shown to the crew; every one is listed in [docs/CITATIONS.md](docs/CITATIONS.md), and a sentence appears only after a person on the team has opened its source.
 
 | Real | Simulated | Estimated |
 | --- | --- | --- |
@@ -42,7 +43,7 @@ npm run build      # production build, installable and offline-capable
 
 ### Log in
 
-Beside the login, the start page has a **judge's tour**: four links that walk the demo (day 213 as Dana, day 221 as Chen, day 223 as Mira on Earth, and the challenge page). Each logs in with that person's demo PIN for you. To log in by hand, pick a person and enter their PIN on the on-screen keypad (or type it); it is printed on their card. These are demo PINs:
+Beside the login, the start page has a **judge's tour**: five links that walk the demo (day 213 as Dana, day 221 as Chen, day 223 as Mira on Earth, the Guide as Chen, and the challenge page). Each logs in with that person's demo PIN for you. To log in by hand, pick a person and enter their PIN on the on-screen keypad (or type it); it is printed on their card. These are demo PINs:
 
 | Person | Role | PIN |
 | --- | --- | --- |
@@ -82,11 +83,12 @@ src/engine/    baseline.ts  deviation.ts  shipOrMe.ts  escalation.ts  privacy.ts
 src/ui/        CrewBoard  CrewTimeline  ShipAlert  FollowUp  Radiation  Medical  CheckInScreen  ReactionTest  Challenge  DemoSettings  DemoDock  Toolbar  ErrorBoundary
 src/auth/      Login  TourLink  RequireUser  demo.ts  pin.ts  session.ts  paths.ts
 src/dashboard/ Dashboard  SkeletonView  ChartSheet  model.ts  history.ts
+src/guide/     Guide  entries.ts  search.ts
 src/data/      types.ts  wearable.ts
 scripts/       snapshot_eda.py  simulate_crew.py  backtest.py  make_accounts.py  engine_cli.ts  snapshots/
 public/data/   cabin.json  crew.json  backtest.json  accounts.json
-tests/         engine  golden  checkin  wearable  gravity  mission  auth  dashboard  history  text  (*.test.ts)
-docs/          SPEC.md  CITATIONS.md  AI_USE_LOG.md
+tests/         engine  golden  checkin  wearable  gravity  mission  auth  dashboard  history  text  guide  (*.test.ts)
+docs/          SPEC.md  CITATIONS.md  AI_USE_LOG.md  adr/  research/
 ```
 
 `docs/SPEC.md` has the JSON shapes, every rule, the readings of the plan that this build chose, and the open items.

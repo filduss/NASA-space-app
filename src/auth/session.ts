@@ -110,12 +110,12 @@ export function clearFailures(store: Storage, crewId: string): void {
 // ---- What a role may open -----------------------------------------------------------------
 
 /**
- * Crew (astronauts and the medical officer) get their own dashboard and their own check-in. The crew
+ * Crew (astronauts and the medical officer) get their own dashboard, their own check-in and the Guide. The crew
  * app (/app) is the medical console: the medical officer and the flight surgeon only. The flight
  * surgeon is not crew, so has no dashboard and no check-in.
  */
 export function mayOpen(user: User, page: Page): boolean {
-  if (page === 'dashboard' || page === 'checkin') return user.role !== 'surgeon'
+  if (page === 'dashboard' || page === 'checkin' || page === 'guide') return user.role !== 'surgeon'
   if (page === 'app') return user.role !== 'astronaut'
   return true
 }

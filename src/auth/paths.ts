@@ -1,9 +1,9 @@
 // The five pages, without a router. "/" is the login and "/challenge" is public; the other three need a
 // logged-in person.
 
-export type Page = 'login' | 'challenge' | 'dashboard' | 'checkin' | 'app'
+export type Page = 'login' | 'challenge' | 'dashboard' | 'checkin' | 'guide' | 'app'
 
-const PAGE_PATHS: Record<Exclude<Page, 'login'>, string> = { challenge: '/challenge', dashboard: '/dashboard', checkin: '/checkin', app: '/app' }
+const PAGE_PATHS: Record<Exclude<Page, 'login'>, string> = { challenge: '/challenge', dashboard: '/dashboard', checkin: '/checkin', guide: '/guide', app: '/app' }
 
 /** Path inside the app, without the deploy base and without a trailing slash ("" for the root). */
 export function appPath(pathname: string, base: string): string {

@@ -7,6 +7,7 @@ type ToolbarPage = Exclude<Page, 'login' | 'challenge'>
 const LABEL: Record<ToolbarPage, string> = {
   dashboard: 'My dashboard',
   checkin: 'Check in',
+  guide: 'Guide',
   app: 'Crew app',
 }
 
@@ -28,6 +29,7 @@ function Glyph({ kind }: { kind: ToolbarPage | 'logout' }) {
           <path d="M6.5 2.75v-.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v.5M6.25 9.4l1.8 1.8 3.7-3.9" />
         </>
       )}
+      {kind === 'guide' && <path d="M9 4.6C7.6 3.5 5.6 3 2.75 3v10.5c2.85 0 4.85.5 6.25 1.6 1.4-1.1 3.4-1.6 6.25-1.6V3C12.4 3 10.4 3.5 9 4.6zM9 4.6v10.5" />}
       {kind === 'app' && (
         <>
           <rect x="1.75" y="4.75" width="14.5" height="10.5" rx="2.5" />
@@ -41,7 +43,7 @@ function Glyph({ kind }: { kind: ToolbarPage | 'logout' }) {
 
 /**
  * The page toolbar: links to the person's other pages (only those they may open), then log out.
- * The same buttons on /dashboard, /checkin and /app.
+ * The same buttons on /dashboard, /checkin, /guide and /app.
  */
 export function Toolbar({ user, pages, day, onLogOut }: { user: User; pages: ToolbarPage[]; day: number; onLogOut: () => void }) {
   const links = pages.filter((p) => mayOpen(user, p))
