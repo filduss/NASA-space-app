@@ -41,10 +41,14 @@ function loadLocal(): Local {
   try {
     const raw = localStorage.getItem(STORE_KEY)
     if (!raw) return EMPTY
-    // Only the fields this version keeps: older saves also carried XP events and quest ticks, and
-    // check-ins with a safetyFlag (now a conference request, so an old flag is dropped, not converted).
+    // Only the fields this version keeps: older saves also carried XP events and quest ticks. An older
+    // check-in's safety answer becomes an urgent conference request, so it is not lost.
     const saved = JSON.parse(raw) as Partial<Local>
-    return { liveCheckIns: saved.liveCheckIns ?? [], shareWatch: saved.shareWatch ?? {}, requests: saved.requests ?? [] }
+    const liveCheckIns = (saved.liveCheckIns ?? []) as (CheckIn & { safetyFlag?: boolean })[]
+    const fromOld = liveCheckIns.filter((c) => c.safetyFlag).map((c) => ({ crewId: c.crewId, day: c.day, urgent: true }))
+    const requests = [...(saved.requests ?? [])]
+    for (const r of fromOld) if (!requests.some((x) => x.crewId === r.crewId && x.day === r.day)) requests.push(r)
+    return { liveCheckIns: liveCheckIns.map(({ safetyFlag: _old, ...c }) => c), shareWatch: saved.shareWatch ?? {}, requests }
   } catch {
     return EMPTY
   }

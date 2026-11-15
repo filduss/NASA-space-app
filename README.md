@@ -80,7 +80,7 @@ src/auth/     Login  RequireUser  pin.ts  session.ts  paths.ts
 src/dashboard/ Dashboard  SkeletonView  ChartSheet  model.ts  history.ts
 scripts/      snapshot_eda.py  simulate_crew.py  backtest.py  make_accounts.py  engine_cli.ts  snapshots/
 public/data/  cabin.json  crew.json  backtest.json  accounts.json
-tests/        engine.test.ts  golden.test.ts  mission.test.ts  auth.test.ts  history.test.ts
+tests/        engine.test.ts  checkin.test.ts  golden.test.ts  mission.test.ts  auth.test.ts  history.test.ts
 docs/         SPEC.md  CITATIONS.md  AI_USE_LOG.md
 ```
 

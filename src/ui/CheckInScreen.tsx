@@ -20,16 +20,9 @@ import {
   type Usual,
 } from './checkInForm.ts'
 import { ReactionTest } from './ReactionTest.tsx'
-import { delayText, symptomLabel } from './text.ts'
+import { delayText, hoursText, symptomLabel } from './text.ts'
 
 const SCALE = Array.from({ length: 11 }, (_, i) => i)
-
-/** 6.2 h → "6 h 12 min". */
-function hoursText(h: number): string {
-  const whole = Math.floor(h)
-  const min = Math.round((h - whole) * 60)
-  return min === 0 ? `${whole} h` : min === 60 ? `${whole + 1} h` : `${whole} h ${min} min`
-}
 
 /** The person's usual for each rating: the most recent own-normal median the engine has for them. */
 function useUsual(crewId: string): Usual {
@@ -73,7 +66,7 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
   }
 
   if (mode === 'receipt' && sentLive) {
-    return <Receipt crewId={crewId} wearable={wearable} reaction={reaction} onChange={() => setMode('form')} />
+    return <Receipt crewId={crewId} reaction={reaction} onChange={() => setMode('form')} />
   }
 
   return (
@@ -163,17 +156,19 @@ function RatingRow({ rating, value, usual, onChange }: { rating: Rating; value: 
     onChange(v)
     if (focus) group.current?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[v]?.focus()
   }
+  // The ARIA radio-group pattern: arrows move from the focused number and choose it, wrapping at the ends.
   const onKey = (e: KeyboardEvent) => {
-    const at = value ?? -1
+    const at = Number((e.target as HTMLElement).dataset.v ?? stop)
+    const last = SCALE.length - 1
     const next =
-      e.key === 'ArrowRight' || e.key === 'ArrowUp'
-        ? Math.min(10, at + 1)
-        : e.key === 'ArrowLeft' || e.key === 'ArrowDown'
-          ? Math.max(0, at < 0 ? 0 : at - 1)
+      e.key === 'ArrowRight' || e.key === 'ArrowDown'
+        ? (at + 1) % SCALE.length
+        : e.key === 'ArrowLeft' || e.key === 'ArrowUp'
+          ? (at + last) % SCALE.length
           : e.key === 'Home'
             ? 0
             : e.key === 'End'
-              ? 10
+              ? last
               : null
     if (next === null) return
     e.preventDefault()
@@ -198,6 +193,7 @@ function RatingRow({ rating, value, usual, onChange }: { rating: Rating; value: 
             key={v}
             type="button"
             role="radio"
+            data-v={v}
             aria-checked={value === v}
             tabIndex={v === stop ? 0 : -1}
             className={value === v ? 'ci-num ci-num-on' : 'ci-num'}
@@ -240,35 +236,46 @@ function SymptomTiles({ value, onToggle, onNone }: { value: SymptomKey[] | null;
   )
 }
 
-/** Who is told about a request, by name: the medical officer on board and the flight surgeon on Earth. */
+/**
+ * Who is told about a request, by name: the medical officer on board and the flight surgeon on Earth.
+ * `selfIsMedical` when the person asking is the medical officer: nobody else on board is told.
+ */
 function useCareTeam(crewId: string) {
   const s = useStore()
-  const medical = s.data.accounts.accounts.find((a) => a.role === 'medical' && a.crewId !== crewId)
+  const medical = s.data.accounts.accounts.find((a) => a.role === 'medical')
   const surgeon = s.data.accounts.accounts.find((a) => a.role === 'surgeon')
-  return { medical: medical ? s.nameOf(medical.crewId) : null, surgeon: surgeon ? s.nameOf(surgeon.crewId) : null }
+  return {
+    medical: medical && medical.crewId !== crewId ? s.nameOf(medical.crewId) : null,
+    selfIsMedical: medical?.crewId === crewId,
+    surgeon: surgeon ? s.nameOf(surgeon.crewId) : null,
+  }
 }
 
 function ConferenceCard({ crewId, open, onOpen }: { crewId: string; open: boolean; onOpen: () => void }) {
   const s = useStore()
   const team = useCareTeam(crewId)
-  const sent = s.local.requests.find((r) => r.crewId === crewId && r.day === s.today)
+  const sent = s.todayResult.people[crewId]?.conference ?? null
   const [urgent, setUrgent] = useState<boolean | null>(null)
   const delay = delayText(s.commDelaySec)
   const surgeon = team.surgeon ? `${team.surgeon}, your flight surgeon,` : 'Your flight surgeon'
-  const medical = team.medical ? `${team.medical}, the crew medical officer,` : 'The crew medical officer'
+  const onBoard = team.selfIsMedical
+    ? 'You are the crew medical officer, so nobody else on board is told.'
+    : `${team.medical ? `${team.medical}, the crew medical officer,` : 'The crew medical officer'} has been told privately, now.`
+  const onBoardShort = team.selfIsMedical ? 'Nobody else on board is told (you are the medical officer)' : `${team.medical ?? 'The crew medical officer'} on board is told at once`
 
   if (sent) {
+    const isUrgent = sent === 'urgent'
     return (
-      <Card title="Talk to your flight surgeon" tone={sent.urgent ? 'alert' : undefined}>
+      <Card title="Talk to your flight surgeon" tone={isUrgent ? 'alert' : undefined}>
         <p role="status">
-          <Mark tone={sent.urgent ? 'alert' : 'ok'}>{sent.urgent ? 'Urgent request sent' : 'Request sent'}</Mark>
+          <Mark tone={isUrgent ? 'alert' : 'ok'}>{isUrgent ? 'Urgent request sent' : 'Request sent'}</Mark>
         </p>
         <p className="muted">
-          {sent.urgent
-            ? `${medical} has been told privately, now. ${surgeon} gets your request in ${delay}. Nothing about it appears on the crew board.`
+          {isUrgent
+            ? `${onBoard} ${surgeon} gets your request in ${delay}. Nothing about it appears on the crew board.`
             : `${surgeon} gets your request in ${delay} and will take it at the next scheduled conference. Nobody on board is told.`}
         </p>
-        {!sent.urgent && (
+        {!isUrgent && (
           <button type="button" className="btn btn-quiet" onClick={() => s.requestConference(crewId, true)}>
             Make it urgent
           </button>
@@ -299,7 +306,7 @@ function ConferenceCard({ crewId, open, onOpen }: { crewId: string; open: boolea
             <span>
               <strong>Urgent: now</strong>
               <span className="fine">
-                {team.medical ?? 'The crew medical officer'} on board is told at once; {team.surgeon ?? 'the flight surgeon'} in {delay}.
+                {onBoardShort}; {team.surgeon ?? 'the flight surgeon'} gets it in {delay}.
               </span>
             </span>
           </label>
@@ -317,7 +324,7 @@ function ConferenceCard({ crewId, open, onOpen }: { crewId: string; open: boolea
   )
 }
 
-function Receipt({ crewId, wearable, reaction, onChange }: { crewId: string; wearable: WearableReading | null; reaction: ReactionResult | null; onChange: () => void }) {
+function Receipt({ crewId, reaction, onChange }: { crewId: string; reaction: ReactionResult | null; onChange: () => void }) {
   const s = useStore()
   const [helpOpen, setHelpOpen] = useState(false)
   const sent = s.checkIns.find((c) => c.crewId === crewId && c.day === s.today && !c.simulated)
@@ -343,12 +350,13 @@ function Receipt({ crewId, wearable, reaction, onChange }: { crewId: string; wea
           </div>
           <div>
             <dt>Slept (wearable)</dt>
-            <dd>{wearable?.sleepHours != null ? hoursText(wearable.sleepHours) : 'No reading'}</dd>
+            <dd>{sent.sleepHours !== null ? hoursText(sent.sleepHours) : 'No reading'}</dd>
           </div>
         </dl>
         <p className="muted">
           Compared with your own normal, never with anyone else's. Your flight surgeon sees your answers only if something stays off your usual
-          for {RULES.persistDays} days, or if you make an urgent conference request.
+          for {RULES.persistDays} days, or if you make an urgent conference request. On the crew board, crewmates see when your sleep, fatigue,
+          irritability or symptoms are off your usual; mood and stress only as a count with no names.
         </p>
         <div className="row">
           <button type="button" className="btn btn-primary" onClick={() => s.setScreen('me')}>

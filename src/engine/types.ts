@@ -12,7 +12,7 @@ export type IndicatorKey =
 
 export type SymptomKey = 'headache' | 'dizziness' | 'nausea' | 'congestion' | 'eye_strain'
 
-/** One morning check-in. Sliders run 0-10. */
+/** One morning check-in. Ratings run 0-10; sleepHours and exerciseMin are the wearable's readings. */
 export interface CheckIn {
   crewId: string
   /** Mission day (integer). */

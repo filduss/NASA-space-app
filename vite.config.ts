@@ -17,7 +17,7 @@ export default defineConfig({
       manifest: {
         name: 'Shipshape',
         short_name: 'Shipshape',
-        description: 'Crew check-in game for long missions. Is it me, or the ship?',
+        description: 'Crew check-in for long missions. Is it me, or the ship?',
         theme_color: '#101418',
         background_color: '#101418',
         display: 'standalone',

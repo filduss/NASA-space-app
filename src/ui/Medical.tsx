@@ -1,5 +1,5 @@
 import { cabinLevel } from '../dashboard/model.ts'
-import { cmoInbox, type CmoItem } from '../engine/privacy.ts'
+import { boardPerson, cmoInbox, type CmoItem } from '../engine/privacy.ts'
 import { SPEC } from '../engine/deviation.ts'
 import type { SurgeonSummary } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
@@ -90,14 +90,16 @@ export function CmoInbox() {
                 const p = r.people[c.id]
                 const a = p.assessment
                 const shared = s.local.shareWatch[c.id] === true
+                // What an urgent conference request hides from the board is hidden here too.
+                const symptoms = boardPerson(p).symptoms
                 return (
-                  <tr key={c.id} className={a.checkedIn && p.conference !== 'urgent' && a.symptoms.length ? 'row-watch' : undefined}>
+                  <tr key={c.id} className={a.checkedIn && symptoms.length ? 'row-watch' : undefined}>
                     <th scope="row">{c.name}</th>
                     {a.checkedIn ? (
                       <>
                         <td>{fmt('sleepHours', a.indicators.sleepHours.value)}</td>
                         <td>{fmt('sleepQuality', a.indicators.sleepQuality.value)}</td>
-                        <td>{p.conference === 'urgent' ? 'none shown' : a.symptoms.map(symptomLabel).join(', ') || 'none'}</td>
+                        <td>{p.conference === 'urgent' ? 'none shown' : symptoms.map(symptomLabel).join(', ') || 'none'}</td>
                         <td>
                           {shared
                             ? `mood ${fmt('mood', a.indicators.mood.value)}, stress ${fmt('stress', a.indicators.stress.value)}`
@@ -133,9 +135,10 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
     conference: `Conference request: ${name}`,
     person: `${name}: off own usual for ${sum.episodeDay} days`,
   }[sum.kind]
-  const tone = sum.kind === 'conference' || (sum.kind === 'ship' && cabinLevel(sum.cabin) !== 'alert') ? 'watch' : 'alert'
+  // A routine request is not a health alert: no orange or red.
+  const tone = sum.kind === 'conference' ? '' : sum.kind === 'ship' && cabinLevel(sum.cabin) !== 'alert' ? ' doc-watch' : ' doc-alert'
   return (
-    <article className={`doc doc-${tone}`}>
+    <article className={`doc${tone}`}>
       <header>
         <h3>{title}</h3>
         <p className="fine">
@@ -181,7 +184,7 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
       )}
       {sum.kind === 'conference' && (
         <>
-          <p>{name} asked for a private medical conference at the next weekly slot.</p>
+          <p>{name} asked for a private medical conference at the next scheduled one.</p>
           <p className="fine">The request carries no readings. Nobody on board was told.</p>
         </>
       )}

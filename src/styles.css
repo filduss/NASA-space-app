@@ -426,17 +426,6 @@ input {
 .evidence-line {
   margin-top: 12px;
 }
-/* A check-in slider nobody has set yet: dimmed, its value reads "Not set". */
-.slider-unset input[type='range'] {
-  opacity: 0.4;
-}
-.slider-unset output {
-  color: var(--ink-3);
-  font-weight: 500;
-}
-.unset-note {
-  text-align: center;
-}
 .fine {
   font-size: 13px;
   color: var(--ink-3);
