@@ -111,4 +111,6 @@ docs/          SPEC.md  CITATIONS.md  AI_USE_LOG.md  adr/  research/
 
 ## License
 
-To be decided.
+The code is licensed under the [Apache License 2.0](LICENSE).
+
+The skeleton model (`public/models/skeleton.glb`) is not covered by it: it comes from BodyParts3D © The Database Center for Life Science, modified by [open-anatomy-3d](https://github.com/MervinR07/open-anatomy-3d), both CC BY 4.0, with the skeleton extracted and re-exported. The credit is also in the demo dock's "About the data". The ISS cabin telemetry comes from NASA's Open Science Data Repository.
