@@ -125,7 +125,7 @@ function Evidence() {
             <p>
               Compared with a rule that gives each person their own alert, on the same crews: during the {base.alertLoad.shipEvents} CO₂
               rises that rule called it a personal problem on {base.alertLoad.perPerson.caseDays} person-days and sent the flight surgeon{' '}
-              {base.alertLoad.perPerson.personSummaries} individual summaries. Shipshape did so on{' '}
+              {base.alertLoad.perPerson.personSummaries} individual summaries. Ship Or Me? did so on{' '}
               <strong>{base.alertLoad.shipshape.caseDays}</strong> person-days and sent <strong>{base.alertLoad.shipshape.personSummaries}</strong>{' '}
               individual summaries, plus one crew-level summary for every 3 days of a ship alert ({base.alertLoad.shipshape.shipSummaries}).
             </p>
@@ -323,7 +323,7 @@ function HrpMap() {
   return (
     <Card title="Each reading and its NASA risk">
       <p className="muted">
-        NASA's Human Research Program works to reduce a list of Human System Risks. Each reading in Shipshape informs one or more of them; the
+        NASA's Human Research Program works to reduce a list of Human System Risks. Each reading in Ship Or Me? informs one or more of them; the
         links open NASA's page for that risk.
       </p>
       <ul className="hrp-list">
@@ -353,7 +353,7 @@ function Antarctica() {
   return (
     <Card title="Beyond spaceflight: Antarctic stations">
       <p>
-        The closest place on Earth to Shipshape's crew is a research station through the polar winter. At Concordia, 3,200 m up on the
+        The closest place on Earth to this crew is a research station through the polar winter. At Concordia, 3,200 m up on the
         Antarctic plateau, the winter crew runs the base on its own for three-quarters of a year, about four months of it without the Sun,
         and once the last plane has left no help can come from outside. ESA sends a doctor there every year because the station is similar
         in some respects to spaceflight.
@@ -427,7 +427,7 @@ export function ChallengePage() {
   const s = useStore()
   const base = import.meta.env.BASE_URL
   useEffect(() => {
-    document.title = 'How it answers the challenge · Shipshape'
+    document.title = 'How it answers the challenge · Ship Or Me?'
   }, [])
   return (
     <div className="app">
@@ -437,7 +437,7 @@ export function ChallengePage() {
             S
           </span>
           <div>
-            <p className="appbar-name">Shipshape</p>
+            <p className="appbar-name">Ship Or Me?</p>
             <p className="appbar-meta">Is it me, or the ship?</p>
           </div>
         </div>
@@ -457,7 +457,7 @@ export function ChallengePage() {
       <section className="intro">
         <div>
           <p className="intro-eyebrow">NASA Space Apps Challenge 2026 · Create Health Monitoring Software for Astronauts on Space Missions</p>
-          <h1>How Shipshape answers the challenge</h1>
+          <h1>How Ship Or Me? answers the challenge</h1>
         </div>
       </section>
 
@@ -474,7 +474,7 @@ export function ChallengePage() {
 
       <footer className="foot">
         <p>
-          Shipshape says "likely" and never diagnoses; it supports the flight surgeon and never replaces one.
+          Ship Or Me? says "likely" and never diagnoses; it supports the flight surgeon and never replaces one.
         </p>
       </footer>
     </div>

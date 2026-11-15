@@ -14,7 +14,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('Shipshape stopped on an error', error, info.componentStack)
+    console.error('Ship Or Me? stopped on an error', error, info.componentStack)
   }
 
   render() {

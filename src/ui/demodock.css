@@ -2,7 +2,7 @@
    dashboard's --d-* values. */
 /* The demo's controls float apart from the page, marked as help with the same "?" as the
    judge's tour beside the login: they move the simulated mission calendar and are not part of
-   Shipshape. The page keeps room under its content so the dock never covers it. */
+   Ship Or Me? The page keeps room under its content so the dock never covers it. */
 
 .demo-tag {
   display: inline-block;
@@ -334,6 +334,10 @@
   }
   .demo-scene {
     font-size: 12px;
+    /* "Likely not the ship" is longer than a quarter of a phone: the labels may take two lines. */
+    white-space: normal;
+    line-height: 1.15;
+    text-align: center;
   }
 }
 

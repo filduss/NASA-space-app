@@ -6,13 +6,13 @@ import './demodock.css'
 
 // The demo's own controls, kept apart from the page itself (the dashboard and the crew app): a floating dock at the bottom
 // of the screen, styled as help like the judge's tour beside the login. It moves the simulated
-// mission calendar; nothing in it is part of Shipshape. The golden path: the cabin CO2 climbs
+// mission calendar; nothing in it is part of Ship Or Me? The golden path: the cabin CO2 climbs
 // (212), Chen is fine while the cabin is high (213), still off once the air is back to normal
 // (221), and day 3 (223). The same four days as the crew app's golden path.
 const SCENES: { day: number; label: string }[] = [
   { day: 212, label: 'CO₂ climbs' },
   { day: 213, label: 'Cabin high' },
-  { day: 221, label: 'Likely you' },
+  { day: 221, label: 'Likely not the ship' },
   { day: 223, label: 'Day 3' },
 ]
 
@@ -91,7 +91,7 @@ export function DemoDock({ settings, page, surgeon = false }: { settings?: React
   }
 
   return (
-    <aside className="demo" data-tour="demo" aria-label="Demo controls, not part of Shipshape">
+    <aside className="demo" data-tour="demo" aria-label="Demo controls, not part of Ship Or Me?">
       {walk && <Walkthrough storageKey={key} steps={[...walkSteps(page, surgeon), dockStep(Boolean(settings))]} onClose={() => setWalk(false)} />}
       <div className="demo-head">
         <button type="button" className="demo-mark demo-mark-btn" onClick={showWalk} aria-label="Show the walkthrough" title="Show the walkthrough">
@@ -164,7 +164,7 @@ export function DemoDock({ settings, page, surgeon = false }: { settings?: React
             <p>
               <span className="demo-tag demo-tag-real">Real ISS cabin air</span> CO₂, temperature and humidity, NASA OSDR, {s.data.cabin.meta.mission}, replayed on the mission calendar.
             </p>
-            <p>Shipshape says "likely" and never diagnoses.</p>
+            <p>Ship Or Me? says "likely" and never diagnoses.</p>
             <p className="demo-credit">
               Anatomy: BodyParts3D © The Database Center for Life Science (CC BY 4.0). Modified by open-anatomy-3d (https://github.com/MervinR07/open-anatomy-3d), CC BY 4.0. Skeleton extracted and
               re-exported. For visualisation only.

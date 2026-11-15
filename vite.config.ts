@@ -15,8 +15,8 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
       },
       manifest: {
-        name: 'Shipshape',
-        short_name: 'Shipshape',
+        name: 'Ship Or Me?',
+        short_name: 'Ship Or Me?',
         description: 'Crew check-in for long missions. Is it me, or the ship?',
         theme_color: '#101418',
         background_color: '#101418',

@@ -1,4 +1,4 @@
-"""Shared helpers for the Shipshape data scripts (stdlib only).
+"""Shared helpers for the Ship Or Me? data scripts (stdlib only).
 
 Real data: ISS telemetry from the NASA OSDR Environmental Data Application (EDA) API.
 Rules for real data in this project:

@@ -65,7 +65,7 @@ export interface BacktestScenario {
     privateCardPerPersonDay: number
     surgeonSummaryPerCrewDay: number
   }
-  /** During ship events: Shipshape against the same crews with one case per person. Older files lack it. */
+  /** During ship events: Ship Or Me? against the same crews with one case per person. Older files lack it. */
   alertLoad?: { shipEvents: number; shipshape: AlertLoad; perPerson: AlertLoad }
   /** Person-days with both a personal event and a CO2 rise, left out of the accuracy. */
   accuracyMixedExcluded?: number

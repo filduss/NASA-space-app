@@ -1,6 +1,6 @@
-# Shipshape MVP spec (v0.1)
+# Ship Or Me? MVP spec (v0.1)
 
-Shipshape is a crew check-in for long missions. It compares each person with their own normal and checks the cabin air before blaming anyone.
+Ship Or Me? is a crew check-in for long missions. It compares each person with their own normal and checks the cabin air before blaming anyone.
 
 This file describes what the code on this branch does. Where the plan left room, the section "Readings of the plan" says which reading was built, so the team can steer.
 
@@ -8,7 +8,7 @@ This file describes what the code on this branch does. Where the plan left room,
 
 | # | Decision | Built |
 | --- | --- | --- |
-| 1 | Name | Shipshape |
+| 1 | Name | Ship Or Me? |
 | 2 | Hooks | "Is it me, or the ship?" in the header. The second hook, "rewards honesty, not perfection", went with the game |
 | 3 | Game depth | None. XP, the weekly streak, shield days, quests and kudos were built and then removed (15 Nov 2026): the check-in stands on its own |
 | 4 | Mission setting | ISS, lunar surface, Mars transit (default) or an Antarctic station, chosen in the demo controls. It changes the comm delay and the radiation card only. The CO₂ source (ISS) is stated on every screen |
@@ -216,7 +216,7 @@ These are the places where the plan could be read two ways, or where the build g
 - **Irritability stays linked to CO₂.** NASA's CO₂ brief lists headache, fatigue, malaise, poor or decreased sleep and nausea, not irritability. Dropping it would change every CO₂ result and the seeded demo, so it stays, and the check-in says so. Nausea, in NASA's list above 4.5 mmHg, is not added: the rule keeps headache as the one symptom with a published dose-response.
 - **Day 3 counts per likely cause.** When a ship alert ends and someone is still off, their count restarts at day 1 as "me". This is what makes the golden path's "day 3" land two days after the air clears.
 - **One person drifting under high CO₂ is "me".** The card says the cabin is above its usual level and that the rule does not blame the air yet.
-- **The Cabin air chip names all three factors.** The personal dashboard's status box says "Likely you" or "Likely the ship"; its Cabin air chip gives CO₂, temperature and humidity, says when all three are at their usual levels, and turns orange or red for temperature and humidity outside NASA's comfort range or health limits, as it does for CO₂.
+- **The ship check shows cabin CO₂ only.** The personal dashboard's status box has two chips: You and CO₂ (`cabinLevel`, as on the crew app). Temperature and humidity have no chip, to keep the box short; they still count toward the headline and the box's colour, and the crew app's Ship screen shows them. On a day with no usable CO₂ reading the chip says "No data" with a dashed circle, not a tick.
 - **Real ISS crews are a reference, never a threshold.** The sleep tile shows the published ISS figure (about 6.5 h, Jones et al. 2022) beside the person's own usual, for context. The rules still compare each person only with their own normal.
 - **Headache is the only symptom that counts toward a CO₂ ship alert.** It is the one with a published dose-response. Congestion and dry or sore eyes count toward a humidity alert ([V2 6012]); dizziness and nausea open a private Watch only.
 - **Check-in answers start unset.** A rating that starts at the person's usual lets a rushed check-in report "as usual" without anyone choosing it, which is the under-reporting the check-in is meant to counter. Built: each of the five ratings is a row of 0-10 tap targets with nothing chosen, and every rating is tapped by hand: there is no "as usual" shortcut (an "As usual" chip and "Set the rest to my usual" were built and removed on 15 Nov 2026). Symptoms work the same way: "None today" is its own tile, exclusive of the five symptoms, and unticking the last symptom leaves the question unanswered rather than "none". Send waits until all six are answered. The logic is `src/ui/checkInForm.ts`.
@@ -228,7 +228,20 @@ These are the places where the plan could be read two ways, or where the build g
 - **The live reaction test is shown, not compared.** The presenter has no baseline, and the result is never stored, so it does not feed the rules.
 - **Did the fix work?** For 7 days after a ship alert ends, the board and the Ship screen say whether the air is back to its usual level and how many of the crew it touched are back to theirs. Counts only, judged on shared indicators as the board does (`shipFollowUp` in `src/engine/privacy.ts`). Anyone still off is already "likely you" with a new 3-day count. It does not claim the fix caused the recovery.
 - **The limit check uses the 24 h mean.** NASA writes the limit as a 1-hour average, but a single 1-hour peak would make the air a suspect on many quiet days. In the backtest the 24 h mean raised fewer false ship alarms (table under "Evidence"). The highest 1-hour average is still shown on the Ship screen and in summaries.
-- **The dashboard's status box answers you or the ship.** On `/dashboard` the box is a short answer ("Likely the ship", "Likely you", "You're fine. The air isn't.", "All good" and so on, fixed templates in `verdict` in `src/dashboard/model.ts`), one line more only when someone was told (day 3, or the urgent request), and two chips, each with its own level: You (your own readings against your normal; exercise left out) and Cabin air (the cabin level the crew app uses). The box takes the colour of the side the answer points at: the air's on a likely-ship day, otherwise yours, so a box that says you are fine is never orange or red because of the air. An urgent conference request turns it red with "Help is on the way", even before a check-in. The cabin air has no body zone on the skeleton. There is no notifications list: the box, the body zones and the vitals tiles carry the same facts, and the wearable panel sits under the box.
+- **The dashboard's status box is a ship check.** The pitch asks "likely you or likely the ship?", but on a person's own screen "Likely you" read as blame. So on `/dashboard` the box, labeled "Ship check", always has the ship as its subject and answers one question. The fixed templates are in `verdict` in `src/dashboard/model.ts`:
+
+  | Engine result | Headline |
+  | --- | --- |
+  | No check-in today | Check in to check the ship |
+  | Likely the ship | Likely the ship, not you |
+  | Likely not the ship (one person, or several the air does not explain) | Likely not the ship |
+  | The same, but the day has no cabin data | No cabin data to check |
+  | Within your normal, a cabin factor orange or red | You're within your normal |
+  | Within your normal, the cabin at its usual | All good |
+
+  The shared case says nothing about the others. Under the headline are the two chips, each with its own level: You (your own readings against your normal; exercise left out) and CO₂. The box takes the colour of the side the answer points at: the air's on a likely-ship day, otherwise yours, so a box that says you are fine is never orange or red because of the air. It never shows a day count or who was told: a ship episode's day 3 stays "Likely the ship, not you", and the day-3 summary to Earth is shown to the flight surgeon, not in the box.
+
+  Conference requests are a separate feature: the box ignores them (the check-in page confirms a request, and the drop-in banner says "Urgent request sent"). The cabin air has no body zone on the skeleton. There is no notifications list: the box, the body zones and the vitals tiles carry the same facts, and the wearable panel sits under the box.
 - **The wearable's vitals are shown, not judged.** Besides sleep and exercise, the simulated wearable reports resting heart rate, HRV, blood oxygen, breathing and skin temperature, shown on the check-in and in the dashboard's "From your wearable" panel as today's values only. They are there to show what a wearable could add: no rule reads them, no threshold, no tier, no part in ship or me. The next step would be to compare each with the person's own normal, as the check-in readings are, once a real device feeds them. Sleep quality stays the person's own rating, not a wearable reading.
 - **Bone and muscle are shown, not judged.** The gravity hazard is covered through its countermeasure, exercise: the wearable logs the day before's exercise, and the engine counts how many of the last 7 logged days reached 120 minutes. Below target on 3 of them turns the core (hip and spine) and limbs zones of the personal dashboard orange, never red, and the zone names the count. Like radiation it has no tier, no card on the crew board, nothing for the crew medical officer and no part in ship or me. The 120-minute target follows NASA's figure of about two hours of exercise a day on the ISS; the 3-of-7 count is a demo parameter.
 - **Radiation is shown, not judged.** It has no tier, no card per person and no part in ship or me: the whole crew gets about the same dose and nobody can feel it at everyday levels. A solar-storm warning would be a second "ship" cause; that is not built.
@@ -245,8 +258,8 @@ The demo dock (`src/ui/DemoDock.tsx`) jumps between the four days of the demo, o
 | --- | --- | --- |
 | 212 | 2018-08-20 | Everyone OK. CO₂ has started to climb; a 1-hour average is above 3 mmHg |
 | 213 | 2018-08-21 | CO₂ 4.3 mmHg against a usual 2.4. Anna, Ben and Dana drift. "Likely the ship, not you" |
-| 221 | 2018-08-29 | CO₂ back to 2.3 mmHg. Chen is still short on sleep: his own dashboard says "likely you". The board and the Ship screen show the re-check: the air is back to usual, 3 of the 4 crew who felt it are back to theirs |
-| 223 | 2018-08-31 | Chen's day 3: a summary goes to the flight surgeon and Chen is told |
+| 221 | 2018-08-29 | CO₂ back to 2.3 mmHg. Chen is still short on sleep: his own dashboard says "Likely not the ship". The board and the Ship screen show the re-check: the air is back to usual, 3 of the 4 crew who felt it are back to theirs |
+| 223 | 2018-08-31 | Chen's day 3: a summary goes to the flight surgeon; his dashboard still says "Likely not the ship" |
 
 The real rise lasts from day 213 to day 220; nothing in the app can shorten a recording. Chen's sleep loss (days 219-226) and Ben's stress dip (days 188-192) are scripted events, listed in `crew.json`.
 
@@ -301,13 +314,13 @@ Headaches come out close. The simulated crews sleep about 40 minutes more than I
 
 Most health apps give each person their own alert. The backtest runs the same crews through a comparator that does that (`perPersonOnly` in `EngineInput`: every drifting person is their own case and the ship is never blamed) and counts what happens during the 60 ship events of the base case:
 
-| During CO₂ rises | Shipshape | One alert per person |
+| During CO₂ rises | Ship Or Me? | One alert per person |
 | --- | --- | --- |
 | Person-days treated as a personal problem | 95 | 343 |
 | Individual summaries to the flight surgeon (they carry private readings) | 5 | 39 |
 | Crew-level ship summaries | 71 | 0 |
 
-Shipshape has 72% fewer personal cases and 87% fewer individual summaries in the base case; the reduction in personal cases is 41% to 95% across the seven scenarios. It does send more messages in total, because the ship summary repeats every 3 days while an alert lasts; each is one crew-level note about the cabin, not a medical case.
+Ship Or Me? has 72% fewer personal cases and 87% fewer individual summaries in the base case; the reduction in personal cases is 41% to 95% across the seven scenarios. It does send more messages in total, because the ship summary repeats every 3 days while an alert lasts; each is one crew-level note about the cabin, not a medical case.
 
 ### Which reading of the 3 mmHg limit
 

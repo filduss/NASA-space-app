@@ -114,13 +114,13 @@ export function dockStep(hasSettings: boolean): WalkStep {
     title: 'This bar runs the demo',
     body: (
       <>
-        <p>It is not part of Shipshape. It moves the mission calendar so you can watch the app react.</p>
+        <p>It is not part of Ship Or Me? It moves the mission calendar so you can watch the app react.</p>
         <ul className="tip-list">
           <li>
             <strong>‹ Day ›</strong> steps one mission day.
           </li>
           <li>
-            <strong>1–4</strong> jump to the four moments of the demo: the cabin CO₂ climbs, the cabin is high, likely you, day 3.
+            <strong>1–4</strong> jump to the four moments of the demo: the cabin CO₂ climbs, the cabin is high, likely not the ship, day 3.
           </li>
           {hasSettings && (
             <li>

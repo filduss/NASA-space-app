@@ -43,7 +43,7 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
   const myRole = s.user ? ROLE_WORD[s.user.role] : ''
 
   useEffect(() => {
-    document.title = `${LABELS[screen]} · Shipshape`
+    document.title = `${LABELS[screen]} · Ship Or Me?`
   }, [screen])
 
   return (
@@ -54,7 +54,7 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
             S
           </span>
           <div>
-            <p className="appbar-name">Shipshape</p>
+            <p className="appbar-name">Ship Or Me?</p>
             <p className="appbar-meta">Is it me, or the ship?</p>
           </div>
         </div>
@@ -111,7 +111,7 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
 
       <footer className="foot">
         <p>
-          Shipshape says "likely" and never diagnoses; it supports the flight surgeon and never replaces one. Radiation figures are
+          Ship Or Me? says "likely" and never diagnoses; it supports the flight surgeon and never replaces one. Radiation figures are
           published averages for the chosen setting, not dosimeter readings.
         </p>
       </footer>

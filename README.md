@@ -1,6 +1,6 @@
-# Shipshape
+# Ship Or Me?
 
-**Is it me, or the ship?** A daily check-in for a crew on a long mission. When several people feel off at once, Shipshape checks the real ISS cabin air (CO₂, temperature and humidity) before blaming anyone, and tells each astronaut whether a bad day is likely them or the ship.
+**Is it me, or the ship?** A daily check-in for a crew on a long mission. When several people feel off at once, Ship Or Me? checks the real ISS cabin air (CO₂, temperature and humidity) before blaming anyone, and tells each astronaut whether a bad day is likely them or the ship.
 
 Built for the NASA Space Apps Challenge 2026, "Create Health Monitoring Software for Astronauts on Space Missions". It grew from the team's [plan v0.1](docs/plan-v0.1.md), now superseded by [docs/SPEC.md](docs/SPEC.md).
 

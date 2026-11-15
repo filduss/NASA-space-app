@@ -182,6 +182,6 @@ function vitalBody(key: IndicatorKey, v: Vital, series: Series, st: ReturnType<t
     note:
       SPEC[key].privacy === 'private'
         ? 'Only you see this. It is compared with your own normal and never used in the ship rule.'
-        : 'Compared with your own normal. Shaded days were off your usual that day. Shipshape says "likely" and never diagnoses.',
+        : 'Compared with your own normal. Shaded days were off your usual that day. Ship Or Me? says "likely" and never diagnoses.',
   }
 }

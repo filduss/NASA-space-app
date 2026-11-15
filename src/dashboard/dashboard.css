@@ -249,29 +249,40 @@ body.dash-body {
   color: var(--d-ink-2);
   text-wrap: pretty;
 }
-/* The two sides of the answer, as small chips: icon (shape), name, level word. */
+/* You and cabin CO₂, as two chips side by side: icon (shape), name, level word. */
 .hero-chips {
   list-style: none;
   margin: 16px 0 0;
   padding: 0;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 .hero-chip {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 6px;
-  padding: 5px 11px 5px 8px;
-  border-radius: 999px;
+  column-gap: 8px;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 10px;
   background: var(--d-surface-2);
   border: 1px solid var(--d-stroke);
   font-size: 13px;
   font-weight: 600;
   cursor: default;
 }
+/* Icon on the left across both lines; the name above its level word. */
+.hero-chip > .lvl {
+  grid-row: span 2;
+}
+.hero-chip-label {
+  line-height: 1.2;
+}
 .hero-chip-word {
+  font-size: 12px;
   font-weight: 600;
+  line-height: 1.2;
 }
 .hero-chip-ok .hero-chip-word {
   color: #6ee38f;
@@ -458,6 +469,18 @@ body.dash-body {
   }
 }
 
+.hero-chip-idle {
+  color: var(--d-ink-2);
+}
+/* The feature's name above the answer. */
+.hero .hero-kicker {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--d-ink-2);
+  margin-bottom: 6px;
+}
 /* ---------- 3D stage ---------- */
 
 .col-stage {

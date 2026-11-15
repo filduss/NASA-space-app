@@ -1,12 +1,12 @@
 // Turns one person's engine result into what the personal dashboard draws: the status box
-// (likely you or likely the ship), a level per body zone, vital tiles, and the notifications for
+// (the ship check: likely the ship or not), a level per body zone, vital tiles, and the notifications for
 // the day. No new rules live here; every level comes from the engine's own output (drift, days
 // off, tier, attribution, exercise lapse) or the cabin CO2 limit.
 
 import { RULES } from '../engine/config.ts'
 import { SPEC } from '../engine/deviation.ts'
 import type { ExerciseWeek } from '../engine/gravity.ts'
-import type { CabinStatus, CheckIn, IndicatorKey, PersonStatus, SymptomKey } from '../engine/types.ts'
+import type { CabinStatus, CheckIn, ComfortStatus, IndicatorKey, PersonStatus, SymptomKey } from '../engine/types.ts'
 import { celsius, comfortLine, delayText, indicatorLine, rhPercent, symptomLabel } from '../ui/text.ts'
 
 /** ok = within own normal, watch = orange, alert = red. */
@@ -78,8 +78,13 @@ export function cabinLevel(c: Pick<CabinStatus, 'hasData' | 'co2Mean' | 'elevate
 
 /** Cabin temperature and humidity: outside NASA's health limits is red, outside its comfort range orange. */
 export function airLevel(c: Pick<CabinStatus, 'temp' | 'rh'>): Level {
-  if (c.temp.overLimit || c.rh.overLimit) return 'alert'
-  if (c.temp.outside || c.rh.outside) return 'watch'
+  return worst(comfortLevel(c.temp), comfortLevel(c.rh))
+}
+
+/** One of temperature or humidity: outside NASA's health limits is red, outside its comfort range orange. */
+export function comfortLevel(s: ComfortStatus): Level {
+  if (s.overLimit) return 'alert'
+  if (s.outside) return 'watch'
   return 'ok'
 }
 
@@ -132,18 +137,25 @@ export interface VerdictSide {
   detail: string
 }
 
+/** The cabin CO₂ side of the ship check. `known` is false on a day with no usable reading. */
+export interface Co2Side extends VerdictSide {
+  known: boolean
+}
+
 /**
- * The status box: whether today is likely you or likely the ship. Only reads the engine's
- * attribution, tier and decision; the colour follows the side the answer points at, so a box that
- * says you are fine is never orange or red because of the air.
+ * The status box: a ship check. It answers one question, likely the ship or not, and always with
+ * the ship as the subject, so the person is never the suspect. Only reads the engine's attribution
+ * and decision; the colour follows the side the answer points at, so a box that says you are fine
+ * is never orange or red because of the air. Conference requests and tiers are not part of it.
  */
 export interface Verdict {
   tint: Level
   title: string
-  /** One short line, only when someone was told (tier 3 and 4). */
-  note: string | null
   you: VerdictSide
+  /** The cabin as a whole (CO₂, temperature, humidity): its level decides the headline and colour. */
   ship: VerdictSide
+  /** The one cabin chip the box shows. */
+  co2: Co2Side
 }
 
 /** Your own readings against your normal. Exercise and the cabin are left out. */
@@ -175,21 +187,31 @@ function shipDetail(cabin: CabinStatus): string {
   return `${mean}, ${celsius(cabin.temp.value)}, ${rhPercent(cabin.rh.value)} humidity: all at their usual levels`
 }
 
+function co2Detail(cabin: CabinStatus): string {
+  if (cabin.co2Mean === null) return 'No usable CO₂ reading today'
+  const mean = `${cabin.co2Mean.toFixed(1)} mmHg over 24 h`
+  if (cabin.co2Mean > RULES.co2LimitMmHg) return `${mean}, over NASA's ${RULES.co2LimitMmHg} mmHg limit`
+  if (cabin.elevated) return cabin.baseline !== null ? `${mean}, usual ${cabin.baseline.toFixed(1)}` : `${mean}, above its usual`
+  if (cabin.aboveLimit) return `${mean}; a 1-hour peak of ${cabin.co2Max1h?.toFixed(1)} mmHg`
+  return `${mean}, at its usual level`
+}
+
+/** The ship check. */
 export function verdict(me: PersonStatus, cabin: CabinStatus): Verdict {
   const a = me.assessment
   const you: VerdictSide = { level: youLevel(me), detail: '' }
   you.detail = youDetail(me, you.level)
   // Cabin CO2, temperature and humidity: orange or red as on the crew app (cabinLevel, airLevel).
   const ship: VerdictSide = { level: worst(cabinLevel(cabin), airLevel(cabin)), detail: shipDetail(cabin) }
-  const pick = (tint: Level, title: string, note: string | null = null): Verdict => ({ tint, title, note, you, ship })
+  const co2: Co2Side = { level: cabinLevel(cabin), detail: co2Detail(cabin), known: cabin.hasData && cabin.co2Mean !== null }
+  const pick = (tint: Level, title: string): Verdict => ({ tint, title, you, ship, co2 })
 
-  if (me.tier === 4) return pick('alert', 'Help is on the way', 'Your crew medical officer was told.')
-  if (!a.checkedIn) return pick(you.level, 'Check in first')
-  if (me.tier === 3) return pick(you.level, `Likely you · day ${me.episodeDay}`, 'The flight surgeon was told.')
-  if (me.attribution === 'ship') return pick(worst(ship.level, 'watch'), 'Likely the ship')
-  if (me.attribution === 'me') return pick(you.level, 'Likely you')
-  if (me.attribution === 'shared') return pick(you.level, 'Not just you')
-  if (ship.level !== 'ok') return pick(you.level, "You're fine. The air isn't.")
+  if (!a.checkedIn) return pick(you.level, 'Check in to check the ship')
+  if (me.attribution === 'ship') return pick(worst(ship.level, 'watch'), 'Likely the ship, not you')
+  // Without cabin data the rule could not check the air, so the box does not say "not the ship".
+  if (!cabin.hasData) return pick(you.level, me.attribution === 'none' ? "You're within your normal" : 'No cabin data to check')
+  if (me.attribution === 'me' || me.attribution === 'shared') return pick(you.level, 'Likely not the ship')
+  if (ship.level !== 'ok') return pick(you.level, "You're within your normal")
   return pick(you.level, 'All good')
 }
 
@@ -208,11 +230,12 @@ export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, 
   const out: Notice[] = []
   const a = me.assessment
   if (me.conference === 'urgent') {
-    out.push({ id: 'urgent', source: 'you', level: 'alert', title: 'Help is on the way', body: `Your crew medical officer was told privately. Your request to the flight surgeon: ${delayText(delaySec)} to Earth.` })
+    out.push({ id: 'urgent', source: 'you', level: 'alert', title: 'Urgent request sent', body: `Your crew medical officer was told privately. Your request to the flight surgeon: ${delayText(delaySec)} to Earth.` })
   } else if (me.conference === 'routine') {
     out.push({ id: 'conference', source: 'you', level: 'ok', title: 'Conference requested', body: `Your flight surgeon gets the request in ${delayText(delaySec)} and will take it at the next scheduled conference.` })
   }
-  if (me.tier === 3) {
+  // A ship episode's day 3 sends a cabin summary, not one of this person's readings (engine/escalation.ts).
+  if (me.tier === 3 && me.attribution !== 'ship') {
     out.push({
       id: 'surgeon',
       source: 'you',

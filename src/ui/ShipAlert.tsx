@@ -45,7 +45,7 @@ function WhatNow({ alertDay, causes }: { alertDay: number; causes: CabinFactor[]
           and compare a second sensor if there is one.
         </li>
         <li>
-          <strong>Nobody is singled out.</strong> Each affected person's own dashboard already says "Likely the ship", so a bad day is not put down
+          <strong>Nobody is singled out.</strong> Each affected person's own dashboard already says "Likely the ship, not you", so a bad day is not put down
           to them.
         </li>
         <li>
