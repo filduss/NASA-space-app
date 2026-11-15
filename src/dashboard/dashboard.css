@@ -785,6 +785,20 @@ body.dash-body {
   border-color: rgba(255, 69, 58, 0.4);
   background: linear-gradient(170deg, rgba(255, 69, 58, 0.12), transparent 50%), var(--d-surface);
 }
+/* From your watch: the simulated wearable's vitals, for information only. */
+.watch-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+  margin-bottom: 12px;
+}
+.watch-trends {
+  display: grid;
+  gap: 8px;
+}
+.watch-trend .spark {
+  width: 100%;
+}
 /* Bone & muscle: exercise against its daily target; orange (watch) when it lapses, never red. */
 .bone-watch {
   border-color: rgba(255, 159, 10, 0.3);

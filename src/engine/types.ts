@@ -28,12 +28,26 @@ export interface CheckIn {
   reactionMs: number | null
   /** Minutes of exercise the day before; missing or null when not logged. Shown, never judged (engine/gravity.ts). */
   exerciseMin?: number | null
-  /** Blood oxygen saturation from the wrist wearable, %; missing or null without one. Shown, never judged. */
-  spo2?: number | null
+  /** The wrist wearable's other readings; missing or null without one. Shown for information, never judged. */
+  watch?: WatchVitals | null
   /** The safety answer: "I need to talk to someone now". */
   safetyFlag?: boolean
   /** True for generated check-ins, false for ones entered live in the app. */
   simulated: boolean
+}
+
+/** What the wrist wearable measured besides sleep and exercise. Shown for information; no rule reads it. */
+export interface WatchVitals {
+  /** Resting heart rate, beats per minute. */
+  restingHr: number
+  /** Heart rate variability overnight (RMSSD), milliseconds. */
+  hrvMs: number
+  /** Blood oxygen saturation, %. */
+  spo2: number
+  /** Breathing rate overnight, breaths per minute. */
+  respRate: number
+  /** Skin temperature against the person's own usual, °C. */
+  skinTempDelta: number
 }
 
 /** One mission day of cabin air: the 24 h before the morning check-in. Real ISS data. */

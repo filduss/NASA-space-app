@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { watchReading } from '../data/watch.ts'
+import { vitalLines, watchReading } from '../data/watch.ts'
 import { SPEC, SYMPTOMS } from '../engine/deviation.ts'
 import type { CheckIn, SymptomKey } from '../engine/types.ts'
 import { XP } from '../game/xp.ts'
@@ -27,7 +27,7 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
   const existing = s.checkIns.find((c) => c.crewId === crewId && c.day === s.today)
   const sentBefore = existing && !existing.simulated ? existing : null
   const status = s.todayResult.people[crewId]
-  // The simulated wrist wearable: last night's sleep, a sleep score, yesterday's exercise, blood oxygen.
+  // The simulated wrist wearable: last night's sleep and its quality, yesterday's exercise, and vitals.
   const watch = watchReading(s.data.crew.checkIns, crewId, s.today)
 
   // The watch fills in what it measures; the person can correct it. The other sliders start unset, never
@@ -49,8 +49,8 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
   const [symptoms, setSymptoms] = useState<SymptomKey[]>(existing && !existing.simulated ? existing.symptoms : [])
   // Optional; shown on the person's own dashboard only, never judged (engine/gravity.ts).
   const [exercise, setExercise] = useState<number | null>(sentBefore ? (sentBefore.exerciseMin ?? null) : (watch?.exerciseMin ?? null))
-  // Measured, not rated, so not editable; shown, never judged.
-  const spo2 = sentBefore ? (sentBefore.spo2 ?? null) : (watch?.spo2 ?? null)
+  // Measured, not rated, so not editable; shown for information, never judged.
+  const vitals = sentBefore ? (sentBefore.watch ?? null) : (watch?.vitals ?? null)
   const [safety, setSafety] = useState(existing?.safetyFlag === true)
   const [reaction, setReaction] = useState<ReactionResult | null>(s.liveReaction[`${crewId}|${s.today}`] ?? null)
   const [sent, setSent] = useState(false)
@@ -58,7 +58,7 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
   const submit = () => {
     if (unset.length > 0) return
     const rated = values as Record<SliderKey, number>
-    const c: CheckIn = { crewId, day: s.today, ...rated, symptoms, reactionMs: null, exerciseMin: exercise, spo2, safetyFlag: safety || undefined, simulated: false }
+    const c: CheckIn = { crewId, day: s.today, ...rated, symptoms, reactionMs: null, exerciseMin: exercise, watch: vitals, safetyFlag: safety || undefined, simulated: false }
     s.submitCheckIn(c, reaction)
     setSent(true)
     window.scrollTo({ top: 0 })
@@ -111,12 +111,18 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
                 <dt>Exercise yesterday</dt>
                 <dd>{watch.exerciseMin === null ? '–' : `${watch.exerciseMin} min`}</dd>
               </div>
-              <div>
-                <dt>Blood oxygen</dt>
-                <dd>{watch.spo2 === null ? '–' : `${watch.spo2}%`}</dd>
-              </div>
+              {watch.vitals &&
+                vitalLines(watch.vitals).map((l) => (
+                  <div key={l.label}>
+                    <dt>{l.label}</dt>
+                    <dd>{l.value}</dd>
+                  </div>
+                ))}
             </dl>
-            <p className="why">Already filled in below; move a slider if the watch got it wrong. Blood oxygen is shown, never judged.</p>
+            <p className="why">
+              Sleep and exercise are already filled in below; move a slider if the watch got it wrong. Heart rate, HRV, blood oxygen, breathing
+              and skin temperature are shown for information: the rules don't use them yet.
+            </p>
           </>
         ) : (
           <p className="muted">No watch data for last night: enter your sleep below.</p>

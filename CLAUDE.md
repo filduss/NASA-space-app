@@ -64,7 +64,7 @@ XP, weekly streak with shield days, quests. Game functions cannot read check-in 
 
 ### State and UI
 
-`src/state.tsx` (`StoreProvider` / `useStore`) loads the four JSON files (including `accounts.json`), holds the logged-in `user`, merges live check-ins, runs the engine, and holds the demo controls (role, mission day, comm delay). Live check-ins persist only in `localStorage` under `shipshape.v1`; live reaction-test results stay in memory and are never stored. The check-in's simulated wrist wearable (`src/data/watch.ts`) reads the simulated crew record for that person and day; its blood oxygen is shown, never judged.
+`src/state.tsx` (`StoreProvider` / `useStore`) loads the four JSON files (including `accounts.json`), holds the logged-in `user`, merges live check-ins, runs the engine, and holds the demo controls (role, mission day, comm delay). Live check-ins persist only in `localStorage` under `shipshape.v1`; live reaction-test results stay in memory and are never stored. The check-in's simulated wrist wearable (`src/data/watch.ts`) reads the simulated crew record for that person and day: it fills in sleep and exercise, and its vitals (`CheckIn.watch`: heart rate, HRV, blood oxygen, breathing, skin temperature) are shown for information. No rule may read `watch`; a test checks it.
 
 `src/main.tsx` picks one of four pages by pathname (`src/auth/paths.ts`), without a router:
 

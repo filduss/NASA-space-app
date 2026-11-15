@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { hrefOf } from '../auth/paths.ts'
 import { mayOpen, type User } from '../auth/session.ts'
 import { RULES } from '../engine/config.ts'
+import { vitalLines } from '../data/watch.ts'
 import { exerciseWeek } from '../engine/gravity.ts'
 import { useStore } from '../state.tsx'
 import { delayText, symptomLabel } from '../ui/text.ts'
@@ -74,6 +75,19 @@ function VitalTile({ v, onOpen }: { v: Vital; onOpen: () => void }) {
   )
 }
 
+/** A 14-day line of one watch reading, with its value under the pointer. No usual line: these are not judged. */
+function WatchTrend({ label, unit, series }: { label: string; unit: string; series: { day: number; v: number | null }[] }) {
+  const [hover, setHover] = useState<string | null>(null)
+  return (
+    <div className="watch-trend">
+      <span className="cabin-label">
+        {label}, {TREND_DAYS} days{hover ? ` · ${hover}` : ''}
+      </span>
+      <Sparkline series={series} usual={null} level="ok" format={(v) => `${Math.round(v)} ${unit}`} onHover={setHover} />
+    </div>
+  )
+}
+
 function NoticeCard({ n, onOpen }: { n: Notice; onOpen?: () => void }) {
   return (
     <li className={`note note-${n.level}`}>
@@ -119,8 +133,14 @@ export function Dashboard() {
 
   const history = useMemo(() => s.checkIns.filter((c) => c.crewId === crewId), [s.checkIns, crewId])
   const exercise = useMemo(() => exerciseWeek(history, today), [history, today])
-  // From the (simulated) wrist wearable; shown, never judged.
-  const spo2 = history.find((c) => c.day === today)?.spo2 ?? null
+  // The (simulated) wrist wearable's vitals: shown for information, never judged.
+  const vitalsToday = history.find((c) => c.day === today)?.watch ?? null
+  const vitalTrend = (pick: (c: { restingHr: number; hrvMs: number }) => number) =>
+    Array.from({ length: TREND_DAYS }, (_, i) => {
+      const d = today - TREND_DAYS + 1 + i
+      const w = history.find((c) => c.day === d)?.watch
+      return { day: d, v: w ? pick(w) : null }
+    })
   const zones = useMemo(() => zoneStates(me, cabin, exercise), [me, cabin, exercise])
   const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise), [me, cabin, s.commDelaySec, exercise])
   const tiles = useMemo(() => vitals(me, history, today, TREND_DAYS), [me, history, today])
@@ -263,6 +283,32 @@ export function Dashboard() {
               </ul>
             )}
           </div>
+
+          <div className="panel watchp">
+            <h2 className="panel-title">
+              From your watch <span className="panel-note">simulated</span>
+            </h2>
+            {vitalsToday ? (
+              <div className="watch-grid">
+                {vitalLines(vitalsToday).map((l) => (
+                  <div key={l.label}>
+                    <span className="cabin-label">{l.label}</span>
+                    <p className="cabin-small">{l.value}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="bone-main">No watch data today</p>
+            )}
+            <div className="watch-trends">
+              <WatchTrend label="Resting heart rate" unit="bpm" series={vitalTrend((w) => w.restingHr)} />
+              <WatchTrend label="HRV" unit="ms" series={vitalTrend((w) => w.hrvMs)} />
+            </div>
+            <p className="bone-note">
+              Shown for information only: Shipshape's rules don't use these yet. Next, each will be compared with your own normal, as the
+              check-in readings are, once a real device feeds them.
+            </p>
+          </div>
         </section>
 
         <section className="col col-stage" aria-label="Body status">
@@ -309,16 +355,7 @@ export function Dashboard() {
                 <p className="tile-value tile-value-sm">{me.assessment.symptoms.length ? me.assessment.symptoms.length : 'None'}</p>
                 <p className="tile-sub">{me.assessment.symptoms.length ? me.assessment.symptoms.map(symptomLabel).join(', ') : 'Nothing reported today'}</p>
               </article>
-              <article className="tile tile-ok">
-                <header className="tile-head">
-                  <h3>Blood oxygen</h3>
-                </header>
-                <p className="tile-value">
-                  {spo2 ?? '–'}
-                  {spo2 !== null && <span className="tile-unit"> %</span>}
-                </p>
-                <p className="tile-sub">From your watch · shown, not judged</p>
-              </article>
+
             </div>
           </div>
 
