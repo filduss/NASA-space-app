@@ -315,11 +315,15 @@ body.dash-body {
 .hero > * {
   position: relative;
 }
-.hero-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
+.hero-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.hero p.hero-eyebrow {
+  color: var(--d-ink-3);
 }
 .hero h1 {
   font-size: 28px;
@@ -333,11 +337,52 @@ body.dash-body {
   color: var(--d-ink-2);
   text-wrap: pretty;
 }
+.hero-rows {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+/* One row per side, icon + label + level word on the first line, the detail after it. */
+.hero-row {
+  display: grid;
+  grid-template-columns: 16px auto 1fr;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 2px;
+  padding: 8px 0;
+  border-top: 1px solid var(--d-stroke);
+}
+.hero-row-label {
+  font-weight: 600;
+  font-size: 15px;
+}
+.hero-row-word {
+  font-size: 12px;
+  font-weight: 600;
+  justify-self: start;
+}
+.hero-row-ok .hero-row-word {
+  color: #6ee38f;
+}
+.hero-row-watch .hero-row-word {
+  color: #ffb340;
+}
+.hero-row-alert .hero-row-word {
+  color: #ff6961;
+}
+.hero-row-detail {
+  grid-column: 2 / -1;
+  font-size: 13px;
+  color: var(--d-ink-2);
+  text-wrap: pretty;
+}
 .hero-facts {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
-  margin-top: 20px;
+  margin-top: 4px;
   padding-top: 16px;
   border-top: 1px solid var(--d-stroke);
 }
@@ -360,6 +405,17 @@ body.dash-body {
 .notices {
   display: grid;
   gap: 8px;
+}
+.notice-group + .notice-group {
+  margin-top: 14px;
+}
+.notice-group-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--d-ink-3);
+  margin: 0 0 8px;
 }
 .note {
   display: flex;
@@ -1246,7 +1302,7 @@ body.dash-body {
     flex-direction: column;
     min-height: 170px;
   }
-  .col-left .notices {
+  .col-left .notice-list {
     min-height: 0;
     overflow-y: auto;
     scrollbar-width: thin;
@@ -1282,15 +1338,18 @@ body.dash-body {
   .hero {
     padding: 18px;
   }
-  .hero-top {
-    margin-bottom: 10px;
+  .hero-rows {
+    margin-top: 12px;
+  }
+  .hero-row {
+    padding: 7px 0;
   }
   .hero h1 {
     font-size: 24px;
   }
   .hero-facts {
-    margin-top: 14px;
-    padding-top: 12px;
+    margin-top: 4px;
+    padding-top: 10px;
   }
   .col-left > .panel {
     min-height: 140px;

@@ -8,7 +8,7 @@ import { ChartSheet, type ChartTarget } from './ChartSheet.tsx'
 import { Sparkline } from './charts.tsx'
 import type { RangeKey } from './history.ts'
 import { LEVEL_WORD, LevelIcon } from './LevelIcon.tsx'
-import { cabinLevel, notices, vitals, worst, zoneStates, ZONES, type Level, type Notice, type Vital, type ZoneKey } from './model.ts'
+import { notices, verdict, vitals, zoneStates, ZONES, type Notice, type NoticeSource, type Vital, type VerdictSide, type ZoneKey } from './model.ts'
 import { SkeletonView } from './SkeletonView.tsx'
 import './dashboard.css'
 
@@ -92,8 +92,26 @@ function NoticeCard({ n, onOpen }: { n: Notice; onOpen?: () => void }) {
   )
 }
 
+const NOTICE_GROUPS: { source: NoticeSource; label: string }[] = [
+  { source: 'you', label: 'You' },
+  { source: 'air', label: 'Cabin air' },
+  { source: 'exercise', label: 'Exercise' },
+]
+
+/** One side of the status box, with its own level so a colour always sits next to what it means. */
+function HeroRow({ label, side }: { label: string; side: VerdictSide }) {
+  return (
+    <li className={`hero-row hero-row-${side.level}`}>
+      <LevelIcon level={side.level} size={16} />
+      <span className="hero-row-label">{label}</span>
+      <span className="hero-row-word">{LEVEL_WORD[side.level]}</span>
+      <span className="hero-row-detail">{side.detail}</span>
+    </li>
+  )
+}
+
+// The cabin air has no body zone: the skeleton only shows the person.
 const NOTICE_ZONE = (id: string): ZoneKey | null => {
-  if (id === 'co2' || id === 'ship') return 'chest'
   if (id === 'ind-fatigue') return 'limbs'
   if (id === 'exercise') return 'core'
   if (id.startsWith('ind-') || id === 'safety') return 'head'
@@ -116,12 +134,12 @@ export function Dashboard() {
 
   const history = useMemo(() => s.checkIns.filter((c) => c.crewId === crewId), [s.checkIns, crewId])
   const exercise = useMemo(() => exerciseWeek(history, today), [history, today])
-  const zones = useMemo(() => zoneStates(me, cabin, exercise), [me, cabin, exercise])
+  const zones = useMemo(() => zoneStates(me, exercise), [me, exercise])
   const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise), [me, cabin, s.commDelaySec, exercise])
   const tiles = useMemo(() => vitals(me, history, today, TREND_DAYS), [me, history, today])
   const chartVital = chart ? tiles.find((t) => t.key === chart.key) : undefined
-  const overall = worst(...ZONES.map((z) => zones[z.key].level))
-  const co2Level = cabinLevel(cabin)
+  const v = verdict(me, cabin, s.todayResult.decision)
+  const groups = NOTICE_GROUPS.map((g) => ({ ...g, items: list.filter((n) => n.source === g.source) })).filter((g) => g.items.length > 0)
 
   // An iOS-style banner drops in when a day brings something new to look at.
   const [banner, setBanner] = useState<Notice | null>(null)
@@ -162,8 +180,6 @@ export function Dashboard() {
       </p>
     </>
   )
-
-  const hero = heroText(overall, me.attribution, me.tier, me.episodeDay, me.assessment.checkedIn, co2Level)
 
   return (
     <div className="dash">
@@ -229,21 +245,18 @@ export function Dashboard() {
 
       <main className="grid">
         <section className="col col-left">
-          <div className={`hero hero-${overall}`}>
-            <div className="hero-top">
-              <LevelIcon level={overall} size={28} />
-              <span className={`pill pill-${overall}`}>{LEVEL_WORD[overall]}</span>
-            </div>
-            <h1>{hero.title}</h1>
-            <p>{hero.body}</p>
+          <div className={`hero hero-${v.tint}`}>
+            {!me.assessment.safety && <p className="hero-eyebrow">Likely you or likely the ship?</p>}
+            <h1>{v.title}</h1>
+            <p>{v.body}</p>
+            <ul className="hero-rows">
+              <HeroRow label="You" side={v.you} />
+              <HeroRow label="Cabin air" side={v.ship} />
+            </ul>
             <dl className="hero-facts">
               <div>
                 <dt>Check-in UTC</dt>
                 <dd>{me.assessment.checkedIn ? '08:00' : 'Not yet'}</dd>
-              </div>
-              <div>
-                <dt>Flagged</dt>
-                <dd>{me.assessment.off.length + (co2Level === 'ok' ? 0 : 1)}</dd>
               </div>
               <div>
                 <dt>Earth delay</dt>
@@ -256,18 +269,25 @@ export function Dashboard() {
             <h2 className="panel-title">
               Notifications <span className="badge">{list.length}</span>
             </h2>
-            {list.length === 0 ? (
-              <ul className="notices">
-                <NoticeCard n={{ id: 'clear', level: 'ok', title: 'Nothing needs your attention', body: 'Everything you logged today sits inside your own usual range, and the cabin air is normal.' }} />
-              </ul>
-            ) : (
-              <ul className="notices">
-                {list.map((n) => {
-                  const z = NOTICE_ZONE(n.id)
-                  return <NoticeCard key={n.id} n={n} onOpen={z ? () => setFocus(z) : undefined} />
-                })}
-              </ul>
-            )}
+            <div className="notice-list">
+              {list.length === 0 ? (
+                <ul className="notices">
+                  <NoticeCard n={{ id: 'clear', source: 'you', level: 'ok', title: 'Nothing needs your attention', body: 'Everything you logged today sits inside your own usual range, and the cabin air is normal.' }} />
+                </ul>
+              ) : (
+                groups.map((g) => (
+                  <section key={g.source} className="notice-group" aria-label={g.label}>
+                    <h3 className="notice-group-title">{g.label}</h3>
+                    <ul className="notices">
+                      {g.items.map((n) => {
+                        const z = NOTICE_ZONE(n.id)
+                        return <NoticeCard key={n.id} n={n} onOpen={z ? () => setFocus(z) : undefined} />
+                      })}
+                    </ul>
+                  </section>
+                ))
+              )}
+            </div>
           </div>
 
           <footer className="dash-foot dash-foot-side">{credits}</footer>
@@ -336,15 +356,4 @@ export function Dashboard() {
       <footer className="dash-foot dash-foot-end">{credits}</footer>
     </div>
   )
-}
-
-function heroText(overall: Level, attribution: string, tier: number, episodeDay: number, checkedIn: boolean, co2: Level): { title: string; body: string } {
-  if (!checkedIn) return { title: 'Good morning', body: 'No check-in yet today. Your trends run up to your last one.' }
-  if (tier === 4) return { title: 'Help is on the way', body: 'Your crew medical officer was told privately. The game is paused for you today.' }
-  if (tier === 3) return { title: `Still off your usual, day ${episodeDay}`, body: 'A short summary went to the flight surgeon. It lists what changed, never a diagnosis.' }
-  if (attribution === 'ship') return { title: 'Likely the ship, not you', body: 'Most of the crew show the same change while cabin CO₂ is above its usual level.' }
-  if (attribution === 'me' || attribution === 'shared') return { title: 'Something is off your usual', body: 'Only you see this. Take it easy today and check in again tomorrow.' }
-  if (co2 !== 'ok') return { title: 'You are within your normal', body: 'Your body is steady. The cabin air is flagged in your notifications.' }
-  if (overall === 'ok') return { title: 'All within your normal', body: 'Everything you logged today sits inside your own usual range.' }
-  return { title: 'Worth a look', body: 'Something is flagged below.' }
 }

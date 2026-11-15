@@ -22,7 +22,7 @@ describe('bone and muscle: exercise against its daily target, shown and never ju
   it('a lapse turns the core and limbs zones orange, never red', () => {
     const all = CREW.flatMap((id) => steady(id, 1, 20))
     const me = runEngine({ crewIds: CREW, checkIns: all, cabin: cabin(1, 20), fromDay: 1, toDay: 20 }).at(-1)!
-    const zones = zoneStates(me.people.anna, me.cabin, { logged: 7, onTarget: 3, below: 4, lapse: true })
+    const zones = zoneStates(me.people.anna, { logged: 7, onTarget: 3, below: 4, lapse: true })
     expect(zones.core.level).toBe('watch')
     expect(zones.limbs.level).toBe('watch')
     expect(zones.head.level).toBe('ok')
