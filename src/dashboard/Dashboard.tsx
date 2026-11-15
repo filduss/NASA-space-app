@@ -97,7 +97,7 @@ const NOTICE_ZONE = (id: string): ZoneKey | null => {
   if (id === 'co2' || id === 'ship') return 'chest'
   if (id === 'ind-fatigue') return 'limbs'
   if (id === 'exercise') return 'core'
-  if (id.startsWith('ind-') || id === 'safety') return 'head'
+  if (id.startsWith('ind-') || id === 'urgent') return 'head'
   return null
 }
 
@@ -408,8 +408,9 @@ const GRAVITY_NOTE: Record<'none' | 'lunar' | 'earth', string> = {
 }
 
 function heroText(overall: Level, attribution: string, tier: number, episodeDay: number, checkedIn: boolean, co2: Level): { title: string; body: string } {
-  if (!checkedIn) return { title: 'Good morning', body: 'No check-in yet today. Your trends run up to your last one.' }
+  // An urgent conference request can come before the check-in, so it is checked first.
   if (tier === 4) return { title: 'Help is on the way', body: 'Your crew medical officer was told privately.' }
+  if (!checkedIn) return { title: 'Good morning', body: 'No check-in yet today. Your trends run up to your last one.' }
   if (tier === 3) return { title: `Still off your usual, day ${episodeDay}`, body: 'A short summary went to the flight surgeon. It lists what changed, never a diagnosis.' }
   if (attribution === 'ship') return { title: 'Likely the ship, not you', body: 'Most of the crew show the same change while cabin CO₂ is above its usual level.' }
   if (attribution === 'me' || attribution === 'shared') return { title: 'Something is off your usual', body: 'Only you see this. Take it easy today and check in again tomorrow.' }

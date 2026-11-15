@@ -25,16 +25,17 @@ export interface BoardPerson {
 
 export function boardPerson(status: PersonStatus): BoardPerson {
   const a = status.assessment
-  // Safety answers never reach the board: the person is shown as not reporting shared drift.
-  const off = a.safety ? [] : a.off.filter((k) => SPEC[k].privacy === 'shared')
+  // An urgent conference request never reaches the board: the person is shown as not reporting shared drift.
+  const urgent = status.conference === 'urgent'
+  const off = urgent ? [] : a.off.filter((k) => SPEC[k].privacy === 'shared')
   return {
     crewId: status.crewId,
     checkedIn: a.checkedIn,
     live: a.live,
     off,
-    symptoms: a.safety ? [] : a.symptoms,
+    symptoms: urgent ? [] : a.symptoms,
     ok: a.checkedIn && off.length === 0,
-    shipAffected: !a.safety && status.attribution === 'ship',
+    shipAffected: !urgent && status.attribution === 'ship',
   }
 }
 
@@ -99,7 +100,7 @@ export function canSeePrivate(viewer: Viewer, status: PersonStatus, sharedWithCm
 
 /** The crew medical officer's inbox for a day: tier 2 and above, shaped by the privacy table. */
 export interface CmoItem {
-  kind: 'ship' | 'shared_pattern' | 'shared_watch' | 'persistent' | 'safety'
+  kind: 'ship' | 'shared_pattern' | 'shared_watch' | 'persistent' | 'urgent'
   /** Named only where the privacy table allows it. */
   crewId?: string
   count?: number
@@ -111,7 +112,8 @@ export function cmoInbox(day: DayResult, shareWatch: Record<string, boolean>): C
   const items: CmoItem[] = []
   const people = Object.values(day.people)
   for (const p of people) {
-    if (p.assessment.safety) items.push({ kind: 'safety', crewId: p.crewId, indicators: [] })
+    // A routine conference request goes to the flight surgeon only.
+    if (p.conference === 'urgent') items.push({ kind: 'urgent', crewId: p.crewId, indicators: [] })
   }
   if (day.decision.outcome === 'ship') {
     items.push({
@@ -127,11 +129,11 @@ export function cmoInbox(day: DayResult, shareWatch: Record<string, boolean>): C
       kind: 'shared_pattern',
       count: day.decision.driftingAny.length,
       of: day.decision.crewSize,
-      indicators: unique(people.flatMap((p) => (p.assessment.safety ? [] : p.assessment.off))),
+      indicators: unique(people.flatMap((p) => (p.conference === 'urgent' ? [] : p.assessment.off))),
     })
   }
   for (const p of people) {
-    if (p.assessment.safety || p.attribution === 'none' || p.attribution === 'ship') continue
+    if (p.conference === 'urgent' || p.attribution === 'none' || p.attribution === 'ship') continue
     const shared = shareWatch[p.crewId] === true
     const visible = p.assessment.off.filter((k) => shared || SPEC[k].privacy === 'shared')
     if (p.tier === 3 && visible.length > 0) items.push({ kind: 'persistent', crewId: p.crewId, indicators: visible })
@@ -153,7 +155,7 @@ function unique<T>(xs: T[]): T[] {
 //                          exists only once a summary names them, counts only on ship-summary days
 
 /** One day of one person, as a viewer may see it. "unknown": nothing about that day reached the viewer. */
-export type TimelineMark = 'ok' | 'off' | 'persist' | 'absent' | 'safety' | 'unknown'
+export type TimelineMark = 'ok' | 'off' | 'persist' | 'absent' | 'urgent' | 'unknown'
 
 export interface TimelineCell {
   day: number
@@ -197,13 +199,13 @@ export interface TimelineInput {
   summaries: SurgeonSummary[]
 }
 
-const SEVERITY: Record<TimelineMark, number> = { unknown: 0, ok: 1, absent: 1, off: 2, persist: 3, safety: 4 }
+const SEVERITY: Record<TimelineMark, number> = { unknown: 0, ok: 1, absent: 1, off: 2, persist: 3, urgent: 4 }
 
 function cell(day: number, mark: TimelineMark, more: Partial<TimelineCell> = {}): TimelineCell {
   return { day, mark, keys: [], symptoms: [], co2Linked: false, ...more }
 }
 
-/** A board cell: shared indicators only, safety answers hidden, exactly as boardPerson. */
+/** A board cell: shared indicators only, urgent conference requests hidden, exactly as boardPerson. */
 function boardCell(status: PersonStatus): TimelineCell {
   const p = boardPerson(status)
   if (!p.checkedIn) return cell(status.day, 'absent')
@@ -233,8 +235,8 @@ function fromSummaries(summaries: SurgeonSummary[]) {
       for (let d = s.day - s.episodeDay + 1; d <= s.day; d++) ship.add(d)
       drifting.set(s.day, s.affected?.length ?? 0)
       for (const id of s.affected ?? []) put(id, cell(s.day, 'off', { co2Linked: true }))
-    } else if (s.kind === 'safety' && s.crewId) {
-      put(s.crewId, cell(s.day, 'safety'))
+    } else if (s.kind === 'urgent' && s.crewId) {
+      put(s.crewId, cell(s.day, 'urgent'))
     } else if (s.kind === 'person' && s.crewId) {
       // "Off own usual for N days": each indicator was off on its last daysOff days up to the summary.
       const longest = Math.max(0, ...s.indicators.map((i) => i.daysOff))

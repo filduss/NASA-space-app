@@ -112,7 +112,7 @@ export function RoleSwitcher() {
           type="button"
           className="link"
           onClick={() => {
-            if (window.confirm('Clear the live check-ins you added in this browser?')) s.reset()
+            if (window.confirm('Clear the live check-ins and conference requests you added in this browser?')) s.reset()
           }}
         >
           Reset my inputs

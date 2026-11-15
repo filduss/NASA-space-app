@@ -17,7 +17,8 @@ export interface CheckIn {
   crewId: string
   /** Mission day (integer). */
   day: number
-  sleepHours: number
+  /** Last night's sleep from the wearable, hours; null when it has no reading for the night. */
+  sleepHours: number | null
   sleepQuality: number
   fatigue: number
   irritability: number
@@ -28,8 +29,6 @@ export interface CheckIn {
   reactionMs: number | null
   /** Minutes of exercise the day before; missing or null when not logged. Shown, never judged (engine/gravity.ts). */
   exerciseMin?: number | null
-  /** The safety answer: "I need to talk to someone now". */
-  safetyFlag?: boolean
   /** True for generated check-ins, false for ones entered live in the app. */
   simulated: boolean
 }
@@ -90,7 +89,6 @@ export interface PersonDay {
   /** The subset that the ship-or-me rule may use. Never contains mood or stress. */
   co2LinkedOff: IndicatorKey[]
   symptoms: SymptomKey[]
-  safety: boolean
 }
 
 export interface CabinStatus {
@@ -140,16 +138,30 @@ export interface PersonStatus {
   /** Day count of the current run with the same likely cause (ship vs. personal). */
   episodeDay: number
   tier: Tier
+  /** A conference request this person made today, if any. Urgent outranks routine. */
+  conference: 'routine' | 'urgent' | null
 }
 
-export type SummaryKind = 'ship' | 'person' | 'safety'
+/**
+ * A crew member asking for a private medical conference with the flight surgeon, as NASA crews can
+ * between the weekly ones. Sent on its own, so it never waits for a check-in. Urgent also tells the
+ * crew medical officer at once.
+ */
+export interface ConferenceRequest {
+  crewId: string
+  day: number
+  urgent: boolean
+}
+
+/** `urgent` and `conference` are conference requests: urgent carries today's off indicators, routine only the request. */
+export type SummaryKind = 'ship' | 'person' | 'urgent' | 'conference'
 
 /** What goes to the flight surgeon. Built by the engine from fixed templates; no LLM. */
 export interface SurgeonSummary {
   id: string
   day: number
   kind: SummaryKind
-  /** Safety answers skip the day-3 wait. */
+  /** Conference requests skip the day-3 wait. */
   immediate: boolean
   crewId?: string
   episodeDay: number
@@ -179,6 +191,8 @@ export interface EngineInput {
   toDay: number
   /** Crew who chose to share their private Watch with the crew medical officer. */
   shareWatch?: Record<string, boolean>
+  /** Conference requests, from the crew app only; the simulated crew never makes one. */
+  requests?: ConferenceRequest[]
   /**
    * Backtest only: every drifting person is their own case and the ship is never blamed, as in apps
    * that raise one alert per person. Measures the alert load the ship-or-me rule saves. The app never sets it.

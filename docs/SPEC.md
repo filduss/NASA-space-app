@@ -14,7 +14,7 @@ This file describes what the code on this branch does. Where the plan left room,
 | 4 | Mission setting | ISS, lunar surface, Mars transit (default) or an Antarctic station, chosen in the demo controls. It changes the comm delay and the radiation card only. The CO₂ source (ISS) is stated on every screen |
 | 5 | Board default | Sleep and symptoms shared; mood and stress private, shown as a count with no names |
 | 6 | Live input | Live 30-second reaction test, kept in memory only |
-| 7 | Wearable | None |
+| 7 | Wearable | Simulated. Sleep duration and exercise come from a wrist wearable, modelled on NASA's actigraph, and are shown on the check-in, never asked (15 Nov 2026). In the demo the readings are the simulated crew's own sleep and exercise fields (`src/data/wearable.ts`) |
 | 8 | AI | None. Summaries come from fixed templates |
 | 9 | Demo format | Not built here: the app has a "Golden path" control with the four days a 30-second video needs |
 | 10 | Earth use | Antarctic winter stations: Concordia's winter crew runs the base alone for three-quarters of a year (ESA). On the challenge page and as Mission → Antarctic station |
@@ -53,7 +53,9 @@ ISS telemetry for the Rodent Research 7 payload from the NASA OSDR Environmental
 }
 ```
 
-`shieldDays` is still written by the simulator and committed, but the app no longer reads it: a shielded day shows as a missed check-in. Sliders run 0-10. `symptoms` is any of `headache`, `dizziness`, `nausea`, `congestion`, `eye_strain`. `exerciseMin` is the day before's exercise in minutes; the simulator draws it from a stream of its own, so adding it changed no other value. A live check-in has `simulated: false`, `reactionMs: null`, may leave out `exerciseMin` and may carry `safetyFlag: true`.
+`shieldDays` is still written by the simulator and committed, but the app no longer reads it: a shielded day shows as a missed check-in. Ratings run 0-10. `symptoms` is any of `headache`, `dizziness`, `nausea`, `congestion`, `eye_strain`. `sleepHours` and `exerciseMin` are the wearable's readings: last night's sleep and the day before's exercise in minutes. The simulator draws exercise from a stream of its own, so adding it changed no other value. A live check-in has `simulated: false` and `reactionMs: null`, and takes `sleepHours` and `exerciseMin` from the wearable's reading for that day: `null` when the wearable has none, which makes sleep duration "not measured" that day.
+
+Conference requests are not part of a check-in. The crew app keeps them in `localStorage` as `{ "crewId": "ben", "day": 213, "urgent": true }` and passes them to the engine as `EngineInput.requests`; the simulated crew never makes one.
 
 ### `backtest.json` (simulated crews on real traces)
 
@@ -119,7 +121,9 @@ The air is a suspect when it is above baseline or its 24 h mean is over 3 mmHg. 
 | 1 | Any drift, or a slow change against your starting normal: a private Watch card | You |
 | 2 | A ship alert or shared pattern, or a Watch you chose to share | Crew medical officer |
 | 3 | Still off on day 3 of the same likely cause; again every 3 days | Flight surgeon, with the comm delay |
-| 4 | The safety answer | Crew medical officer and flight surgeon, immediately |
+| 4 | An urgent conference request | Crew medical officer and flight surgeon, immediately |
+
+A routine conference request has no tier: it reaches the flight surgeon as a request with no readings, and nobody on board is told.
 
 ### Privacy
 
@@ -130,7 +134,8 @@ The air is a suspect when it is above baseline or its 24 h mean is over 3 mmHg. 
 | Mood and stress | Everything | Count only, no names | Only if you share | In tier 3 summaries |
 | Sleep and symptoms | Everything | Yes | Yes | In tier 3 summaries |
 | Ship alerts | Yes | Yes | Yes | In summaries |
-| Safety answer | Yes | Never | Immediately | Immediately |
+| Urgent conference request | Yes | Never | Immediately | Immediately, with today's off indicators |
+| Routine conference request | Yes | Never | Never | Immediately, the request only |
 
 ## Mission setting and radiation
 
@@ -149,7 +154,7 @@ The radiation card on the Ship screen shows the dose rate, the dose so far (rate
 
 ### Crew timeline
 
-The crew board and the flight surgeon's screen share one chart: the last 14 days of cabin CO₂ (24 h mean, with the cabin's usual level and the 3 mmHg limit), how many crew drift on CO₂-linked indicators (with the rule's threshold), and one row per person. Each cell is a symbol and a word: ● within own usual, ▲ off own usual, ◆ day 3 or later, ○ no check-in, ■ safety answer, – nothing received. `crewTimeline` in `privacy.ts` fills it per viewer, inside the privacy table above:
+The crew board and the flight surgeon's screen share one chart: the last 14 days of cabin CO₂ (24 h mean, with the cabin's usual level and the 3 mmHg limit), how many crew drift on CO₂-linked indicators (with the rule's threshold), and one row per person. Each cell is a symbol and a word: ● within own usual, ▲ off own usual, ◆ day 3 or later, ○ no check-in, ■ urgent conference request, – nothing received. `crewTimeline` in `privacy.ts` fills it per viewer, inside the privacy table above:
 
 | Part | Crew member | Crew medical officer | Flight surgeon |
 | --- | --- | --- | --- |
@@ -158,7 +163,7 @@ The crew board and the flight surgeon's screen share one chart: the last 14 days
 | Ship-alert band | Every day | Every day | The days a ship summary covers ("day N of the alert") |
 | Rows | Their own only | Everyone, shared indicators only, as on the board | Only people a summary names, and only the days and indicators that summary states |
 
-A row cell shows ◆ when a shared indicator has been off 3 days **and** it is day 3 of the same likely cause, which is the day a summary goes to Earth. Safety answers never show in board rows; the flight surgeon's row shows ■ the day the immediate summary was sent.
+A row cell shows ◆ when a shared indicator has been off 3 days **and** it is day 3 of the same likely cause, which is the day a summary goes to Earth. Urgent conference requests never show in board rows; the flight surgeon's row shows ■ the day the request was sent.
 
 Times: on board, ship time is UTC and the check-in is at 08:00. The flight surgeon's screen gives each time also in Houston local time, where Mission Control sits, after the comm delay. The real date behind a mission day (`cabin.json` replay) decides summer or winter time.
 
@@ -192,7 +197,11 @@ These are the places where the plan could be read two ways, or where the build g
 - **Day 3 counts per likely cause.** When a ship alert ends and someone is still off, their count restarts at day 1 as "me". This is what makes the golden path's "day 3" land two days after the air clears.
 - **One person drifting under high CO₂ is "me".** The card says the cabin is above its usual level and that the rule does not blame the air yet.
 - **Headache is the only symptom that counts toward a ship alert.** It is the one with a published dose-response. Other ticks open a private Watch.
-- **Check-in sliders start unset.** A slider that starts at the person's usual lets a rushed check-in report "as usual" without anyone choosing it, which is the under-reporting the check-in is meant to counter. Built: each slider starts unset and is rated before the usual is shown, or set to the usual with one explicit tap ("Set them to my usual"). Submit waits until every slider is set.
+- **Check-in answers start unset.** A rating that starts at the person's usual lets a rushed check-in report "as usual" without anyone choosing it, which is the under-reporting the check-in is meant to counter. Built: each of the five ratings is a row of 0-10 tap targets with nothing chosen, and "As usual" on each row, or "Set the rest to my usual" for all unset rows, is one explicit tap. Symptoms work the same way: "None today" is its own tile, exclusive of the five symptoms, and unticking the last symptom leaves the question unanswered rather than "none". Send waits until all six are answered. The logic is `src/ui/checkInForm.ts`.
+- **The check-in asks only what a person can tell.** Sleep duration and exercise are measured by the wearable and shown read-only; there is no way to correct them, which would bring the self-report back. The five ratings follow the domains of the ISS Reaction Self Test's 0-10 self-ratings where they overlap (sleep quality, fatigue, stress; Jones et al. 2022, not yet checked in `docs/CITATIONS.md`); irritability and mood are ours. The check-in shows no "why we ask" text: the team judged it out of scope for the MVP.
+- **A night with no wearable reading is not measured.** On a day with no reading, sleep duration is "not measured", as a skipped reaction test is, and the short-sleep rule does not count that night as short.
+- **The safety question is a conference request.** NASA crews have a weekly private medical conference with their flight surgeon and can ask for one at any time. The checkbox "I am not safe, or I need to talk to someone now" became "Ask for a conference": at the next scheduled conference (flight surgeon only, no tier) or urgent (tier 4, the old safety path). It is sent on its own, so asking for help never waits for the ratings, and it works on a day with no check-in.
+- **After sending, a receipt.** The confirmation lists what was sent and who sees it when, with "See my day" and "Change today's answers". Answers can be changed until the mission day changes.
 - **The reaction test counts a lapse at 355 ms**, as PVT-B, the brief test behind the ISS Reaction Self-Test, does (Basner, Mollicone and Dinges 2011).
 - **The live reaction test is shown, not compared.** The presenter has no baseline, and the result is never stored, so it does not feed the rules.
 - **Did the fix work?** For 7 days after a ship alert ends, the board and the Ship screen say whether the air is back to its usual level and how many of the crew it touched are back to theirs. Counts only, judged on shared indicators as the board does (`shipFollowUp` in `src/engine/privacy.ts`). Anyone still off is already "likely you" with a new 3-day count. It does not claim the fix caused the recovery.
@@ -202,7 +211,7 @@ These are the places where the plan could be read two ways, or where the build g
 - **The flight surgeon has a login.** The plan names the flight surgeon as a reader of summaries; the build gives the role a login (Mira, on Earth) so the Earth view can be shown on its own. It adds no access: the login sees what the "Flight surgeon" column of the privacy table allows.
 - **The flight surgeon's timeline is rebuilt from summaries.** Nothing reaches Earth between summaries, so a row's cells come only from what a summary states: a day-3 summary covers the days each listed indicator has been off; a ship summary names who had CO₂-linked changes that day and how long the alert has run.
 - **The medical officer is one of the crew.** The plan's crew medical officer is a role, not a person; the build gives it to Dana. Her login opens her own dashboard like anyone's, plus the crew app as the crew medical officer or as herself. She cannot view as another crew member, because that would show their private mood and stress; the judge's tour opens the other people's screens with their own logins.
-- **Astronauts use the crew app too.** The check-in, the reaction test, the share toggle and the safety question live in the crew app, so every crew member opens it, in their own view only.
+- **Astronauts use the crew app too.** The check-in, the reaction test, the share toggle and the conference request live in the crew app, so every crew member opens it, in their own view only.
 
 ## Golden path
 
@@ -296,6 +305,8 @@ One crew member never ticks a symptom and reports every slider one point better 
 - A slow change is judged against the first 14 check-ins. If those were unusually good days, a return to normal can read as a slow change.
 
 ## Open items
+
+- **The crew board still shares sleep and symptoms.** The check-in says "Your answers go to your flight surgeon", and `CONTEXT.md` says a check-in's answers never reach crewmates. On this branch the board and the crew medical officer's inbox still follow the privacy table above (sleep and symptoms shared). That privacy change is not built yet.
 
 - A deploy to Vercel and the `v1.0-submission` tag.
 - README sections for the challenge map and the Antarctic case (both are in the app: Demo controls → How it answers the challenge), and the Antarctic sources in `docs/CITATIONS.md`.

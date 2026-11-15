@@ -22,14 +22,14 @@ const DRIFT_H = 46
 const ROWS_Y = DRIFT_Y + DRIFT_H + 14
 const ROW_H = 30
 
-const TONE: Record<TimelineMark, Tone> = { ok: 'ok', off: 'watch', persist: 'alert', absent: 'idle', safety: 'alert', unknown: 'idle' }
+const TONE: Record<TimelineMark, Tone> = { ok: 'ok', off: 'watch', persist: 'alert', absent: 'idle', urgent: 'alert', unknown: 'idle' }
 
 const LEGEND: { mark: TimelineMark; word: string }[] = [
   { mark: 'ok', word: 'Within own usual' },
   { mark: 'off', word: 'Off own usual' },
   { mark: 'persist', word: `Day ${RULES.persistDays} or later` },
   { mark: 'absent', word: 'No check-in' },
-  { mark: 'safety', word: 'Safety answer' },
+  { mark: 'urgent', word: 'Urgent conference request' },
   { mark: 'unknown', word: 'Nothing received' },
 ]
 
@@ -45,7 +45,7 @@ function Sym({ mark, x, y, s }: { mark: TimelineMark; x: number; y: number; s: n
       return <path className={cls} d={`M${x},${y - s}L${x + s},${y}L${x},${y + s}L${x - s},${y}Z`} />
     case 'absent':
       return <circle className={cls} cx={x} cy={y} r={s * 0.55} />
-    case 'safety':
+    case 'urgent':
       return <rect className={cls} x={x - s * 0.72} y={y - s * 0.72} width={s * 1.44} height={s * 1.44} rx={1.5} />
     default:
       return <line className={cls} x1={x - s * 0.45} x2={x + s * 0.45} y1={y} y2={y} />
@@ -66,8 +66,8 @@ function cellWords(c: TimelineCell): string {
       return 'Within own usual on what is shared'
     case 'absent':
       return 'No check-in'
-    case 'safety':
-      return 'Safety answer: medical officer and flight surgeon told at once'
+    case 'urgent':
+      return 'Urgent conference request: medical officer and flight surgeon told at once'
     case 'unknown':
       return 'Nothing about this day reached Earth'
   }
@@ -287,7 +287,7 @@ export function CrewTimeline({ viewer }: { viewer: Viewer }) {
       </div>
 
       <ul className="tl-legend" aria-label="Symbols">
-        {LEGEND.filter((l) => earth || (l.mark !== 'safety' && l.mark !== 'unknown')).map((l) => (
+        {LEGEND.filter((l) => earth || (l.mark !== 'urgent' && l.mark !== 'unknown')).map((l) => (
           <li key={l.mark}>
             <LegendSym mark={l.mark} />
             {l.word}

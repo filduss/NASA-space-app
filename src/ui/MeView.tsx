@@ -18,8 +18,16 @@ function StatusCard({ me }: { me: PersonStatus }) {
   const s = useStore()
   const a = me.assessment
   const shared = s.local.shareWatch[me.crewId] === true
-  const sentToday = s.todayResult.summaries.find((x) => x.crewId === me.crewId)
+  const sentToday = s.todayResult.summaries.find((x) => x.crewId === me.crewId && x.kind === 'person')
 
+  if (me.conference === 'urgent') {
+    return (
+      <Card title="You asked for an urgent conference" tone="alert">
+        <p>Your crew medical officer was told privately, and your request is on its way to the flight surgeon ({delayText(s.commDelaySec)} to Earth).</p>
+        <p className="muted">Nothing about this is on the crew board.</p>
+      </Card>
+    )
+  }
   if (!a.checkedIn) {
     return (
       <Card title="No check-in yet today">
@@ -27,14 +35,6 @@ function StatusCard({ me }: { me: PersonStatus }) {
         <button type="button" className="btn btn-primary" onClick={() => s.setScreen('checkin')}>
           Check in
         </button>
-      </Card>
-    )
-  }
-  if (a.safety) {
-    return (
-      <Card title="You asked to talk to someone" tone="alert">
-        <p>Your crew medical officer was told privately as soon as you checked in, and a message is on its way to the flight surgeon ({delayText(s.commDelaySec)} to Earth).</p>
-        <p className="muted">Nothing about this is on the crew board.</p>
       </Card>
     )
   }

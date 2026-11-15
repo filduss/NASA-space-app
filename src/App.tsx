@@ -93,7 +93,7 @@ export function App() {
         </span>
       </section>
 
-      <details className="controls" open>
+      <details className="controls">
         <summary>Demo controls</summary>
         <RoleSwitcher />
       </details>

@@ -16,6 +16,7 @@ import {
   tierFor,
   trailingBaseline,
   type CheckIn,
+  type ConferenceRequest,
   type PersonDay,
 } from '../src/engine/index.ts'
 import { cabin, checkIn, CREW, steady } from './helpers.ts'
@@ -82,6 +83,21 @@ describe('deviation from own normal', () => {
     const a = assessPerson('anna', 19, history, newMemory())
     expect(a.indicators.sleepHours.reason).toBe('short_sleep')
   })
+  it('a night with no wearable reading is "not measured", never a drift', () => {
+    const history = [...steady('anna', 1, 19), checkIn('anna', 20, { sleepHours: null })]
+    const a = assessPerson('anna', 20, history, newMemory())
+    expect(a.indicators.sleepHours.reason).toBe('not_measured')
+    expect(a.off).toEqual([])
+  })
+  it('a night with no wearable reading does not count as a short night', () => {
+    // Of the last 7 nights, only 15 and 19 are under 6 h; 16 and 18 have no reading. That is 3 short
+    // nights only if a missing night counted as short.
+    const history: CheckIn[] = []
+    for (let d = 1; d <= 14; d++) history.push(checkIn('anna', d, { sleepHours: 6.5 }))
+    for (const [d, h] of [[15, 5.5], [16, null], [17, 6.5], [18, null], [19, 5.5]] as const) history.push(checkIn('anna', d, { sleepHours: h }))
+    const a = assessPerson('anna', 19, history, newMemory())
+    expect(a.indicators.sleepHours.reason).toBe('ok')
+  })
   it('a skipped reaction test is "not measured", never a drift', () => {
     const history = [...steady('anna', 1, 19), checkIn('anna', 20, { reactionMs: null })]
     const a = assessPerson('anna', 20, history, newMemory())
@@ -130,7 +146,7 @@ describe('cabin CO2', () => {
 
 describe('ship-or-me rule', () => {
   const person = (crewId: string, off: PersonDay['off'], co2: PersonDay['off'] = off): PersonDay =>
-    ({ crewId, day: 1, checkedIn: true, live: false, indicators: {} as PersonDay['indicators'], off, co2LinkedOff: co2, symptoms: [], safety: false })
+    ({ crewId, day: 1, checkedIn: true, live: false, indicators: {} as PersonDay['indicators'], off, co2LinkedOff: co2, symptoms: [] })
   const up = cabinStatus(cabin(1, 20, 2.4, { 20: 4 }), 20, new Set())
   const normal = cabinStatus(cabin(1, 20, 2.4), 20, new Set())
 
@@ -179,13 +195,13 @@ describe('ship-or-me rule', () => {
 
 describe('escalation tiers', () => {
   it('follows the ladder', () => {
-    expect(tierFor({ safety: false, attribution: 'none', episodeDay: 0, shared: false })).toBe(0)
-    expect(tierFor({ safety: false, attribution: 'me', episodeDay: 1, shared: false })).toBe(1)
-    expect(tierFor({ safety: false, attribution: 'me', episodeDay: 1, shared: true })).toBe(2)
-    expect(tierFor({ safety: false, attribution: 'ship', episodeDay: 1, shared: false })).toBe(2)
-    expect(tierFor({ safety: false, attribution: 'shared', episodeDay: 2, shared: false })).toBe(2)
-    expect(tierFor({ safety: false, attribution: 'me', episodeDay: 3, shared: false })).toBe(3)
-    expect(tierFor({ safety: true, attribution: 'none', episodeDay: 0, shared: false })).toBe(4)
+    expect(tierFor({ urgent: false, attribution: 'none', episodeDay: 0, shared: false })).toBe(0)
+    expect(tierFor({ urgent: false, attribution: 'me', episodeDay: 1, shared: false })).toBe(1)
+    expect(tierFor({ urgent: false, attribution: 'me', episodeDay: 1, shared: true })).toBe(2)
+    expect(tierFor({ urgent: false, attribution: 'ship', episodeDay: 1, shared: false })).toBe(2)
+    expect(tierFor({ urgent: false, attribution: 'shared', episodeDay: 2, shared: false })).toBe(2)
+    expect(tierFor({ urgent: false, attribution: 'me', episodeDay: 3, shared: false })).toBe(3)
+    expect(tierFor({ urgent: true, attribution: 'none', episodeDay: 0, shared: false })).toBe(4)
   })
 
   it('a private Watch stays tier 1 for two days and reaches the flight surgeon on day 3', () => {
@@ -259,12 +275,26 @@ describe('escalation tiers', () => {
     expect(shipFollowUp(upTo(25 + RULES.followUpDays))).toBeNull()
   })
 
-  it('a safety answer is tier 4 at once, with an immediate summary', () => {
-    const all = replace(crewHistory(1, 20), checkIn('ben', 20, { safetyFlag: true }))
-    const res = runEngine({ crewIds: CREW, checkIns: all, cabin: cabin(1, 20), fromDay: 1, toDay: 20 })
+  it('an urgent conference request is tier 4 at once, with an immediate summary, even before the check-in', () => {
+    // Ben asks for help on day 20 without checking in: help never waits for the ratings.
+    const all = crewHistory(1, 20).filter((c) => !(c.crewId === 'ben' && c.day === 20))
+    const res = runEngine({ crewIds: CREW, checkIns: all, cabin: cabin(1, 20), fromDay: 1, toDay: 20, requests: [{ crewId: 'ben', day: 20, urgent: true }] })
     const last = res[res.length - 1]
+    expect(last.people.ben.assessment.checkedIn).toBe(false)
     expect(last.people.ben.tier).toBe(4)
-    expect(last.summaries).toMatchObject([{ kind: 'safety', crewId: 'ben', immediate: true }])
+    expect(last.people.ben.conference).toBe('urgent')
+    expect(last.summaries).toMatchObject([{ kind: 'urgent', crewId: 'ben', immediate: true }])
+  })
+
+  it('a routine conference request goes to the flight surgeon only, with no tier and none of the readings', () => {
+    const all = replace(crewHistory(1, 20), checkIn('ben', 20, { mood: 1 }))
+    const base = { crewIds: CREW, checkIns: all, cabin: cabin(1, 20), fromDay: 1, toDay: 20 }
+    const without = runEngine(base).at(-1)!
+    const day = runEngine({ ...base, requests: [{ crewId: 'ben', day: 20, urgent: false }] }).at(-1)!
+    expect(day.people.ben.tier).toBe(without.people.ben.tier)
+    expect(day.people.ben.conference).toBe('routine')
+    expect(day.summaries).toEqual([expect.objectContaining({ kind: 'conference', crewId: 'ben', immediate: true, indicators: [] })])
+    expect(cmoInbox(day, {})).toEqual([])
   })
 
   it('choosing to share a Watch informs the crew medical officer (tier 2)', () => {
@@ -335,9 +365,9 @@ describe('slow change against the starting normal', () => {
 })
 
 describe('privacy', () => {
-  const run = (over: Partial<CheckIn>, shareWatch: Record<string, boolean> = {}) => {
+  const run = (over: Partial<CheckIn>, shareWatch: Record<string, boolean> = {}, requests: ConferenceRequest[] = []) => {
     const all = replace(crewHistory(1, 20), checkIn('anna', 20, over))
-    const day = runEngine({ crewIds: CREW, checkIns: all, cabin: cabin(1, 20), fromDay: 1, toDay: 20, shareWatch }).at(-1)!
+    const day = runEngine({ crewIds: CREW, checkIns: all, cabin: cabin(1, 20), fromDay: 1, toDay: 20, shareWatch, requests }).at(-1)!
     return { day, inbox: cmoInbox(day, shareWatch) }
   }
   it('the crew board never shows mood or stress, only a count with no names', () => {
@@ -363,15 +393,16 @@ describe('privacy', () => {
     expect(inbox[0]).toMatchObject({ kind: 'shared_pattern', count: 2, of: 4 })
     expect(inbox[0].crewId).toBeUndefined()
   })
-  it('a safety answer never appears on the board and reaches the crew medical officer immediately', () => {
-    const { day, inbox } = run({ safetyFlag: true, symptoms: ['headache'] })
+  it('an urgent conference request never appears on the board and reaches the crew medical officer immediately', () => {
+    const { day, inbox } = run({ symptoms: ['headache'] }, {}, [{ crewId: 'anna', day: 20, urgent: true }])
     expect(boardPerson(day.people.anna).off).toEqual([])
-    expect(inbox[0]).toMatchObject({ kind: 'safety', crewId: 'anna' })
+    expect(inbox[0]).toMatchObject({ kind: 'urgent', crewId: 'anna' })
   })
 })
 
 describe('crew timeline', () => {
-  const runDays = (all: CheckIn[], to = 20) => runEngine({ crewIds: CREW, checkIns: all, cabin: cabin(1, to), fromDay: 1, toDay: to })
+  const runDays = (all: CheckIn[], to = 20, requests: ConferenceRequest[] = []) =>
+    runEngine({ crewIds: CREW, checkIns: all, cabin: cabin(1, to), fromDay: 1, toDay: to, requests })
   const timeline = (viewer: Parameters<typeof crewTimeline>[0], results: ReturnType<typeof runDays>) =>
     crewTimeline(viewer, {
       window: results.slice(-14),
@@ -412,9 +443,9 @@ describe('crew timeline', () => {
     const t = timeline({ kind: 'cmo' }, results)
     expect(t.rows[0].cells.at(-1)?.mark).toBe('off')
   })
-  it('a safety answer never shows in the board rows', () => {
-    const t = timeline({ kind: 'cmo' }, runDays(replace(crewHistory(1, 20), checkIn('anna', 20, { safetyFlag: true, symptoms: ['headache'] }))))
-    expect(t.rows[0].cells.at(-1)?.mark).toBe('ok')
+  it('an urgent conference request never shows in the board rows', () => {
+    const results = runDays(replace(crewHistory(1, 20), checkIn('anna', 20, { symptoms: ['headache'] })), 20, [{ crewId: 'anna', day: 20, urgent: true }])
+    expect(timeline({ kind: 'cmo' }, results).rows[0].cells.at(-1)?.mark).toBe('ok')
   })
   it('the flight surgeon sees no rows and no counts before a summary is sent', () => {
     const results = sleepLoss().slice(0, -1) // up to day 19: day 2 of the sleep loss
@@ -431,9 +462,9 @@ describe('crew timeline', () => {
     expect(t.rows[0].cells.slice(-4).map((c) => c.mark)).toEqual(['unknown', 'off', 'off', 'persist'])
     expect(t.rows[0].cells.at(-1)?.keys).toEqual(['sleepQuality'])
   })
-  it('a safety answer reaches the flight surgeon immediately', () => {
-    const t = timeline({ kind: 'surgeon' }, runDays(replace(crewHistory(1, 20), checkIn('anna', 20, { safetyFlag: true }))))
+  it('an urgent conference request reaches the flight surgeon immediately', () => {
+    const t = timeline({ kind: 'surgeon' }, runDays(crewHistory(1, 20), 20, [{ crewId: 'anna', day: 20, urgent: true }]))
     expect(t.rows).toMatchObject([{ crewId: 'anna' }])
-    expect(t.rows[0].cells.at(-1)?.mark).toBe('safety')
+    expect(t.rows[0].cells.at(-1)?.mark).toBe('urgent')
   })
 })

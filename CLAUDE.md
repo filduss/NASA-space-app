@@ -60,7 +60,7 @@ Every threshold lives in `config.ts` as `RULES`, each either cited or labeled a 
 
 ### State and UI
 
-`src/state.tsx` (`StoreProvider` / `useStore`) loads the four JSON files (including `accounts.json`), holds the logged-in `user`, merges live check-ins, runs the engine, and holds the demo controls (role, mission day, comm delay). Live check-ins persist only in `localStorage` under `shipshape.v1`; live reaction-test results stay in memory and are never stored.
+`src/state.tsx` (`StoreProvider` / `useStore`) loads the four JSON files (including `accounts.json`), holds the logged-in `user`, merges live check-ins, runs the engine, and holds the demo controls (role, mission day, comm delay). Live check-ins and conference requests persist only in `localStorage` under `shipshape.v1`; live reaction-test results stay in memory and are never stored. The check-in's form logic is `src/ui/checkInForm.ts` (answers start unset); sleep duration and exercise come from the simulated wearable via `src/data/wearable.ts`, never from the form.
 
 `src/main.tsx` picks one of four pages by pathname (`src/auth/paths.ts`), without a router:
 

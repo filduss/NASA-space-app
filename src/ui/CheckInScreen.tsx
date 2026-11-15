@@ -1,202 +1,365 @@
-import { useState } from 'react'
+import { useId, useRef, useState, type KeyboardEvent } from 'react'
+import { RULES } from '../engine/config.ts'
 import { SPEC, SYMPTOMS } from '../engine/deviation.ts'
-import type { CheckIn, SymptomKey } from '../engine/types.ts'
+import type { SymptomKey } from '../engine/types.ts'
+import type { WearableReading } from '../data/wearable.ts'
 import { useStore, type ReactionResult } from '../state.tsx'
-import { Card, Origin } from './bits.tsx'
+import { Card, Mark, Origin } from './bits.tsx'
+import {
+  formFrom,
+  left,
+  noSymptoms,
+  rate,
+  RATINGS,
+  restToUsual,
+  toCheckIn,
+  toggleSymptom,
+  type CheckInForm,
+  type Rating,
+  type RatingKey,
+  type Usual,
+} from './checkInForm.ts'
 import { ReactionTest } from './ReactionTest.tsx'
-import { delayText } from './text.ts'
+import { delayText, symptomLabel } from './text.ts'
 
-type SliderKey = 'sleepHours' | 'sleepQuality' | 'fatigue' | 'irritability' | 'stress' | 'mood'
-type Slider = { key: SliderKey; min: number; max: number; step: number; lo: string; hi: string }
-const SLIDERS: Slider[] = [
-  { key: 'sleepHours', min: 3, max: 10, step: 0.5, lo: '3 h', hi: '10 h' },
-  { key: 'sleepQuality', min: 0, max: 10, step: 1, lo: 'Poor', hi: 'Great' },
-  { key: 'fatigue', min: 0, max: 10, step: 1, lo: 'None', hi: 'Exhausted' },
-  { key: 'irritability', min: 0, max: 10, step: 1, lo: 'Calm', hi: 'On edge' },
-  { key: 'stress', min: 0, max: 10, step: 1, lo: 'Low', hi: 'High' },
-  { key: 'mood', min: 0, max: 10, step: 1, lo: 'Low', hi: 'Good' },
-]
+const SCALE = Array.from({ length: 11 }, (_, i) => i)
+
+/** 6.2 h → "6 h 12 min". */
+function hoursText(h: number): string {
+  const whole = Math.floor(h)
+  const min = Math.round((h - whole) * 60)
+  return min === 0 ? `${whole} h` : min === 60 ? `${whole + 1} h` : `${whole} h ${min} min`
+}
+
+/** The person's usual for each rating: the most recent own-normal median the engine has for them. */
+function useUsual(crewId: string): Usual {
+  const s = useStore()
+  const out = {} as Usual
+  for (const r of RATINGS) {
+    let median: number | null = null
+    for (let i = s.results.length - 1; i >= 0 && median === null; i--) median = s.results[i].people[crewId]?.assessment.indicators[r.key].baseline?.median ?? null
+    out[r.key] = median === null ? null : Math.min(10, Math.max(0, Math.round(median)))
+  }
+  return out
+}
 
 export function CheckInScreen({ crewId }: { crewId: string }) {
   const s = useStore()
   const existing = s.checkIns.find((c) => c.crewId === crewId && c.day === s.today)
-  const status = s.todayResult.people[crewId]
+  const sentLive = existing && !existing.simulated ? existing : undefined
+  const wearable = s.wearableToday(crewId)
+  const usual = useUsual(crewId)
 
-  // Sliders start unset, never at the person's usual: a rushed check-in must not report "as usual" by
-  // default, so each one is rated before the usual is shown, or explicitly set as usual. A check-in
-  // already sent today starts from what was sent.
-  const [values, setValues] = useState<Record<SliderKey, number | null>>(() => {
-    const v = {} as Record<SliderKey, number | null>
-    for (const sl of SLIDERS) v[sl.key] = existing && !existing.simulated ? existing[sl.key] : null
-    return v
-  })
-  const set = (key: SliderKey, value: number) => setValues((v) => ({ ...v, [key]: value }))
-  const usualOf = (sl: Slider) => {
-    const usual = status.assessment.indicators[sl.key].baseline?.median ?? (sl.min + sl.max) / 2
-    return Math.round(usual / sl.step) * sl.step
-  }
-  const unset = SLIDERS.filter((sl) => values[sl.key] === null)
-  const restAsUsual = () =>
-    setValues((v) => Object.fromEntries(SLIDERS.map((sl) => [sl.key, v[sl.key] ?? usualOf(sl)])) as Record<SliderKey, number>)
-  const [symptoms, setSymptoms] = useState<SymptomKey[]>(existing && !existing.simulated ? existing.symptoms : [])
-  // Optional; shown on the person's own dashboard only, never judged (engine/gravity.ts).
-  const [exercise, setExercise] = useState<number | null>(existing && !existing.simulated ? (existing.exerciseMin ?? null) : null)
-  const [safety, setSafety] = useState(existing?.safetyFlag === true)
+  const [form, setForm] = useState<CheckInForm>(() => formFrom(existing))
+  const [mode, setMode] = useState<'form' | 'receipt'>(sentLive ? 'receipt' : 'form')
   const [reaction, setReaction] = useState<ReactionResult | null>(s.liveReaction[`${crewId}|${s.today}`] ?? null)
-  const [sent, setSent] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const helpRef = useRef<HTMLElement>(null)
+
+  const missing = left(form)
+  const canFillUsual = RATINGS.some((r) => form.ratings[r.key] === null && usual[r.key] !== null)
 
   const submit = () => {
-    if (unset.length > 0) return
-    const rated = values as Record<SliderKey, number>
-    const c: CheckIn = { crewId, day: s.today, ...rated, symptoms, reactionMs: null, exerciseMin: exercise, safetyFlag: safety || undefined, simulated: false }
+    const c = toCheckIn(form, { crewId, day: s.today, wearable })
+    if (!c) return
     s.submitCheckIn(c, reaction)
-    setSent(true)
+    setMode('receipt')
     window.scrollTo({ top: 0 })
   }
 
-  if (sent) {
-    return (
-      <div className="stack">
-        {safety ? (
-          <Card title="Thank you for saying so" tone="alert">
-            <p>
-              Your crew medical officer has been told privately, right now. The flight surgeon has been sent a message; it takes{' '}
-              {delayText(s.commDelaySec)} to reach Earth.
-            </p>
-            <p>Nothing about this appears on the crew board.</p>
-          </Card>
-        ) : (
-          <Card title="Checked in">
-            <p className="muted">Your readings are compared with your own normal, not with anyone else's.</p>
-            <div className="row">
-              <button type="button" className="btn" onClick={() => s.setScreen('me')}>
-                See my day
-              </button>
-              <button type="button" className="btn btn-quiet" onClick={() => s.setScreen('board')}>
-                Crew board
-              </button>
-            </div>
-          </Card>
+  const needHelp = () => {
+    setHelpOpen(true)
+    helpRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  if (mode === 'receipt' && sentLive) {
+    return <Receipt crewId={crewId} wearable={wearable} reaction={reaction} onChange={() => setMode('form')} />
+  }
+
+  return (
+    <div className="stack checkin">
+      <div className="ci-intro">
+        <p>
+          About a minute. Your answers go to your flight surgeon.
+          {existing?.simulated && <span className="fine"> Sending replaces the simulator's check-in for {s.nameOf(crewId)} today.</span>}
+        </p>
+        <button type="button" className="link ci-help-link" onClick={needHelp}>
+          Need help now?
+        </button>
+      </div>
+
+      <Card title="Last night" aside={<Origin kind="simulated">from your wearable</Origin>}>
+        <WearableLine wearable={wearable} />
+      </Card>
+
+      <Card title="How you feel this morning">
+        <div className="ci-ratings">
+          {RATINGS.map((r) => (
+            <RatingRow key={r.key} rating={r} value={form.ratings[r.key]} usual={usual[r.key]} onChange={(v) => setForm((f) => rate(f, r.key, v))} />
+          ))}
+        </div>
+      </Card>
+
+      <Card title="Symptoms since yesterday">
+        <SymptomTiles value={form.symptoms} onToggle={(k) => setForm((f) => toggleSymptom(f, k))} onNone={() => setForm(noSymptoms)} />
+      </Card>
+
+      <Card title="Reaction test" aside={<Origin kind="live" />}>
+        <p className="muted ci-optional">Optional.</p>
+        <ReactionTest result={reaction} onResult={setReaction} />
+      </Card>
+
+      <section ref={helpRef} id="conference" className="ci-anchor">
+        <ConferenceCard crewId={crewId} open={helpOpen} onOpen={() => setHelpOpen(true)} />
+      </section>
+
+      <div className="ci-bar" role="region" aria-label="Send the check-in">
+        <p className="ci-left" aria-live="polite">
+          {missing === 0 ? (
+            <Mark tone="ok">Ready to send</Mark>
+          ) : (
+            <>
+              <strong>{missing}</strong> left
+            </>
+          )}
+        </p>
+        {canFillUsual && (
+          <button type="button" className="link" onClick={() => setForm((f) => restToUsual(f, usual))}>
+            Set the rest to my usual
+          </button>
+        )}
+        <button type="button" className="btn btn-primary ci-send" onClick={submit} disabled={missing > 0}>
+          {sentLive ? 'Send changes' : 'Send check-in'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function WearableLine({ wearable }: { wearable: WearableReading | null }) {
+  if (!wearable) return <p className="muted">No wearable reading for last night.</p>
+  return (
+    <dl className="ci-wearable">
+      <div>
+        <dt>Slept</dt>
+        <dd>{wearable.sleepHours === null ? 'no reading' : hoursText(wearable.sleepHours)}</dd>
+      </div>
+      <div>
+        <dt>Exercise yesterday</dt>
+        <dd>{wearable.exerciseMin === null ? 'none logged' : `${wearable.exerciseMin} min`}</dd>
+      </div>
+    </dl>
+  )
+}
+
+/** One 0-10 rating: a radio group of tap targets, unset until chosen, with an explicit "As usual". */
+function RatingRow({ rating, value, usual, onChange }: { rating: Rating; value: number | null; usual: number | null; onChange: (v: number) => void }) {
+  const id = useId()
+  const group = useRef<HTMLDivElement>(null)
+  // Roving focus: the chosen number, or 0 before anything is chosen, is the one Tab stop.
+  const stop = value ?? 0
+
+  const choose = (v: number, focus: boolean) => {
+    onChange(v)
+    if (focus) group.current?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[v]?.focus()
+  }
+  const onKey = (e: KeyboardEvent) => {
+    const at = value ?? -1
+    const next =
+      e.key === 'ArrowRight' || e.key === 'ArrowUp'
+        ? Math.min(10, at + 1)
+        : e.key === 'ArrowLeft' || e.key === 'ArrowDown'
+          ? Math.max(0, at < 0 ? 0 : at - 1)
+          : e.key === 'Home'
+            ? 0
+            : e.key === 'End'
+              ? 10
+              : null
+    if (next === null) return
+    e.preventDefault()
+    choose(next, true)
+  }
+
+  return (
+    <div className={value === null ? 'ci-rating ci-unset' : 'ci-rating'}>
+      <div className="ci-rating-head">
+        <span id={`${id}-q`} className="ci-question">
+          {rating.question}
+        </span>
+        {usual !== null && (
+          <button type="button" className={value === usual ? 'ci-usual ci-usual-on' : 'ci-usual'} onClick={() => onChange(usual)} aria-describedby={`${id}-q`}>
+            As usual
+          </button>
         )}
       </div>
+      <div ref={group} className="ci-scale" role="radiogroup" aria-labelledby={`${id}-q`} aria-describedby={`${id}-ends`} onKeyDown={onKey}>
+        {SCALE.map((v) => (
+          <button
+            key={v}
+            type="button"
+            role="radio"
+            aria-checked={value === v}
+            tabIndex={v === stop ? 0 : -1}
+            className={value === v ? 'ci-num ci-num-on' : 'ci-num'}
+            onClick={() => choose(v, false)}
+          >
+            {v}
+          </button>
+        ))}
+      </div>
+      <div id={`${id}-ends`} className="ci-ends">
+        <span>0 {rating.lo}</span>
+        <span>{rating.hi} 10</span>
+      </div>
+    </div>
+  )
+}
+
+function SymptomTiles({ value, onToggle, onNone }: { value: SymptomKey[] | null; onToggle: (k: SymptomKey) => void; onNone: () => void }) {
+  const none = value !== null && value.length === 0
+  return (
+    <div className="ci-tiles" role="group" aria-label="Symptoms since yesterday">
+      {SYMPTOMS.map((sym) => {
+        const on = value?.includes(sym.key) === true
+        return (
+          <button key={sym.key} type="button" className={on ? 'ci-tile ci-tile-on' : 'ci-tile'} aria-pressed={on} onClick={() => onToggle(sym.key)}>
+            <span className="ci-tick" aria-hidden="true">
+              {on ? '✓' : ''}
+            </span>
+            {sym.label}
+          </button>
+        )
+      })}
+      <button type="button" className={none ? 'ci-tile ci-tile-none ci-tile-on' : 'ci-tile ci-tile-none'} aria-pressed={none} onClick={onNone}>
+        <span className="ci-tick" aria-hidden="true">
+          {none ? '✓' : ''}
+        </span>
+        None today
+      </button>
+    </div>
+  )
+}
+
+/** Who is told about a request, by name: the medical officer on board and the flight surgeon on Earth. */
+function useCareTeam(crewId: string) {
+  const s = useStore()
+  const medical = s.data.accounts.accounts.find((a) => a.role === 'medical' && a.crewId !== crewId)
+  const surgeon = s.data.accounts.accounts.find((a) => a.role === 'surgeon')
+  return { medical: medical ? s.nameOf(medical.crewId) : null, surgeon: surgeon ? s.nameOf(surgeon.crewId) : null }
+}
+
+function ConferenceCard({ crewId, open, onOpen }: { crewId: string; open: boolean; onOpen: () => void }) {
+  const s = useStore()
+  const team = useCareTeam(crewId)
+  const sent = s.local.requests.find((r) => r.crewId === crewId && r.day === s.today)
+  const [urgent, setUrgent] = useState<boolean | null>(null)
+  const delay = delayText(s.commDelaySec)
+  const surgeon = team.surgeon ? `${team.surgeon}, your flight surgeon,` : 'Your flight surgeon'
+  const medical = team.medical ? `${team.medical}, the crew medical officer,` : 'The crew medical officer'
+
+  if (sent) {
+    return (
+      <Card title="Talk to your flight surgeon" tone={sent.urgent ? 'alert' : undefined}>
+        <p role="status">
+          <Mark tone={sent.urgent ? 'alert' : 'ok'}>{sent.urgent ? 'Urgent request sent' : 'Request sent'}</Mark>
+        </p>
+        <p className="muted">
+          {sent.urgent
+            ? `${medical} has been told privately, now. ${surgeon} gets your request in ${delay}. Nothing about it appears on the crew board.`
+            : `${surgeon} gets your request in ${delay} and will take it at the next scheduled conference. Nobody on board is told.`}
+        </p>
+        {!sent.urgent && (
+          <button type="button" className="btn btn-quiet" onClick={() => s.requestConference(crewId, true)}>
+            Make it urgent
+          </button>
+        )}
+      </Card>
     )
   }
 
   return (
-    <div className="stack">
-      <Card
-        title={`Morning check-in, day ${s.today}`}
-        aside={existing ? <Origin kind={existing.simulated ? 'simulated' : 'live'}>{existing.simulated ? 'today is pre-filled by the simulator' : 'you already checked in'}</Origin> : undefined}
-      >
-        <p className="muted">
-          About a minute. {existing?.simulated ? `Submitting replaces ${s.nameOf(crewId)}'s simulated check-in for today with yours. ` : ''}
-          Rate each slider before you see your usual; if one is as usual, say so.
-        </p>
-        <div className="sliders">
-          {SLIDERS.map((sl) => {
-            const spec = SPEC[sl.key]
-            const v = values[sl.key]
-            return (
-              <div className={v === null ? 'slider slider-unset' : 'slider'} key={sl.key}>
-                <label htmlFor={`sl-${sl.key}`}>
-                  <span>
-                    {spec.label}
-                    {spec.privacy === 'private' && <span className="lock" title="Private: only you see this"> 🔒 private</span>}
-                  </span>
-                  <output>{v === null ? 'Not set' : sl.key === 'sleepHours' ? `${v.toFixed(1)} h` : v}</output>
-                </label>
-                <input
-                  id={`sl-${sl.key}`}
-                  type="range"
-                  min={sl.min}
-                  max={sl.max}
-                  step={sl.step}
-                  value={v ?? (sl.min + sl.max) / 2}
-                  onChange={(e) => set(sl.key, Number(e.target.value))}
-                  // A tap on the thumb where it already sits sets it too.
-                  onClick={(e) => v === null && set(sl.key, Number(e.currentTarget.value))}
-                />
-                <div className="ends">
-                  <span>{sl.lo}</span>
-                  <span>{sl.hi}</span>
-                </div>
-                <p className="why">Why we ask: {spec.whyWeAsk}</p>
-              </div>
-            )
-          })}
-        </div>
-      </Card>
-
-      <Card title="Symptoms today">
-        <div className="ticks">
-          {SYMPTOMS.map((sym) => (
-            <label key={sym.key} className="tick">
-              <input
-                type="checkbox"
-                checked={symptoms.includes(sym.key)}
-                onChange={(e) => setSymptoms((cur) => (e.target.checked ? [...cur, sym.key] : cur.filter((x) => x !== sym.key)))}
-              />
-              <span>{sym.label}</span>
-            </label>
-          ))}
-        </div>
-        <p className="why">Why we ask: {SPEC.symptoms.whyWeAsk} Symptoms are shared with the crew by default.</p>
-      </Card>
-
-      <Card title="Exercise yesterday">
-        <div className={exercise === null ? 'slider slider-unset' : 'slider'}>
-          <label htmlFor="sl-exercise">
-            <span>Minutes</span>
-            <output>{exercise === null ? 'Not logged' : `${exercise} min`}</output>
+    <Card title="Talk to your flight surgeon">
+      <p className="muted">Ask for a private medical conference at any time, without finishing the check-in.</p>
+      {!open ? (
+        <button type="button" className="btn" onClick={onOpen}>
+          Ask for a conference
+        </button>
+      ) : (
+        <fieldset className="ci-conf">
+          <legend className="sr-only">When do you need it?</legend>
+          <label className={urgent === false ? 'ci-choice ci-choice-on' : 'ci-choice'}>
+            <input type="radio" name="conference" checked={urgent === false} onChange={() => setUrgent(false)} />
+            <span>
+              <strong>At the next scheduled conference</strong>
+              <span className="fine">Only {team.surgeon ?? 'your flight surgeon'} is told.</span>
+            </span>
           </label>
-          <input
-            id="sl-exercise"
-            type="range"
-            min={0}
-            max={180}
-            step={15}
-            value={exercise ?? 90}
-            onChange={(e) => setExercise(Number(e.target.value))}
-            onClick={(e) => exercise === null && setExercise(Number(e.currentTarget.value))}
-          />
-          <div className="ends">
-            <span>None</span>
-            <span>3 h</span>
-          </div>
-        </div>
-        <p className="why">
-          Why we ask: in spaceflight, weight-bearing bones lose on average 1 to 1.5% of their mineral density a month (NASA), and exercise is the
-          countermeasure; ISS crews exercise about two hours a day. Shown only on your dashboard, never judged. Optional.
-        </p>
-      </Card>
-
-      <Card title="Reaction test" aside={<Origin kind="live" />}>
-        <ReactionTest result={reaction} onResult={setReaction} />
-        <p className="why">Why we ask: {SPEC.reaction.whyWeAsk} Optional in the demo.</p>
-      </Card>
-
-      <Card title="One more question">
-        <label className="tick safety">
-          <input type="checkbox" checked={safety} onChange={(e) => setSafety(e.target.checked)} />
-          <span>I am not safe, or I need to talk to someone now</span>
-        </label>
-        <p className="why">
-          If you tick this, the game steps out of the way and your crew medical officer and flight surgeon are told privately and
-          immediately. It never appears on the crew board.
-        </p>
-      </Card>
-
-      {unset.length > 0 && (
-        <p className="fine unset-note">
-          {unset.length} {unset.length === 1 ? 'slider is' : 'sliders are'} not set.{' '}
-          <button type="button" className="link" onClick={restAsUsual}>
-            Set {unset.length === 1 ? 'it' : 'them'} to my usual
+          <label className={urgent === true ? 'ci-choice ci-choice-on ci-choice-urgent' : 'ci-choice'}>
+            <input type="radio" name="conference" checked={urgent === true} onChange={() => setUrgent(true)} />
+            <span>
+              <strong>Urgent: now</strong>
+              <span className="fine">
+                {team.medical ?? 'The crew medical officer'} on board is told at once; {team.surgeon ?? 'the flight surgeon'} in {delay}.
+              </span>
+            </span>
+          </label>
+          <button
+            type="button"
+            className={urgent ? 'btn btn-primary btn-urgent' : 'btn btn-primary'}
+            disabled={urgent === null}
+            onClick={() => urgent !== null && s.requestConference(crewId, urgent)}
+          >
+            Send request
           </button>
-        </p>
+        </fieldset>
       )}
-      <button type="button" className="btn btn-primary btn-wide" onClick={submit} disabled={unset.length > 0}>
-        Submit check-in
-      </button>
+    </Card>
+  )
+}
+
+function Receipt({ crewId, wearable, reaction, onChange }: { crewId: string; wearable: WearableReading | null; reaction: ReactionResult | null; onChange: () => void }) {
+  const s = useStore()
+  const [helpOpen, setHelpOpen] = useState(false)
+  const sent = s.checkIns.find((c) => c.crewId === crewId && c.day === s.today && !c.simulated)
+  if (!sent) return null
+  const ratings: RatingKey[] = RATINGS.map((r) => r.key)
+  return (
+    <div className="stack checkin">
+      <Card title={<Mark tone="ok">Checked in, day {s.today}</Mark>} aside={<span className="origin">Saved in this browser</span>}>
+        <dl className="ci-receipt">
+          {ratings.map((k) => (
+            <div key={k}>
+              <dt>{SPEC[k].label}</dt>
+              <dd>{sent[k]}/10</dd>
+            </div>
+          ))}
+          <div>
+            <dt>Symptoms</dt>
+            <dd>{sent.symptoms.length ? sent.symptoms.map(symptomLabel).join(', ') : 'None'}</dd>
+          </div>
+          <div>
+            <dt>Reaction test</dt>
+            <dd>{reaction ? `${Math.round(reaction.meanMs)} ms average` : 'Not taken'}</dd>
+          </div>
+          <div>
+            <dt>Slept (wearable)</dt>
+            <dd>{wearable?.sleepHours != null ? hoursText(wearable.sleepHours) : 'No reading'}</dd>
+          </div>
+        </dl>
+        <p className="muted">
+          Compared with your own normal, never with anyone else's. Your flight surgeon sees your answers only if something stays off your usual
+          for {RULES.persistDays} days, or if you make an urgent conference request.
+        </p>
+        <div className="row">
+          <button type="button" className="btn btn-primary" onClick={() => s.setScreen('me')}>
+            See my day
+          </button>
+          <button type="button" className="btn btn-quiet" onClick={onChange}>
+            Change today's answers
+          </button>
+        </div>
+      </Card>
+      <ConferenceCard crewId={crewId} open={helpOpen} onOpen={() => setHelpOpen(true)} />
     </div>
   )
 }

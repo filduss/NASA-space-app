@@ -6,7 +6,8 @@ import type { AccountsFile, BacktestFile, CabinFile, CrewFile } from './data/typ
 import { runEngine } from './engine/escalation.ts'
 import { MISSIONS, type MissionKey, type MissionSetting } from './engine/mission.ts'
 import type { Viewer } from './engine/privacy.ts'
-import type { CheckIn, DayResult, SurgeonSummary } from './engine/types.ts'
+import type { CheckIn, ConferenceRequest, DayResult, SurgeonSummary } from './engine/types.ts'
+import { wearableReading, type WearableReading } from './data/wearable.ts'
 
 export type Role = Viewer
 export type Screen = 'board' | 'checkin' | 'me' | 'ship' | 'inbox' | 'summary'
@@ -30,17 +31,20 @@ function fromUrl(): { day: number; screen: Screen | null; mission: MissionKey | 
 interface Local {
   liveCheckIns: CheckIn[]
   shareWatch: Record<string, boolean>
+  /** Conference requests made in this browser. */
+  requests: ConferenceRequest[]
 }
-const EMPTY: Local = { liveCheckIns: [], shareWatch: {} }
+const EMPTY: Local = { liveCheckIns: [], shareWatch: {}, requests: [] }
 const STORE_KEY = 'shipshape.v1'
 
 function loadLocal(): Local {
   try {
     const raw = localStorage.getItem(STORE_KEY)
     if (!raw) return EMPTY
-    // Only the fields this version keeps: older saves also carried XP events and quest ticks.
+    // Only the fields this version keeps: older saves also carried XP events and quest ticks, and
+    // check-ins with a safetyFlag (now a conference request, so an old flag is dropped, not converted).
     const saved = JSON.parse(raw) as Partial<Local>
-    return { liveCheckIns: saved.liveCheckIns ?? [], shareWatch: saved.shareWatch ?? {} }
+    return { liveCheckIns: saved.liveCheckIns ?? [], shareWatch: saved.shareWatch ?? {}, requests: saved.requests ?? [] }
   } catch {
     return EMPTY
   }
@@ -91,6 +95,10 @@ interface Store {
   /** In memory only, gone on reload: the live reaction test is never stored. */
   liveReaction: Record<string, ReactionResult>
   submitCheckIn: (c: CheckIn, reaction: ReactionResult | null) => void
+  /** Sends a conference request on its own, without the check-in. A second request the same day can only make it urgent. */
+  requestConference: (crewId: string, urgent: boolean) => void
+  /** The wearable's reading for a person today; null when it has none. */
+  wearableToday: (crewId: string) => WearableReading | null
   toggleShare: (crewId: string) => void
   reset: () => void
 }
@@ -218,8 +226,8 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
   }, [data, local.liveCheckIns, today])
 
   const results = useMemo(
-    () => runEngine({ crewIds, checkIns, cabin: data.cabin.daily, fromDay: firstDay, toDay: today, shareWatch: local.shareWatch }),
-    [crewIds, checkIns, data, firstDay, today, local.shareWatch],
+    () => runEngine({ crewIds, checkIns, cabin: data.cabin.daily, fromDay: firstDay, toDay: today, shareWatch: local.shareWatch, requests: local.requests }),
+    [crewIds, checkIns, data, firstDay, today, local.shareWatch, local.requests],
   )
   const todayResult = results[results.length - 1]
   const summaries = useMemo(() => results.flatMap((r) => r.summaries).reverse(), [results])
@@ -238,6 +246,19 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
       return next
     })
   }, [])
+
+  const requestConference = useCallback(
+    (crewId: string, urgent: boolean) => {
+      setLocal((l) => {
+        const same = l.requests.find((r) => r.crewId === crewId && r.day === today)
+        if (same && (same.urgent || !urgent)) return l
+        return { ...l, requests: [...l.requests.filter((r) => r !== same), { crewId, day: today, urgent }] }
+      })
+    },
+    [today],
+  )
+
+  const wearableToday = useCallback((id: string) => wearableReading(data.crew, id, today), [data, today])
 
   const toggleShare = useCallback((id: string) => {
     setLocal((l) => ({ ...l, shareWatch: { ...l.shareWatch, [id]: !l.shareWatch[id] } }))
@@ -272,6 +293,8 @@ function Ready({ data, children }: { data: Data; children: ReactNode }) {
     local,
     liveReaction,
     submitCheckIn,
+    requestConference,
+    wearableToday,
     toggleShare,
     reset,
   }

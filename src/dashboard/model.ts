@@ -108,7 +108,7 @@ export function zoneStates(me: PersonStatus, cabin: CabinStatus, exercise?: Exer
       raise(INDICATOR_ZONE[key], l, SPEC[key].label)
     }
   }
-  if (a.safety) raise('head', 'alert', 'Asked to talk to someone')
+  if (me.conference === 'urgent') raise('head', 'alert', 'Asked for an urgent conference')
   if (exercise?.lapse) {
     raise('core', 'watch', exerciseWhy(exercise))
     raise('limbs', 'watch', exerciseWhy(exercise))
@@ -131,8 +131,10 @@ export interface Notice {
 export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, exercise?: ExerciseWeek): Notice[] {
   const out: Notice[] = []
   const a = me.assessment
-  if (a.safety) {
-    out.push({ id: 'safety', level: 'alert', title: 'Help is on the way', body: `Your crew medical officer was told privately. Message to the flight surgeon: ${delayText(delaySec)} to Earth.` })
+  if (me.conference === 'urgent') {
+    out.push({ id: 'urgent', level: 'alert', title: 'Help is on the way', body: `Your crew medical officer was told privately. Your request to the flight surgeon: ${delayText(delaySec)} to Earth.` })
+  } else if (me.conference === 'routine') {
+    out.push({ id: 'conference', level: 'ok', title: 'Conference requested', body: `Your flight surgeon gets the request in ${delayText(delaySec)} and will take it at the next scheduled conference.` })
   }
   if (me.tier === 3) {
     out.push({
