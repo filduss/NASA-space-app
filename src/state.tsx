@@ -145,7 +145,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  if (error) return <p className="boot">Could not load the data files ({error}). Run <code>npm run data</code>.</p>
+  if (error)
+    return (
+      <div className="boot" role="alert">
+        <h1 className="boot-title">Shipshape could not load its data</h1>
+        <p>The connection may have dropped while the page was loading.</p>
+        <p className="boot-actions">
+          <button type="button" className="btn btn-primary" onClick={() => window.location.reload()}>
+            Try again
+          </button>
+        </p>
+        <p className="fine boot-detail">
+          {error}. Running from source? <code>public/data/</code> is committed; <code>npm run data</code> rebuilds it.
+        </p>
+      </div>
+    )
   if (!data) return <p className="boot">Loading…</p>
   return <Ready data={data}>{children}</Ready>
 }

@@ -6,6 +6,7 @@ import { appPath, pageOf } from './auth/paths.ts'
 import { RequireUser } from './auth/RequireUser.tsx'
 import { StoreProvider } from './state.tsx'
 import { ChallengePage } from './ui/Challenge.tsx'
+import { ErrorBoundary } from './ui/ErrorBoundary.tsx'
 import './styles.css'
 
 // Five pages, no router: "/" is the login with the judge's tour, /challenge the public challenge page,
@@ -17,16 +18,18 @@ const page = pageOf(appPath(window.location.pathname, import.meta.env.BASE_URL))
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>
-    <StoreProvider>
-      <Suspense fallback={<p className="boot">Loading…</p>}>
-        {page === 'login' ? (
-          <Login />
-        ) : page === 'challenge' ? (
-          <ChallengePage />
-        ) : (
-          <RequireUser page={page}>{page === 'dashboard' ? <Dashboard /> : <App page={page} />}</RequireUser>
-        )}
-      </Suspense>
-    </StoreProvider>
+    <ErrorBoundary>
+      <StoreProvider>
+        <Suspense fallback={<p className="boot">Loading…</p>}>
+          {page === 'login' ? (
+            <Login />
+          ) : page === 'challenge' ? (
+            <ChallengePage />
+          ) : (
+            <RequireUser page={page}>{page === 'dashboard' ? <Dashboard /> : <App page={page} />}</RequireUser>
+          )}
+        </Suspense>
+      </StoreProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )

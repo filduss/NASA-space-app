@@ -88,9 +88,26 @@ input {
 }
 
 .boot {
+  max-width: 560px;
+  margin: 0 auto;
   padding: 48px 16px;
   text-align: center;
   color: var(--ink-2);
+}
+.boot-title {
+  margin: 0 0 8px;
+  font-size: 22px;
+  color: var(--ink);
+}
+.boot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 20px 0;
+}
+.boot-detail {
+  overflow-wrap: anywhere;
 }
 /* The bar runs edge to edge; everything else sits in a centred column. */
 .app {
