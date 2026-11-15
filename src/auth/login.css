@@ -324,6 +324,9 @@ body.login-body {
   color: var(--l-red);
   font-size: 14px;
 }
+.login-msg-busy {
+  color: var(--l-ink-2);
+}
 
 .login-actions {
   display: flex;

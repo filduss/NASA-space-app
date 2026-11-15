@@ -221,8 +221,9 @@ export function Login() {
               onChange={(e) => onChange(e.target.value)}
               aria-describedby="pin-msg"
             />
-            <p id="pin-msg" className="login-msg" role="status" aria-live="polite">
-              {locked ? `${message ?? 'Locked.'} Try again in ${mmss(lockedUntil - now)}.` : busy ? null : message}
+            {/* The check takes about a second (PBKDF2) and the dots have cleared by then, so it says so. */}
+            <p id="pin-msg" className={busy && !locked ? 'login-msg login-msg-busy' : 'login-msg'} role="status" aria-live="polite">
+              {locked ? `${message ?? 'Locked.'} Try again in ${mmss(lockedUntil - now)}.` : busy ? 'Checking…' : message}
             </p>
             <div className="login-keypad" role="group" aria-label="PIN keypad">
               {KEYS.map((k, i) =>
