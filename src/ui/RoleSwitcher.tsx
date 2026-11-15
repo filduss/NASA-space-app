@@ -14,7 +14,8 @@ const GOLDEN: { day: number; label: string }[] = [
   { day: 223, label: 'Day 3 to Earth' },
 ]
 
-export function RoleSwitcher() {
+/** `days` false leaves out the mission day and golden path, for the demo dock that has its own. */
+export function RoleSwitcher({ days = true }: { days?: boolean }) {
   const s = useStore()
   const [min, max] = s.dayRange
   // Only the views this login may take on this page (viewsFor). Other people's views need their login.
@@ -48,34 +49,38 @@ export function RoleSwitcher() {
           <output className="field-fixed">{label(views[0])}</output>
         </div>
       )}
-      <div className="field">
-        <span>Mission day</span>
-        <div className="stepper">
-          <button type="button" onClick={() => step(-1)} disabled={s.today <= min} aria-label="Previous day">
-            ‹
-          </button>
-          <output aria-live="polite">{s.today}</output>
-          <button type="button" onClick={() => step(1)} disabled={s.today >= max} aria-label="Next day">
-            ›
-          </button>
-        </div>
-      </div>
-      <div className="field">
-        <span>Golden path</span>
-        <div className="chips">
-          {GOLDEN.map((g) => (
-            <button
-              type="button"
-              key={g.day}
-              className={`chip${s.today === g.day ? ' chip-on' : ''}`}
-              onClick={() => s.setToday(g.day)}
-              title={`Jump to mission day ${g.day}`}
-            >
-              {g.day} · {g.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      {days && (
+        <>
+          <div className="field">
+            <span>Mission day</span>
+            <div className="stepper">
+              <button type="button" onClick={() => step(-1)} disabled={s.today <= min} aria-label="Previous day">
+                ‹
+              </button>
+              <output aria-live="polite">{s.today}</output>
+              <button type="button" onClick={() => step(1)} disabled={s.today >= max} aria-label="Next day">
+                ›
+              </button>
+            </div>
+          </div>
+          <div className="field">
+            <span>Golden path</span>
+            <div className="chips">
+              {GOLDEN.map((g) => (
+                <button
+                  type="button"
+                  key={g.day}
+                  className={`chip${s.today === g.day ? ' chip-on' : ''}`}
+                  onClick={() => s.setToday(g.day)}
+                  title={`Jump to mission day ${g.day}`}
+                >
+                  {g.day} · {g.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
       <label className="field">
         <span>Mission</span>
         <select value={s.mission.key} onChange={(e) => s.setMission(e.target.value as MissionKey)}>

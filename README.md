@@ -61,7 +61,7 @@ The login is a privacy gate for a demo, not security: there is no server, so any
 - **/dashboard**: the logged-in person's dashboard on a 3D skeleton. Zones turn orange when something drifts from their own normal and red when it lasts to day 3 or cabin CO₂ is over the limit. Its demo days are the crew app's: 212 (CO₂ starts to climb), 213 (cabin high, Chen fine), 221 (air normal, Chen still off) and 223 (day 3); `?day=221` opens a specific day. Chen (PIN 3333) is the one to follow. Tap a vital tile to open it larger, with ranges from one day to the whole mission so far and the flagged days marked.
 - **/challenge** (no login): how the demo answers the challenge's five questions, the backtest evidence and the Antarctic case. Each answer has a button that opens the screen that shows it.
 - **/checkin**: the logged-in crew member's morning check-in. Their status against their own normal is on their dashboard. The check-in takes about a minute: a simulated wearable has measured last night's sleep and yesterday's exercise, shown but never asked, and the person taps five 0-10 ratings (sleep quality, fatigue, irritability, stress, mood) and their symptoms. From the check-in they can also ask for a conference with the flight surgeon, routine or urgent. The wearable's heart rate, HRV, blood oxygen, breathing and skin temperature are shown for information on the check-in and the dashboard; no rule uses them yet.
-- **/app**: the crew app, for Dana and Mira. Use the **Golden path** control: day 212 (all OK), 213 (CO₂ rises, "Likely the ship, not you"), 221 (air back to normal, one person still off), 223 (day 3, summary to the flight surgeon). **Mission** switches between the ISS, the lunar surface, Mars transit and an Antarctic station; it changes the delay to Earth and the radiation card on the Ship screen, never the rules. The crew board's **crew timeline** shows 14 days of cabin CO₂, how many crew drift, and a row per person; tap a day to read it. Log in as Mira for the same screens plus **Summaries**: on day 223 Chen's day-3 summary arrives, with times in Houston.
+- **/app**: the crew app, for Dana and Mira. Use the **demo dock** at the bottom of the screen: day 212 (all OK), 213 (CO₂ rises, "Likely the ship, not you"), 221 (air back to normal, one person still off), 223 (day 3, summary to the flight surgeon). **Mission**, under the dock's settings button, switches between the ISS, the lunar surface, Mars transit and an Antarctic station; it changes the delay to Earth and the radiation card on the Ship screen, never the rules. The crew board's **crew timeline** shows 14 days of cabin CO₂, how many crew drift, and a row per person; tap a day to read it. Log in as Mira for the same screens plus **Summaries**: on day 223 Chen's day-3 summary arrives, with times in Houston.
 
 ## Rebuild the data
 
@@ -79,7 +79,7 @@ python3 scripts/snapshot_eda.py --verify
 
 ```
 src/engine/    baseline.ts  deviation.ts  shipOrMe.ts  escalation.ts  privacy.ts  gravity.ts  mission.ts  config.ts
-src/ui/        CrewBoard  CrewTimeline  ShipAlert  FollowUp  Radiation  Medical  CheckInScreen  ReactionTest  Challenge  RoleSwitcher  ErrorBoundary
+src/ui/        CrewBoard  CrewTimeline  ShipAlert  FollowUp  Radiation  Medical  CheckInScreen  ReactionTest  Challenge  RoleSwitcher  DemoDock  Toolbar  ErrorBoundary
 src/auth/      Login  TourLink  RequireUser  demo.ts  pin.ts  session.ts  paths.ts
 src/dashboard/ Dashboard  SkeletonView  ChartSheet  model.ts  history.ts
 src/data/      types.ts  wearable.ts

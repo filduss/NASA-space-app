@@ -1,45 +1,58 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { hrefOf } from '../auth/paths.ts'
-import { mayOpen, type User } from '../auth/session.ts'
+import type { User } from '../auth/session.ts'
 import { vitalLines } from '../data/wearable.ts'
 import { exerciseWeek } from '../engine/gravity.ts'
 import { useStore } from '../state.tsx'
 import { symptomLabel } from '../ui/text.ts'
+import { DemoDock } from '../ui/DemoDock.tsx'
+import { Toolbar } from '../ui/Toolbar.tsx'
 import { ChartSheet, type ChartTarget } from './ChartSheet.tsx'
 import { Sparkline } from './charts.tsx'
 import type { RangeKey } from './history.ts'
 import { LEVEL_WORD, LevelIcon } from './LevelIcon.tsx'
 import { notices, verdict, vitals, zoneStates, ZONES, type Notice, type Vital, type VerdictSide, type ZoneKey } from './model.ts'
 import { SkeletonView } from './SkeletonView.tsx'
-import { DemoDock } from './DemoDock.tsx'
 import './dashboard.css'
 
 // Personal dashboard of the logged-in crew member, and only theirs: nobody opens another
 // person's dashboard. The demo's day controls live apart from it, in DemoDock.
 const TREND_DAYS = 14
 
-/** Toolbar glyphs, drawn in the spirit of SF Symbols: one stroke weight, rounded ends. */
-function NavIcon({ kind }: { kind: 'checkin' | 'app' | 'logout' }) {
+type CheckInState = 'todo' | 'simulated' | 'done'
+
+const CHECK_IN_TEXT: Record<CheckInState, { title: string; sub: string }> = {
+  todo: { title: 'Check in', sub: 'Not done today · about a minute' },
+  simulated: { title: 'Check in', sub: 'Today’s came from the simulator' },
+  done: { title: 'Checked in today', sub: 'View or change your answers' },
+}
+
+/** The daily check-in, the one thing the dashboard asks of the person: a large card in the left
+ *  column, filled blue until today's is sent, then quiet with a done mark. */
+function CheckInCard({ state, day }: { state: CheckInState; day: number }) {
+  const text = CHECK_IN_TEXT[state]
   return (
-    <svg className="tbtn-icon" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-      {kind === 'checkin' && (
-        <>
-          <rect x="3.25" y="2.75" width="11.5" height="13" rx="2.5" />
-          <path d="M6.5 2.75v-.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v.5M6.25 9.4l1.8 1.8 3.7-3.9" />
-        </>
-      )}
-      {kind === 'app' && (
-        <>
-          <rect x="1.75" y="4.75" width="14.5" height="10.5" rx="2.5" />
-          <path d="M6.5 4.75v-1a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1M9 7.6v5M6.5 10.1h5" />
-        </>
-      )}
-      {kind === 'logout' && (
-        <>
-          <path d="M7.5 2.75H4.75a2 2 0 0 0-2 2v8.5a2 2 0 0 0 2 2H7.5M12 5.5L15.25 9 12 12.5M15 9H7" />
-        </>
-      )}
-    </svg>
+    <a className={`cta cta-${state}`} href={hrefOf('checkin', import.meta.env.BASE_URL, `?day=${day}`)}>
+      <span className="cta-icon" aria-hidden="true">
+        {state === 'done' ? (
+          <svg width="22" height="22" viewBox="0 0 22 22">
+            <path d="M5.5 11.5l3.8 3.8 7.2-8" />
+          </svg>
+        ) : (
+          <svg width="22" height="22" viewBox="0 0 18 18">
+            <rect x="3.25" y="2.75" width="11.5" height="13" rx="2.5" />
+            <path d="M6.5 2.75v-.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v.5M6.25 9.4l1.8 1.8 3.7-3.9" />
+          </svg>
+        )}
+      </span>
+      <span className="cta-text">
+        <span className="cta-title">{text.title}</span>
+        <span className="cta-sub">{text.sub}</span>
+      </span>
+      <svg className="cta-chev" width="10" height="16" viewBox="0 0 10 16" aria-hidden="true">
+        <path d="M2 2l6 6-6 6" />
+      </svg>
+    </a>
   )
 }
 
@@ -132,7 +145,10 @@ export function Dashboard() {
   const history = useMemo(() => s.checkIns.filter((c) => c.crewId === crewId), [s.checkIns, crewId])
   const exercise = useMemo(() => exerciseWeek(history, today), [history, today])
   // The (simulated) wearable's vitals: shown for information, never judged.
-  const vitalsToday = history.find((c) => c.day === today)?.watch ?? null
+  const todaysCheckIn = history.find((c) => c.day === today)
+  const vitalsToday = todaysCheckIn?.watch ?? null
+  // Today's check-in: still to do, sent by the person, or filled in by the crew simulator.
+  const checkInState: CheckInState = !todaysCheckIn ? 'todo' : todaysCheckIn.simulated ? 'simulated' : 'done'
   const zones = useMemo(() => zoneStates(me, exercise), [me, exercise])
   const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise), [me, cabin, s.commDelaySec, exercise])
   const tiles = useMemo(() => vitals(me, history, today, TREND_DAYS), [me, history, today])
@@ -198,23 +214,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        <nav className="toolbar" aria-label="Account">
-          <a className="tbtn tbtn-tint" href={hrefOf('checkin', import.meta.env.BASE_URL, `?day=${today}`)} title="Check in">
-            <NavIcon kind="checkin" />
-            <span className="tbtn-label">Check in</span>
-          </a>
-          {mayOpen(user, 'app') && (
-            <a className="tbtn" href={hrefOf('app', import.meta.env.BASE_URL, `?day=${today}`)} title="Crew app">
-              <NavIcon kind="app" />
-              <span className="tbtn-label">Crew app</span>
-            </a>
-          )}
-          <span className="toolbar-sep" aria-hidden="true" />
-          <button type="button" className="tbtn tbtn-quiet" onClick={s.logOut} title="Log out">
-            <NavIcon kind="logout" />
-            <span className="tbtn-label">Log out</span>
-          </button>
-        </nav>
+        <Toolbar user={user} pages={['app']} day={today} onLogOut={s.logOut} />
       </header>
 
       <main className="grid">
@@ -227,6 +227,8 @@ export function Dashboard() {
               <HeroChip label="Cabin air" side={v.ship} />
             </ul>
           </div>
+
+          <CheckInCard state={checkInState} day={today} />
 
           <div className="panel watchp">
             <h2 className="panel-title watch-title">From your wearable</h2>

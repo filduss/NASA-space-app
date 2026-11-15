@@ -107,102 +107,10 @@ body.dash-body {
   line-height: 18px;
 }
 
-/* Toolbar: capsule buttons with a glyph and a word, as in an Apple toolbar. Check in is the
-   tinted (primary) one, the crew app plain, log out quiet until hovered. */
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.tbtn {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 14px 0 11px;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(118, 118, 128, 0.24);
-  color: var(--d-ink);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  text-decoration: none;
-  white-space: nowrap;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.12s ease;
-}
-.tbtn:hover {
-  background: rgba(118, 118, 128, 0.36);
-  text-decoration: none;
-}
-.tbtn:active {
-  transform: scale(0.96);
-}
-.tbtn-tint {
-  background: rgba(10, 132, 255, 0.2);
-  color: #64b5ff;
-}
-.tbtn-tint:hover {
-  background: rgba(10, 132, 255, 0.3);
-}
-.tbtn-quiet {
-  background: transparent;
-  color: var(--d-ink-2);
-}
-.tbtn-quiet:hover {
-  background: rgba(255, 69, 58, 0.14);
-  color: var(--d-red);
-}
-.tbtn-icon {
-  flex: none;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.toolbar-sep {
-  width: 1px;
-  height: 20px;
-  margin: 0 2px;
-  background: var(--d-stroke-2);
-}
-.dash .tbtn:focus-visible {
-  outline: 2px solid var(--d-blue);
-  outline-offset: 2px;
-}
 .bar-meta-short {
   display: none;
 }
-/* A phone keeps the glyphs only; the word stays as the accessible name and the tooltip. */
 @media (max-width: 560px) {
-  .tbtn {
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    justify-content: center;
-  }
-  .tbtn-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-  .toolbar {
-    gap: 6px;
-  }
-  .toolbar-sep {
-    display: none;
-  }
   .bar-meta-long {
     display: none;
   }
@@ -392,6 +300,130 @@ body.dash-body {
 }
 .hero-chip-alert .hero-chip-word {
   color: #ff6961;
+}
+
+/* ---------- check-in card ---------- */
+/* The one action the dashboard asks for. Until today's check-in is sent it is a filled blue card,
+   the strongest surface on the page; once sent it turns quiet, with a green done mark. */
+
+.cta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px 16px 16px;
+  border-radius: var(--d-radius);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(135deg, #0a84ff 0%, #3b6cf6 55%, #5e5ce6 100%);
+  box-shadow:
+    0 10px 30px rgba(10, 132, 255, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  color: #fff;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+.cta:hover {
+  text-decoration: none;
+  filter: brightness(1.08);
+  box-shadow:
+    0 14px 36px rgba(10, 132, 255, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+.cta:active {
+  transform: scale(0.98);
+}
+.cta:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+.cta-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.3);
+}
+.cta svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.cta-text {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.cta-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.cta-sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.82);
+}
+.cta-chev {
+  flex: none;
+  stroke-width: 2 !important;
+  opacity: 0.85;
+  transition: transform 0.2s ease;
+}
+.cta:hover .cta-chev {
+  transform: translateX(3px);
+}
+
+.cta-done {
+  border-color: var(--d-stroke);
+  background: var(--d-surface);
+  backdrop-filter: var(--d-blur);
+  -webkit-backdrop-filter: var(--d-blur);
+  box-shadow: none;
+  color: var(--d-ink);
+}
+.cta-done:hover {
+  filter: none;
+  background: rgba(44, 44, 46, 0.8);
+  box-shadow: none;
+}
+.cta-done .cta-icon {
+  background: rgba(48, 209, 88, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(48, 209, 88, 0.4);
+  color: var(--d-green);
+}
+.cta-done .cta-icon svg {
+  stroke-width: 2.2;
+}
+.cta-done .cta-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+.cta-done .cta-sub {
+  color: var(--d-ink-2);
+}
+.cta-done .cta-chev {
+  color: var(--d-ink-3);
+}
+.cta-done:focus-visible {
+  outline-color: var(--d-blue);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cta,
+  .cta-chev {
+    transition: none;
+  }
+  .cta:active {
+    transform: none;
+  }
 }
 
 /* ---------- 3D stage ---------- */
@@ -1363,329 +1395,39 @@ body.dash-body {
   }
 }
 
-/* ---------- demo dock ---------- */
-/* The demo's controls float apart from the dashboard, marked as help with the same "?" as the
-   judge's tour beside the login: they move the simulated mission calendar and are not part of
-   Shipshape. The page keeps room under its content so the dock never covers it. */
-
+/* Room under the page for the demo dock (src/ui/DemoDock.tsx), so it never covers the content. */
 .dash {
   padding-bottom: 92px;
 }
 .dash:has(.demo-folded) {
   padding-bottom: 76px;
 }
-
-.tag {
-  display: inline-block;
-  padding: 1px 7px;
-  margin-right: 4px;
-  border-radius: 6px;
-  background: rgba(118, 118, 128, 0.24);
-  color: var(--d-ink-2);
-  font-weight: 600;
-}
-.tag-real {
-  background: rgba(10, 132, 255, 0.18);
-  color: #64b5ff;
-}
-
-.demo {
-  position: fixed;
-  left: 50%;
-  bottom: calc(16px + env(safe-area-inset-bottom));
-  z-index: 30;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  max-width: calc(100vw - 32px);
-  padding: 7px 7px 7px 10px;
-  border-radius: 20px;
-  border: 1px solid rgba(100, 181, 255, 0.28);
-  background: rgba(28, 28, 30, 0.82);
-  backdrop-filter: var(--d-blur);
-  -webkit-backdrop-filter: var(--d-blur);
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.55),
-    inset 0 0.5px 0 rgba(255, 255, 255, 0.08);
-  font-size: 13px;
-}
-.demo-mark {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 1px solid rgba(10, 132, 255, 0.5);
-  background: rgba(10, 132, 255, 0.14);
-  color: #64b5ff;
-  font-size: 13px;
-  font-weight: 700;
-}
-.demo-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-right: 10px;
-  border-right: 1px solid var(--d-stroke-2);
-}
-.demo-title {
-  font-weight: 600;
-  line-height: 1.2;
-}
-.demo-sub {
-  color: var(--d-ink-3);
-  font-size: 11px;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-.demo-day {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-.demo-day button,
-.demo-fold,
-.demo-about summary {
-  appearance: none;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(118, 118, 128, 0.24);
-  color: var(--d-ink);
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.demo-day button:hover:not(:disabled),
-.demo-fold:hover,
-.demo-about summary:hover {
-  background: rgba(118, 118, 128, 0.4);
-}
-.demo-day button:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-.demo svg {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.75;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.demo-day-num {
-  min-width: 70px;
-  text-align: center;
-  font-size: 17px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-}
-.demo-day-num span {
-  margin-right: 2px;
-  color: var(--d-ink-3);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-/* The four days of the golden path: a segmented control, numbered like the tour's steps. */
-.demo-scenes {
-  display: flex;
-  padding: 3px;
-  border-radius: 11px;
-  background: rgba(118, 118, 128, 0.24);
-}
-.demo-scene {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 12px 6px 8px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--d-ink-2);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    background 0.25s ease,
-    box-shadow 0.25s ease,
-    color 0.25s ease;
-}
-.demo-scene:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--d-ink);
-}
-.demo-scene-on,
-.demo-scene-on:hover {
-  background: #636366;
-  color: var(--d-ink);
-  box-shadow:
-    0 3px 8px rgba(0, 0, 0, 0.35),
-    0 0 0 0.5px rgba(255, 255, 255, 0.08);
-}
-.demo-scene-n {
-  display: grid;
-  place-items: center;
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  border: 1px solid var(--d-stroke-2);
-  font-size: 10px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-.demo-scene-on .demo-scene-n {
-  border-color: transparent;
-  background: var(--d-blue);
-  color: #fff;
-}
-
-/* About the data: the data labels and the skeleton's licence credit, opened from the dock. */
-.demo-about {
-  position: relative;
-}
-.demo-about summary {
-  list-style: none;
-  color: var(--d-ink-2);
-}
-.demo-about summary::-webkit-details-marker {
-  display: none;
-}
-.demo-about[open] summary {
-  background: rgba(10, 132, 255, 0.2);
-  color: #64b5ff;
-}
-.demo-about-card {
-  position: absolute;
-  right: -46px;
-  bottom: calc(100% + 18px);
-  width: 340px;
-  display: grid;
-  gap: 8px;
-  padding: 16px;
-  border-radius: var(--d-radius-sm);
-  border: 1px solid var(--d-stroke-2);
-  background: rgba(28, 28, 30, 0.94);
-  backdrop-filter: var(--d-blur);
-  -webkit-backdrop-filter: var(--d-blur);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
-  color: var(--d-ink-2);
-  font-size: 12px;
-  line-height: 1.45;
-}
-.demo-about-title {
-  color: var(--d-ink);
-  font-size: 13px;
-  font-weight: 600;
-}
-.demo-credit {
-  padding-top: 8px;
-  border-top: 1px solid var(--d-stroke);
-  color: var(--d-ink-3);
-  font-size: 11px;
-  overflow-wrap: anywhere;
-}
-.demo-fold {
-  color: var(--d-ink-2);
-}
-
-/* Folded: one small capsule in the corner. */
-.demo-folded {
-  left: auto;
-  right: 16px;
-  transform: none;
-  padding: 0;
-  border-radius: 999px;
-}
-.demo-open {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px 6px 6px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--d-ink);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.demo-open-day {
-  color: var(--d-ink-3);
-  font-variant-numeric: tabular-nums;
-}
-.dash .demo button:focus-visible,
-.dash .demo summary:focus-visible {
-  outline: 2px solid var(--d-blue);
-  outline-offset: 2px;
-}
-
-/* Narrower screens: the dock spans the width, the four days on a row of their own. */
 @media (max-width: 900px) {
   .dash {
     padding-bottom: 136px;
   }
-  .demo:not(.demo-folded) {
-    left: 12px;
-    right: 12px;
-    transform: none;
-    max-width: none;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 8px;
+}
+
+/* Phone: the answer and the check-in come first, above the body stage; the wearable panel and
+   the vitals follow it. The left column's cards join the page grid to be ordered. */
+@media (max-width: 760px) {
+  .col-left {
+    display: contents;
   }
-  .demo-head {
-    margin-right: auto;
+  .col-left > .hero {
+    order: 1;
   }
-  .demo-scenes {
+  .col-left > .cta {
+    order: 2;
+  }
+  .col-stage {
+    grid-row: auto;
+    order: 3;
+  }
+  .col-left > :not(.hero):not(.cta) {
+    order: 4;
+  }
+  .col-right {
     order: 5;
-    flex: 1 0 100%;
-  }
-  .demo-scene {
-    flex: 1;
-    min-width: 0;
-    padding: 7px 4px;
-  }
-  .demo-about {
-    position: static;
-  }
-  .demo-about-card {
-    position: fixed;
-    left: 12px;
-    right: 12px;
-    bottom: calc(132px + env(safe-area-inset-bottom));
-    width: auto;
-  }
-}
-@media (max-width: 560px) {
-  .demo-sub {
-    display: none;
-  }
-  .demo-day-num {
-    min-width: 62px;
-  }
-  .demo-scene-n {
-    display: none;
-  }
-  .demo-scene {
-    font-size: 12px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .tbtn:active {
-    transform: none;
   }
 }

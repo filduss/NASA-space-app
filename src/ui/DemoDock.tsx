@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useStore } from '../state.tsx'
+import './demodock.css'
 
-// The demo's own controls, kept apart from the dashboard itself: a floating dock at the bottom
+// The demo's own controls, kept apart from the page itself (the dashboard and the crew app): a floating dock at the bottom
 // of the screen, styled as help like the judge's tour beside the login. It moves the simulated
 // mission calendar; nothing in it is part of Shipshape. The golden path: the cabin CO2 climbs
 // (212), Chen is fine while the cabin is high (213), still off once the air is back to normal
@@ -31,13 +32,30 @@ function writeFolded(folded: boolean) {
   }
 }
 
-export function DemoDock() {
+type Pop = 'about' | 'settings'
+
+/** The demo dock. `settings` is extra demo controls for this page (the crew app's mission and comm
+ *  delay), opened from a button of its own. */
+export function DemoDock({ settings }: { settings?: ReactNode }) {
   const s = useStore()
   const [folded, setFolded] = useState(readFolded)
+  const [pop, setPop] = useState<Pop | null>(null)
   const [lo, hi] = s.dayRange
   const today = s.today
 
   useEffect(() => writeFolded(folded), [folded])
+
+  // Escape closes an open popover.
+  useEffect(() => {
+    if (!pop) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPop(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [pop])
+
+  const toggle = (p: Pop) => setPop((cur) => (cur === p ? null : p))
 
   if (folded) {
     return (
@@ -92,28 +110,48 @@ export function DemoDock() {
         ))}
       </div>
 
-      <details className="demo-about">
-        <summary aria-label="About the data">
+      {settings && (
+        <div className="demo-pop">
+          <button type="button" className="demo-pop-btn" onClick={() => toggle('settings')} aria-expanded={pop === 'settings'} aria-controls="demo-settings" aria-label="Demo settings" title="Demo settings">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M2 4.5h7M12.5 4.5H14M2 11.5h1.5M7 11.5h7" />
+              <circle cx="10.75" cy="4.5" r="1.75" />
+              <circle cx="5.25" cy="11.5" r="1.75" />
+            </svg>
+          </button>
+          {pop === 'settings' && (
+            <div id="demo-settings" className="demo-pop-card" role="group" aria-label="Demo settings">
+              <p className="demo-pop-title">Demo settings</p>
+              {settings}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="demo-pop">
+        <button type="button" className="demo-pop-btn" onClick={() => toggle('about')} aria-expanded={pop === 'about'} aria-controls="demo-about" aria-label="About the data" title="About the data">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
             <circle cx="8" cy="8" r="6.75" />
             <path d="M8 7.2v4.3M8 4.6v.1" />
           </svg>
-        </summary>
-        <div className="demo-about-card">
-          <p className="demo-about-title">About the data</p>
-          <p>
-            <span className="tag">Simulated crew</span> No real person's data.
-          </p>
-          <p>
-            <span className="tag tag-real">Real ISS cabin air</span> CO₂, temperature and humidity, NASA OSDR, {s.data.cabin.meta.mission}, replayed on the mission calendar.
-          </p>
-          <p>Shipshape says "likely" and never diagnoses.</p>
-          <p className="demo-credit">
-            Anatomy: BodyParts3D © The Database Center for Life Science (CC BY 4.0). Modified by open-anatomy-3d (https://github.com/MervinR07/open-anatomy-3d), CC BY 4.0. Skeleton extracted and
-            re-exported. For visualisation only.
-          </p>
-        </div>
-      </details>
+        </button>
+        {pop === 'about' && (
+          <div id="demo-about" className="demo-pop-card" role="group" aria-label="About the data">
+            <p className="demo-pop-title">About the data</p>
+            <p>
+              <span className="demo-tag">Simulated crew</span> No real person's data.
+            </p>
+            <p>
+              <span className="demo-tag demo-tag-real">Real ISS cabin air</span> CO₂, temperature and humidity, NASA OSDR, {s.data.cabin.meta.mission}, replayed on the mission calendar.
+            </p>
+            <p>Shipshape says "likely" and never diagnoses.</p>
+            <p className="demo-credit">
+              Anatomy: BodyParts3D © The Database Center for Life Science (CC BY 4.0). Modified by open-anatomy-3d (https://github.com/MervinR07/open-anatomy-3d), CC BY 4.0. Skeleton extracted and
+              re-exported. For visualisation only.
+            </p>
+          </div>
+        )}
+      </div>
 
       <button type="button" className="demo-fold" onClick={() => setFolded(true)} aria-label="Hide demo controls" title="Hide demo controls">
         <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">

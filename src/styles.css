@@ -114,11 +114,20 @@ input {
   --col: 1032px;
   padding-bottom: 48px;
 }
+/* The crew app leaves room under the page for the demo dock (src/ui/DemoDock.tsx). */
+.app:has(> .demo) {
+  padding-bottom: 92px;
+}
+@media (max-width: 900px) {
+  .app:has(> .demo) {
+    padding-bottom: 136px;
+  }
+}
 /* The check-in page is one centred column, the width of the form. */
 .app-narrow {
   --col: 760px;
 }
-.app > :not(.appbar) {
+.app > :not(.appbar):not(.demo) {
   width: min(var(--col), 100% - 48px);
   margin-inline: auto;
 }
@@ -230,38 +239,42 @@ input {
   grid-column: -2;
   justify-self: end;
   display: flex;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-  justify-content: flex-end;
   align-items: center;
-  gap: 4px 14px;
-  font-size: 13px;
-  color: var(--ink-2);
+  gap: 14px;
+  white-space: nowrap;
 }
 .account-who {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  padding-right: 14px;
+  border-right: 1px solid var(--line-2);
+}
+.account-text {
+  display: grid;
+  line-height: 1.2;
+}
+.account-name {
   color: var(--ink);
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
 }
 .account-role {
   color: var(--ink-3);
-  font-weight: 400;
+  font-size: 11px;
 }
 .avatar-sm {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  flex: none;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: linear-gradient(145deg, #5e5ce6, #0a84ff);
   color: #fff;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-}
-.account .link {
-  text-decoration: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
 }
 
 /* ---------- large title ---------- */
@@ -1630,13 +1643,12 @@ details[open] > summary {
     flex: 1 0 auto;
     justify-content: center;
   }
-  .appbar-meta,
-  .account-role {
+  .appbar-meta {
     display: none;
   }
 }
 @media (max-width: 720px) {
-  .app > :not(.appbar) {
+  .app > :not(.appbar):not(.demo) {
     width: calc(100% - 32px);
   }
   .appbar {
@@ -1652,12 +1664,13 @@ details[open] > summary {
   .intro h1 {
     font-size: 30px;
   }
-  .account-who > span:last-child {
-    display: none;
+  .account {
+    gap: 10px;
   }
-  /* The medical officer has three account links; beside them the brand name does not fit on a
-     phone and the avatar used to sit on top of it. The icon stays. */
-  .appbar:has(.account > :nth-child(4)) .appbar-brand > div {
+  .account-who {
+    padding-right: 10px;
+  }
+  .account-text {
     display: none;
   }
   .card,

@@ -1,6 +1,4 @@
 import { useEffect } from 'react'
-import { hrefOf, type Page } from './auth/paths.ts'
-import { mayOpen } from './auth/session.ts'
 import type { AccountRole } from './data/types.ts'
 import { cabinLevel } from './dashboard/model.ts'
 import { useStore, type Role, type Screen } from './state.tsx'
@@ -8,8 +6,10 @@ import { Origin } from './ui/bits.tsx'
 import { CheckInScreen } from './ui/CheckInScreen.tsx'
 import { CrewBoard } from './ui/CrewBoard.tsx'
 import { CmoInbox, SurgeonView } from './ui/Medical.tsx'
+import { DemoDock } from './ui/DemoDock.tsx'
 import { RoleSwitcher } from './ui/RoleSwitcher.tsx'
 import { ShipAlert } from './ui/ShipAlert.tsx'
+import { Toolbar } from './ui/Toolbar.tsx'
 
 const LABELS: Record<Screen, string> = {
   board: 'Crew board',
@@ -29,12 +29,8 @@ const TABS: Record<Role['kind'], Screen[]> = {
   surgeon: ['board', 'inbox', 'ship', 'summary'],
 }
 
-/** Links to the other pages this person may open. */
-const OTHER_PAGES: { page: Page; label: string }[] = [
-  { page: 'dashboard', label: 'My dashboard' },
-  { page: 'checkin', label: 'Check in' },
-  { page: 'app', label: 'Crew app' },
-]
+/** The person's other pages, offered in the toolbar when they may open them. */
+const OTHER_PAGES = ['dashboard', 'checkin', 'app'] as const
 
 export function App({ page }: { page: 'checkin' | 'app' }) {
   const s = useStore()
@@ -79,24 +75,18 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
           </nav>
         )}
 
-        <nav className="account" aria-label="Account">
+        <div className="account">
           <span className="account-who">
             <span className="avatar-sm" aria-hidden="true">
               {me.slice(0, 1)}
             </span>
-            <span>
-              {me} <span className="account-role">· {myRole}</span>
+            <span className="account-text">
+              <span className="account-name">{me}</span>
+              <span className="account-role">{myRole}</span>
             </span>
           </span>
-          {OTHER_PAGES.filter((o) => o.page !== page && s.user && mayOpen(s.user, o.page)).map((o) => (
-            <a key={o.page} href={hrefOf(o.page, import.meta.env.BASE_URL, `?day=${s.today}`)}>
-              {o.label}
-            </a>
-          ))}
-          <button type="button" className="link" onClick={s.logOut}>
-            Log out
-          </button>
-        </nav>
+          {s.user && <Toolbar user={s.user} pages={OTHER_PAGES.filter((p) => p !== page)} day={s.today} onLogOut={s.logOut} />}
+        </div>
       </header>
 
       <section className="intro">
@@ -112,10 +102,14 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
         </span>
       </section>
 
-      <details className="controls">
-        <summary>Demo controls</summary>
-        <RoleSwitcher />
-      </details>
+      {/* The crew app's demo controls float in the dock, as on the dashboard. The check-in page keeps
+          them in a fold: its Send bar sits where the dock would. */}
+      {page === 'checkin' && (
+        <details className="controls">
+          <summary>Demo controls</summary>
+          <RoleSwitcher />
+        </details>
+      )}
 
       {/* Keyed by person and day so forms start fresh when either changes. */}
       <main key={`${crewId ?? s.role.kind}-${s.today}`}>
@@ -125,6 +119,8 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
         {screen === 'inbox' && <CmoInbox />}
         {screen === 'summary' && <SurgeonView />}
       </main>
+
+      {page === 'app' && <DemoDock settings={<RoleSwitcher days={false} />} />}
 
       <footer className="foot">
         <p>
