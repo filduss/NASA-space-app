@@ -2,7 +2,7 @@ import type { CheckIn, SymptomKey } from '../engine/types.ts'
 import type { WearableReading } from '../data/wearable.ts'
 
 // The morning check-in's answers, as plain data, with no React. Every answer starts unset: a rushed
-// check-in must never report "as usual" or "no symptoms" without the person choosing it
+// check-in must never report a rating or "no symptoms" the person did not choose
 // (docs/SPEC.md, "Readings of the plan").
 
 export type RatingKey = 'sleepQuality' | 'fatigue' | 'irritability' | 'stress' | 'mood'
@@ -36,16 +36,6 @@ export function formFrom(existing: CheckIn | undefined): CheckInForm {
   const ratings = {} as CheckInForm['ratings']
   for (const r of RATINGS) ratings[r.key] = live ? live[r.key] : null
   return { ratings, symptoms: live ? [...live.symptoms] : null }
-}
-
-/** A person's usual for each rating (null before there is enough history), as a whole number. */
-export type Usual = Record<RatingKey, number | null>
-
-/** "Set the rest to my usual": one explicit tap fills each unset rating that has a usual. Symptoms have none. */
-export function restToUsual(f: CheckInForm, usual: Usual): CheckInForm {
-  const ratings = { ...f.ratings }
-  for (const r of RATINGS) if (ratings[r.key] === null) ratings[r.key] = usual[r.key]
-  return { ...f, ratings }
 }
 
 /** How many answers are still missing: one per unset rating, one for the symptoms. */

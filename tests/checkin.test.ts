@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { wearableReading } from '../src/data/wearable.ts'
-import { formFrom, left, noSymptoms, rate, restToUsual, toCheckIn, toggleSymptom, type CheckInForm } from '../src/ui/checkInForm.ts'
+import { formFrom, left, noSymptoms, rate, toCheckIn, toggleSymptom, type CheckInForm } from '../src/ui/checkInForm.ts'
 import { checkIn } from './helpers.ts'
 
 describe('wearable reading', () => {
@@ -67,13 +67,6 @@ describe('check-in form', () => {
     expect(left(f)).toBe(6)
   })
 
-  it('"Set the rest to my usual" fills only what is unset, and never the symptoms', () => {
-    const usual = { sleepQuality: 7, fatigue: 3, irritability: 2, stress: 3, mood: null }
-    const f = restToUsual(rate(formFrom(undefined), 'fatigue', 8), usual)
-    expect(f.ratings).toEqual({ sleepQuality: 7, fatigue: 8, irritability: 2, stress: 3, mood: null })
-    expect(f.symptoms).toBeNull()
-    expect(left(f)).toBe(2)
-  })
   it("reopens with the answers sent today, but never pre-fills from the simulator's record", () => {
     const sent = checkIn('anna', 20, { sleepQuality: 4, fatigue: 6, irritability: 5, stress: 7, mood: 3, symptoms: ['nausea'], simulated: false })
     expect(formFrom(sent)).toEqual({ ratings: { sleepQuality: 4, fatigue: 6, irritability: 5, stress: 7, mood: 3 }, symptoms: ['nausea'] })

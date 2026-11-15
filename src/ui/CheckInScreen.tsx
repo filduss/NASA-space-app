@@ -1,5 +1,4 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
-import { RULES } from '../engine/config.ts'
 import { SPEC, SYMPTOMS } from '../engine/deviation.ts'
 import type { SymptomKey } from '../engine/types.ts'
 import type { WearableReading } from '../data/wearable.ts'
@@ -11,37 +10,22 @@ import {
   noSymptoms,
   rate,
   RATINGS,
-  restToUsual,
   toCheckIn,
   toggleSymptom,
   type CheckInForm,
   type Rating,
   type RatingKey,
-  type Usual,
 } from './checkInForm.ts'
 import { ReactionTest } from './ReactionTest.tsx'
 import { delayText, hoursText, symptomLabel } from './text.ts'
 
 const SCALE = Array.from({ length: 11 }, (_, i) => i)
 
-/** The person's usual for each rating: the most recent own-normal median the engine has for them. */
-function useUsual(crewId: string): Usual {
-  const s = useStore()
-  const out = {} as Usual
-  for (const r of RATINGS) {
-    let median: number | null = null
-    for (let i = s.results.length - 1; i >= 0 && median === null; i--) median = s.results[i].people[crewId]?.assessment.indicators[r.key].baseline?.median ?? null
-    out[r.key] = median === null ? null : Math.min(10, Math.max(0, Math.round(median)))
-  }
-  return out
-}
-
 export function CheckInScreen({ crewId }: { crewId: string }) {
   const s = useStore()
   const existing = s.checkIns.find((c) => c.crewId === crewId && c.day === s.today)
   const sentLive = existing && !existing.simulated ? existing : undefined
   const wearable = s.wearableToday(crewId)
-  const usual = useUsual(crewId)
 
   const [form, setForm] = useState<CheckInForm>(() => formFrom(existing))
   const [mode, setMode] = useState<'form' | 'receipt'>(sentLive ? 'receipt' : 'form')
@@ -50,7 +34,6 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
   const helpRef = useRef<HTMLElement>(null)
 
   const missing = left(form)
-  const canFillUsual = RATINGS.some((r) => form.ratings[r.key] === null && usual[r.key] !== null)
 
   const submit = () => {
     const c = toCheckIn(form, { crewId, day: s.today, wearable })
@@ -88,7 +71,7 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
       <Card title="How you feel this morning">
         <div className="ci-ratings">
           {RATINGS.map((r) => (
-            <RatingRow key={r.key} rating={r} value={form.ratings[r.key]} usual={usual[r.key]} onChange={(v) => setForm((f) => rate(f, r.key, v))} />
+            <RatingRow key={r.key} rating={r} value={form.ratings[r.key]} onChange={(v) => setForm((f) => rate(f, r.key, v))} />
           ))}
         </div>
       </Card>
@@ -116,11 +99,6 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
             </>
           )}
         </p>
-        {canFillUsual && (
-          <button type="button" className="link" onClick={() => setForm((f) => restToUsual(f, usual))}>
-            Set the rest to my usual
-          </button>
-        )}
         <button type="button" className="btn btn-primary ci-send" onClick={submit} disabled={missing > 0}>
           {sentLive ? 'Send changes' : 'Send check-in'}
         </button>
@@ -145,8 +123,8 @@ function WearableLine({ wearable }: { wearable: WearableReading | null }) {
   )
 }
 
-/** One 0-10 rating: a radio group of tap targets, unset until chosen, with an explicit "As usual". */
-function RatingRow({ rating, value, usual, onChange }: { rating: Rating; value: number | null; usual: number | null; onChange: (v: number) => void }) {
+/** One 0-10 rating: a radio group of tap targets, unset until chosen. */
+function RatingRow({ rating, value, onChange }: { rating: Rating; value: number | null; onChange: (v: number) => void }) {
   const id = useId()
   const group = useRef<HTMLDivElement>(null)
   // Roving focus: the chosen number, or 0 before anything is chosen, is the one Tab stop.
@@ -181,11 +159,6 @@ function RatingRow({ rating, value, usual, onChange }: { rating: Rating; value: 
         <span id={`${id}-q`} className="ci-question">
           {rating.question}
         </span>
-        {usual !== null && (
-          <button type="button" className={value === usual ? 'ci-usual ci-usual-on' : 'ci-usual'} onClick={() => onChange(usual)} aria-describedby={`${id}-q`}>
-            As usual
-          </button>
-        )}
       </div>
       <div ref={group} className="ci-scale" role="radiogroup" aria-labelledby={`${id}-q`} aria-describedby={`${id}-ends`} onKeyDown={onKey}>
         {SCALE.map((v) => (
@@ -353,11 +326,6 @@ function Receipt({ crewId, reaction, onChange }: { crewId: string; reaction: Rea
             <dd>{sent.sleepHours !== null ? hoursText(sent.sleepHours) : 'No reading'}</dd>
           </div>
         </dl>
-        <p className="muted">
-          Compared with your own normal, never with anyone else's. Your flight surgeon sees your answers only if something stays off your usual
-          for {RULES.persistDays} days, or if you make an urgent conference request. On the crew board, crewmates see when your sleep, fatigue,
-          irritability or symptoms are off your usual; mood and stress only as a count with no names.
-        </p>
         <div className="row">
           <button type="button" className="btn btn-primary" onClick={() => s.setScreen('me')}>
             See my day
