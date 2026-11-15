@@ -223,12 +223,12 @@ export const HRP_MAP: HrpRow[] = [
     item: 'Heart rate, HRV',
     kind: 'Watch, shown only',
     risks: ['cv'],
-    nasa: 'Simulated readings; no rule uses them.',
+    nasa: 'Wearable readings; no rule uses them.',
   },
   {
     item: 'Blood oxygen',
     kind: 'Watch, shown only',
     risks: ['hypoxia'],
-    nasa: 'Simulated readings; no rule uses them.',
+    nasa: 'Wearable readings; no rule uses them.',
   },
 ]

@@ -74,7 +74,7 @@ export function ChartSheet({
         <header className="sheet-head">
           <div>
             <p className="sheet-eyebrow">
-              Vitals <span className="tag">Simulated crew</span>
+              Vitals
             </p>
             <h2 id={titleId} className="sheet-title">
               {body.title}

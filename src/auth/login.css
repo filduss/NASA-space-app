@@ -374,14 +374,6 @@ body.login-body {
   display: grid;
   gap: 4px;
 }
-.login-tag {
-  display: inline-block;
-  padding: 1px 6px;
-  border-radius: 6px;
-  background: rgba(255, 159, 10, 0.16);
-  color: #ff9f0a;
-  font-weight: 600;
-}
 
 .visually-hidden {
   position: absolute;

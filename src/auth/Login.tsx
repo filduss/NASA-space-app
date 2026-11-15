@@ -299,7 +299,7 @@ function Shell({ children }: { children: ReactNode }) {
       <main className="login-main">{children}</main>
       <footer className="login-foot">
         <p>
-          <span className="login-tag">Simulated crew</span> No real person's data. The demo PINs are shown next to each name.
+          The demo PINs are shown next to each name.
         </p>
         <p>
           Your session ends when you close this tab. Shipshape says "likely" and never diagnoses.

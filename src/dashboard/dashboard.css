@@ -94,18 +94,6 @@ body.dash-body {
   font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
-.bar-sim {
-  display: inline-block;
-  vertical-align: 2px;
-  margin-left: 4px;
-  padding: 0 6px;
-  border-radius: 5px;
-  background: rgba(118, 118, 128, 0.24);
-  color: var(--d-ink-2);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 18px;
-}
 
 .bar-meta-short {
   display: none;
@@ -162,13 +150,6 @@ body.dash-body {
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.02em;
-}
-.panel-note {
-  margin-left: auto;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: var(--d-ink-3);
 }
 
 /* ---------- levels ---------- */
@@ -387,8 +368,8 @@ body.dash-body {
   transform: translateX(3px);
 }
 
-/* The last 7 mission days: a filled box with a tick for a check-in, an empty outline for none, a
-   dashed one for today while it is still to do. Shape carries the state; colour only supports it. */
+/* The last 7 mission days: a filled circle for a check-in, an empty one for none. Fill carries the
+   state; colour only supports it. */
 .cta-week {
   display: flex;
   flex-wrap: wrap;
@@ -403,24 +384,14 @@ body.dash-body {
   gap: 5px;
 }
 .cta-day {
-  display: grid;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
   border: 1.5px solid rgba(255, 255, 255, 0.45);
 }
 .cta-day-done {
   border-color: transparent;
   background: rgba(255, 255, 255, 0.92);
-  color: #0a6bd6;
-}
-.cta-day-done svg {
-  stroke-width: 2;
-}
-.cta-day-pending {
-  border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.7);
 }
 .cta-count {
   font-size: 12px;
@@ -438,7 +409,6 @@ body.dash-body {
 .cta-done .cta-day-done {
   border-color: transparent;
   background: var(--d-green);
-  color: #000;
 }
 .cta-done .cta-count {
   color: var(--d-ink-2);
@@ -856,10 +826,6 @@ body.dash-body {
 .watch-title {
   margin-bottom: 2px;
 }
-.watch-sub {
-  font-size: 12px;
-  color: var(--d-ink-3);
-}
 /* One reading per row: name on the left, value on the right, so nothing wraps into the next. */
 .watch-list {
   margin: 12px 0 0;
@@ -1021,12 +987,6 @@ body.dash-body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--d-ink-3);
-}
-.sheet-eyebrow .tag {
-  margin-left: 6px;
-  letter-spacing: 0;
-  text-transform: none;
-  font-size: 11px;
 }
 .sheet-title {
   display: flex;

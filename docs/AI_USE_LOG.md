@@ -35,11 +35,13 @@
 | 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `checkin-cta`: the dashboard's check-in card shows the last check-in and the last 7 days as boxes with a count (a streak was asked for and replaced by the count, per the no-game rule, with the team's agreement); the wearable panel's "rules don't use these yet" note removed | Team review pending |
 | 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `checkin-cta`: the check-in page's "Demo controls" fold replaced by the demo dock, the Send bar kept above it; `RoleSwitcher` reduced to the dock's settings (`src/ui/DemoSettings.tsx`) and the unused stepper and chip styles removed | Team review pending |
 | 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `checkin-cta`: the check-in's Send button floats alone as a large capsule (grey until every answer is in, then blue), without the empty panel around it | Team review pending |
+| 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `checkin-cta`: the one-step demo tip grown into a spotlight walkthrough of each page's main features (`src/ui/Walkthrough.tsx`, `src/ui/walkthroughs.tsx`), ending on the demo dock; elements marked with `data-tour` | Team review pending |
+| 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Branch `checkin-cta`, at the team's request: simulated / real labels removed from every screen (the `Origin` simulated and real chips, the dashboard's "Simulated" tags, footers' data sentences), kept only in the demo dock's "About the data"; CLAUDE.md's labelling rule changed to match; dashboard walkthrough reworded (check-in as the astronaut's input, shapes for colour-blind crew, wearable data); the check-in card's 7 days as filled or empty circles | Team review pending |
 
 ## What AI does not do in the product
 
 - No AI model runs in the app. The ship-or-me decision, tiers and summaries are plain rules and fixed templates.
-- No AI-generated data is presented as real. The crew is produced by a seeded simulator (`scripts/shipshape_sim.py`) and labeled as simulated on every screen.
+- No AI-generated data is presented as real. The crew is produced by a seeded simulator (`scripts/shipshape_sim.py`) and stated as simulated in the demo dock's "About the data"; screens carry no simulated / real labels (team decision, 15 Nov 2026).
 - The cabin CO₂ is real NASA data, downloaded by `scripts/snapshot_eda.py` and stored with checksums.
 
 ## To check by hand

@@ -12,7 +12,7 @@ Built for the NASA Space Apps Challenge 2026, "Create Health Monitoring Software
 
 | Real | Simulated | Estimated |
 | --- | --- | --- |
-| ISS cabin CO₂, temperature and humidity from NASA's Open Science Data Repository (mission RR-7 in the demo, 10 missions in the backtest; source, API URL and SHA-256 on screen), NASA-STD-3001's 3 mmHg CO₂ limit and its temperature and humidity ranges, and published results for real ISS crews (sleep, headaches) set beside the simulated crew | The four-person crew and their wrist-wearable readings (sleep, exercise, heart rate, HRV, blood oxygen, breathing, skin temperature), seeded and labelled as simulated on every screen | Radiation dose for the mission setting, from published measurements, against NASA's 600 mSv career limit |
+| ISS cabin CO₂, temperature and humidity from NASA's Open Science Data Repository (mission RR-7 in the demo, 10 missions in the backtest; source, API URL and SHA-256 on screen), NASA-STD-3001's 3 mmHg CO₂ limit and its temperature and humidity ranges, and published results for real ISS crews (sleep, headaches) set beside the simulated crew | The four-person crew and their wrist-wearable readings (sleep, exercise, heart rate, HRV, blood oxygen, breathing, skin temperature), seeded and simulated (stated in the demo dock's "About the data", not labelled on each screen) | Radiation dose for the mission setting, from published measurements, against NASA's 600 mSv career limit |
 
 **Evidence**: 200 simulated crews over 10 real ISS cabin traces, run through the app's own rules ([SPEC, "Evidence"](docs/SPEC.md#evidence)):
 

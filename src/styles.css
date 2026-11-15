@@ -302,11 +302,6 @@ input {
   line-height: 1.12;
   letter-spacing: -0.03em;
 }
-.origins {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
 
 /* ---------- demo settings (in the demo dock's settings popover) ---------- */
 .switcher {
@@ -454,10 +449,6 @@ input {
   font-weight: 600;
   color: var(--ink-2);
   letter-spacing: 0;
-}
-.origin-real {
-  background: rgba(10, 132, 255, 0.18);
-  color: var(--real-ink);
 }
 .origin-live {
   background: transparent;

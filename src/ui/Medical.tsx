@@ -4,7 +4,7 @@ import { RULES } from '../engine/config.ts'
 import { SPEC } from '../engine/deviation.ts'
 import type { CabinFactor, SurgeonSummary } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
-import { Card, Mark, Origin } from './bits.tsx'
+import { Card, Mark } from './bits.tsx'
 import { checkInAt, houstonTime, shipTime } from './clock.ts'
 import { airLine, causeWords, delayText, fmt, indicatorLineThird, list, mmHg, symptomLabel } from './text.ts'
 
@@ -68,7 +68,7 @@ export function CmoInbox() {
   const items = cmoInbox(r, s.local.shareWatch)
   return (
     <div className="stack">
-      <Card title={`Crew medical officer, day ${s.today}`} aside={<Origin kind="simulated" />}>
+      <Card title={`Crew medical officer, day ${s.today}`}>
         {items.length ? (
           <ul className="inbox">
             {items.map((it, i) => (
@@ -213,7 +213,7 @@ export function SurgeonView() {
   const s = useStore()
   return (
     <div className="stack">
-      <Card title="Flight-surgeon summaries" aside={<Origin kind="simulated">crew</Origin>}>
+      <Card title="Flight-surgeon summaries">
         <p className="muted">
           One page per event, written from fixed templates by the rules engine; no AI wording. It supports your judgement and does not
           replace it. Messages arrive {delayText(s.commDelaySec)} after they are sent.

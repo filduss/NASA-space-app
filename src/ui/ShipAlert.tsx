@@ -4,7 +4,7 @@ import { RULES } from '../engine/config.ts'
 import { shipFollowUp } from '../engine/privacy.ts'
 import type { CabinFactor, CabinStatus } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
-import { Card, Mark, Origin, RiskLinks, Stat } from './bits.tsx'
+import { Card, Mark, RiskLinks, Stat } from './bits.tsx'
 import { LineChart } from './charts.tsx'
 import { ShipBanner } from './CrewBoard.tsx'
 import { FollowUpCard } from './FollowUp.tsx'
@@ -100,7 +100,7 @@ export function ShipAlert() {
       <ShipBanner r={r} />
       {followUp && <FollowUpCard f={followUp} />}
 
-      <Card title="Cabin CO₂" aside={<Origin kind="real">{meta.mission}, NASA OSDR</Origin>}>
+      <Card title="Cabin CO₂">
         <div className="stats">
           <Stat label="Last 24 h" tone={level === 'ok' ? undefined : level} value={mmHg(cabin.co2Mean)} note={cabin.hasData ? `${cabin.hours} of 24 h of data` : 'no usable data'} />
           <Stat label="Cabin's usual" value={mmHg(cabin.baseline)} note={`median of the last ${RULES.cabinBaselineDays} normal days`} />
@@ -160,7 +160,7 @@ export function ShipAlert() {
 
       {/* After the chart: the real CO₂ trace stays right under the banner, and the steps follow the evidence. */}
       {decision.outcome === 'ship' && <WhatNow alertDay={r.shipEpisodeDay} causes={decision.causes} />}
-      <Card title="Cabin temperature and humidity" aside={<Origin kind="real">{meta.mission}, NASA OSDR</Origin>}>
+      <Card title="Cabin temperature and humidity">
         <div className="stats">
           <Stat
             label="Temperature, 24 h"
@@ -267,14 +267,14 @@ export function ShipAlert() {
         </ul>
         {evidence && (
           <p className="fine evidence-line">
-            <Origin kind="simulated">crews</Origin> {evidence}
+            {evidence}
           </p>
         )}
       </Card>
 
       <RadiationCard />
 
-      <Card title="Where the cabin data comes from" aside={<Origin kind="real" />}>
+      <Card title="Where the cabin data comes from">
         <dl className="facts">
           <dt>Source</dt>
           <dd>

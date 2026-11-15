@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import type { AccountRole } from './data/types.ts'
 import { cabinLevel } from './dashboard/model.ts'
 import { useStore, type Role, type Screen } from './state.tsx'
-import { Origin } from './ui/bits.tsx'
 import { CheckInScreen } from './ui/CheckInScreen.tsx'
 import { CrewBoard } from './ui/CrewBoard.tsx'
 import { CmoInbox, SurgeonView } from './ui/Medical.tsx'
@@ -61,7 +60,7 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
         </div>
 
         {tabs.length > 1 && (
-          <nav className="tabs" aria-label="Screens">
+          <nav className="tabs" aria-label="Screens" data-tour="screens">
             {tabs.map((t) => (
               <button key={t} type="button" className={t === screen ? 'tab tab-on' : 'tab'} aria-current={t === screen ? 'page' : undefined} onClick={() => s.setScreen(t)}>
                 {LABELS[t]}
@@ -96,10 +95,6 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
           </p>
           <h1>{LABELS[screen]}</h1>
         </div>
-        <span className="origins">
-          <Origin kind="simulated">crew</Origin>
-          <Origin kind="real">ISS cabin air, {s.data.cabin.meta.mission}</Origin>
-        </span>
       </section>
 
 
@@ -112,13 +107,12 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
         {screen === 'summary' && <SurgeonView />}
       </main>
 
-      <DemoDock settings={<DemoSettings />} />
+      <DemoDock settings={<DemoSettings />} page={page} surgeon={s.role.kind === 'surgeon'} />
 
       <footer className="foot">
         <p>
-          Shipshape says "likely" and never diagnoses; it supports the flight surgeon and never replaces one. The crew is simulated; the
-          cabin CO₂, temperature and humidity are real ISS telemetry from NASA's Open Science Data Repository, replayed on the mission
-          calendar in every setting. Radiation figures are published averages for the chosen setting, not dosimeter readings.
+          Shipshape says "likely" and never diagnoses; it supports the flight surgeon and never replaces one. Radiation figures are
+          published averages for the chosen setting, not dosimeter readings.
         </p>
       </footer>
     </div>

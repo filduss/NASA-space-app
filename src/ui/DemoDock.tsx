@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useStore } from '../state.tsx'
-import { DemoTip, tipSeen } from './DemoTip.tsx'
+import { Walkthrough, walkSeen } from './Walkthrough.tsx'
+import { dockStep, walkKey, walkSteps, type WalkPage } from './walkthroughs.tsx'
 import './demodock.css'
 
 // The demo's own controls, kept apart from the page itself (the dashboard and the crew app): a floating dock at the bottom
@@ -35,9 +36,10 @@ function writeFolded(folded: boolean) {
 
 type Pop = 'about' | 'settings'
 
-/** The demo dock. `settings` is extra demo controls for this page (the crew app's mission and comm
- *  delay), opened from a button of its own. */
-export function DemoDock({ settings }: { settings?: ReactNode }) {
+/** The demo dock. `settings` is extra demo controls for this page (the mission and comm delay),
+ *  opened from a button of its own. `page` picks the walkthrough the "?" opens; it also opens by
+ *  itself the first time a browser shows this page. */
+export function DemoDock({ settings, page, surgeon = false }: { settings?: ReactNode; page: WalkPage; surgeon?: boolean }) {
   const s = useStore()
   const [folded, setFolded] = useState(readFolded)
   const [pop, setPop] = useState<Pop | null>(null)
@@ -58,20 +60,20 @@ export function DemoDock({ settings }: { settings?: ReactNode }) {
 
   const toggle = (p: Pop) => setPop((cur) => (cur === p ? null : p))
 
-  // The one-step tutorial: the first visit shows it after a beat, so the page is seen first.
-  const dockRef = useRef<HTMLElement>(null)
-  const [tip, setTip] = useState(false)
+  // The walkthrough: the first visit to a page opens it after a beat, so the page is seen first.
+  const key = walkKey(page)
+  const [walk, setWalk] = useState(false)
   useEffect(() => {
-    if (tipSeen()) return
+    if (walkSeen(key)) return
     const t = window.setTimeout(() => {
       setFolded(false)
-      setTip(true)
+      setWalk(true)
     }, 700)
     return () => window.clearTimeout(t)
-  }, [])
-  const showTip = () => {
+  }, [key])
+  const showWalk = () => {
     setPop(null)
-    setTip(true)
+    setWalk(true)
   }
 
   if (folded) {
@@ -89,10 +91,10 @@ export function DemoDock({ settings }: { settings?: ReactNode }) {
   }
 
   return (
-    <aside ref={dockRef} className="demo" aria-label="Demo controls, not part of Shipshape">
-      {tip && <DemoTip anchor={dockRef} hasSettings={Boolean(settings)} onClose={() => setTip(false)} />}
+    <aside className="demo" data-tour="demo" aria-label="Demo controls, not part of Shipshape">
+      {walk && <Walkthrough storageKey={key} steps={[...walkSteps(page, surgeon), dockStep(Boolean(settings))]} onClose={() => setWalk(false)} />}
       <div className="demo-head">
-        <button type="button" className="demo-mark demo-mark-btn" onClick={showTip} aria-label="What is this bar?" title="What is this bar?">
+        <button type="button" className="demo-mark demo-mark-btn" onClick={showWalk} aria-label="Show the walkthrough" title="Show the walkthrough">
           ?
         </button>
         <div className="demo-head-text">

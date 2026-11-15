@@ -37,14 +37,15 @@ const MARK_WORD: Record<DayMark, string> = { done: 'checked in', missed: 'no che
 
 /** The daily check-in, the one thing the dashboard asks of the person: a large card in the left
  *  column, filled blue until today's is sent, then quiet with a done mark. Under it, the last 7
- *  mission days, checked in or not, as a plain count (no streak: docs/SPEC.md). */
+ *  mission days as circles, filled for a check-in, empty for none, with a plain count (no streak:
+ *  docs/SPEC.md). */
 function CheckInCard({ state, day, last, week }: { state: CheckInState; day: number; last: number | null; week: { day: number; mark: DayMark }[] }) {
   const done = week.filter((w) => w.mark === 'done').length
   const lastText = lastCheckInText(last, day)
   const title = state === 'done' ? 'Checked in today' : 'Check in'
-  const sub = state === 'simulated' ? `${lastText} (simulator)` : state === 'done' ? 'View or change your answers' : lastText
+  const sub = state === 'done' ? 'View or change your answers' : lastText
   return (
-    <a className={`cta cta-${state}`} href={hrefOf('checkin', import.meta.env.BASE_URL, `?day=${day}`)}>
+    <a className={`cta cta-${state}`} data-tour="checkin" href={hrefOf('checkin', import.meta.env.BASE_URL, `?day=${day}`)}>
       <span className="cta-row">
         <span className="cta-icon" aria-hidden="true">
           {state === 'done' ? (
@@ -69,13 +70,7 @@ function CheckInCard({ state, day, last, week }: { state: CheckInState; day: num
       <span className="cta-week">
         <span className="cta-days" role="img" aria-label={`Checked in on ${done} of the last ${WEEK} days`}>
           {week.map((w) => (
-            <span key={w.day} className={`cta-day cta-day-${w.mark}`} title={`Day ${w.day}: ${MARK_WORD[w.mark]}`}>
-              {w.mark === 'done' && (
-                <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-                  <path d="M2.2 5.3l1.9 1.9 3.8-4.2" />
-                </svg>
-              )}
-            </span>
+            <span key={w.day} className={w.mark === 'done' ? 'cta-day cta-day-done' : 'cta-day'} title={`Day ${w.day}: ${MARK_WORD[w.mark]}`} />
           ))}
         </span>
         <span className="cta-count" aria-hidden="true">
@@ -242,7 +237,7 @@ export function Dashboard() {
           </span>
           <div>
             <p className="bar-name">
-              {name} <span className="bar-sim">Simulated</span>
+              {name}
             </p>
             <p className="bar-meta">
               {s.mission.label} · <span className="bar-meta-long">Mission day</span>
@@ -256,7 +251,7 @@ export function Dashboard() {
 
       <main className="grid">
         <section className="col col-left">
-          <div className={`hero hero-${v.tint}`}>
+          <div className={`hero hero-${v.tint}`} data-tour="answer">
             <h1>{v.title}</h1>
             {v.note && <p>{v.note}</p>}
             <ul className="hero-chips">
@@ -267,9 +262,8 @@ export function Dashboard() {
 
           <CheckInCard state={checkInState} day={today} last={lastCheckIn} week={week} />
 
-          <div className="panel watchp">
+          <div className="panel watchp" data-tour="wearable">
             <h2 className="panel-title watch-title">From your wearable</h2>
-            <p className="watch-sub">Simulated · for information</p>
             {vitalsToday ? (
               <dl className="watch-list">
                 {vitalLines(vitalsToday).map((l) => (
@@ -287,7 +281,7 @@ export function Dashboard() {
         </section>
 
         <section className="col col-stage" aria-label="Body status">
-          <div className="stage">
+          <div className="stage" data-tour="body">
             <SkeletonView zones={zones} focus={focus} onFocus={setFocus} />
             <div className="stage-top">
               <p className="stage-eyebrow">Body status</p>
@@ -315,9 +309,9 @@ export function Dashboard() {
         </section>
 
         <section className="col col-right">
-          <div className="panel">
+          <div className="panel" data-tour="vitals">
             <h2 className="panel-title">
-              Vitals <span className="panel-note">vs. your own normal · {TREND_DAYS} days · sleep from your wearable</span>
+              Vitals
             </h2>
             <div className="tiles">
               {tiles.map((v) => (
@@ -357,7 +351,7 @@ export function Dashboard() {
         />
       )}
 
-      <DemoDock />
+      <DemoDock page="dashboard" />
     </div>
   )
 }

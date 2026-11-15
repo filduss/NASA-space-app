@@ -7,7 +7,7 @@ import { HRP_MAP } from '../data/hrp.ts'
 import type { BacktestScenario, TraceCabin } from '../data/types.ts'
 import { RULES } from '../engine/config.ts'
 import { useStore } from '../state.tsx'
-import { Card, Origin, RiskLinks } from './bits.tsx'
+import { Card, RiskLinks } from './bits.tsx'
 import { list } from './text.ts'
 
 // The public page for judges and visitors, with no login: where the demo answers each of the
@@ -92,7 +92,7 @@ function Evidence() {
   const slow = bt?.scenarios.find((x) => x.slowDecline)?.slowDecline
   const mask = base?.masking
   return (
-    <Card title="Does the rule work? Measured on simulated crews" aside={<Origin kind="simulated">crews</Origin>}>
+    <Card title="Does the rule work? Measured on simulated crews">
       {bt && base ? (
         <>
           <p>
@@ -212,7 +212,7 @@ function CabinTraces() {
   const [tLo, tHi] = RULES.tempComfortC
   const [hLo, hHi] = RULES.rhComfortPct
   return (
-    <Card title={`What ${traces.length} ISS missions show`} aside={<Origin kind="real">NASA OSDR</Origin>}>
+    <Card title={`What ${traces.length} ISS missions show`}>
       <p>
         The rule checks three cabin factors from the same ISS telemetry. Over {sum((c) => c.daysWithData)} real days ({years[0]}–{years.at(-1)}),
         CO₂ was a suspect on {sum((c) => c.suspectDays.co2)} days and over NASA's {RULES.co2LimitMmHg} mmHg limit on {sum((c) => c.co2OverLimitDays)}.
@@ -275,7 +275,7 @@ function CrewVsIss() {
   const share = (v: number) => `${(v * 100).toFixed(1)}%`
   const moreMin = Math.round(((sim.sleepHoursMean - iss.sleepHours.value) * 60) / 10) * 10
   return (
-    <Card title="Simulated crews beside real ISS crews" aside={<Origin kind="simulated">crews</Origin>}>
+    <Card title="Simulated crews beside real ISS crews">
       <p className="muted">
         The crews are simulated, so we set them beside published figures for real ISS crews. The simulator is not tuned to these numbers;
         where they differ, we say so.
@@ -459,10 +459,6 @@ export function ChallengePage() {
           <p className="intro-eyebrow">NASA Space Apps Challenge 2026 · Create Health Monitoring Software for Astronauts on Space Missions</p>
           <h1>How Shipshape answers the challenge</h1>
         </div>
-        <span className="origins">
-          <Origin kind="simulated">crew</Origin>
-          <Origin kind="real">ISS cabin air, {s.data.cabin.meta.mission}</Origin>
-        </span>
       </section>
 
       <main>
@@ -478,8 +474,7 @@ export function ChallengePage() {
 
       <footer className="foot">
         <p>
-          Shipshape says "likely" and never diagnoses; it supports the flight surgeon and never replaces one. The crew is simulated; the cabin
-          CO₂, temperature and humidity are real ISS telemetry from NASA's Open Science Data Repository.
+          Shipshape says "likely" and never diagnoses; it supports the flight surgeon and never replaces one.
         </p>
       </footer>
     </div>

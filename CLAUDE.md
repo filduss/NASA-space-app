@@ -89,7 +89,7 @@ A privacy gate with no server behind it, not security. `docs/SPEC.md` "Login" ha
 These come from the plan and are easy to break by accident:
 
 - **Never rescale or repair real data.** Cabin CO₂ is ISS telemetry (mission RR-7) converted from ppm to mmHg and averaged, nothing else. Invalid samples are dropped, not fixed. Real dates are only relabeled as mission days.
-- **Label simulated data everywhere.** Every screen showing the crew carries the "simulated" marker; real data carries its source.
+- **No simulated / real labels on screens** (team decision, 15 Nov 2026). Which data is simulated and which is real ISS telemetry, with its source, is stated in one place: the demo dock's "About the data" (`src/ui/DemoDock.tsx`). The challenge page still describes the backtest's simulated crews, because that is what the evidence is.
 - **The app says "likely" and never diagnoses.** No AI-generated text in decisions or summaries; summaries come from fixed templates.
 - **Each dashboard and check-in shows only the logged-in person.** The crew app (`/app`) is for the medical officer (as the crew medical officer) and the flight surgeon (the same access, plus summaries); everyone else's data reaches it through `privacy.ts`.
 - **Mood and stress are private.** They appear on the crew board only as a count with no names, and never count toward a ship alert. Among symptoms, only headache counts toward a CO₂ alert, and only congestion and dry or sore eyes toward a humidity alert.

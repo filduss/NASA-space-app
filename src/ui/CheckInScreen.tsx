@@ -62,12 +62,12 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
         </button>
       </div>
 
-      <Card title="Last night" aside={<Origin kind="simulated">from your wearable</Origin>}>
+      <Card title="Last night" tour="last-night">
         <WearableLine wearable={wearable} />
         <RiskLinks risks={INDICATOR_RISKS.sleepHours} />
       </Card>
 
-      <Card title="How you feel this morning">
+      <Card title="How you feel this morning" tour="ratings">
         <div className="ci-ratings">
           {RATINGS.map((r) => (
             <RatingRow key={r.key} rating={r} value={form.ratings[r.key]} onChange={(v) => setForm((f) => rate(f, r.key, v))} />
@@ -75,7 +75,7 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
         </div>
       </Card>
 
-      <Card title="Symptoms since yesterday">
+      <Card title="Symptoms since yesterday" tour="symptoms">
         <SymptomTiles value={form.symptoms} onToggle={(k) => setForm((f) => toggleSymptom(f, k))} onNone={() => setForm(noSymptoms)} />
         <RiskLinks risks={[...new Set(SYMPTOMS.flatMap((sym) => SYMPTOM_RISKS[sym.key]))] as HrpRiskKey[]} />
       </Card>
@@ -86,12 +86,12 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
         <RiskLinks risks={INDICATOR_RISKS.reaction} />
       </Card>
 
-      <section ref={helpRef} id="conference" className="ci-anchor">
+      <section ref={helpRef} id="conference" className="ci-anchor" data-tour="conference">
         <ConferenceCard crewId={crewId} open={helpOpen} onOpen={() => setHelpOpen(true)} />
       </section>
 
       <div className="ci-bar" role="region" aria-label="Send the check-in">
-        <button type="button" className="btn btn-primary ci-send" onClick={submit} disabled={missing > 0}>
+        <button type="button" className="btn btn-primary ci-send" data-tour="send" onClick={submit} disabled={missing > 0}>
           {sentLive ? 'Send changes' : 'Send check-in'}
         </button>
       </div>
