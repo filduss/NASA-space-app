@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   assessPerson,
+  attributionFor,
   boardPerson,
   cabinStatus,
   cmoInbox,
@@ -76,6 +77,22 @@ describe('deviation from own normal', () => {
     expect(a.off).toEqual(['symptoms'])
     expect(a.co2LinkedOff).toEqual([])
   })
+  it('each cabin factor has its own indicators: CO2 headache and fatigue, temperature sleep, humidity dry eyes and nose', () => {
+    const history = steady('anna', 1, 19)
+    const dry = assessPerson('anna', 20, [...history, checkIn('anna', 20, { symptoms: ['congestion', 'eye_strain'] })], newMemory())
+    expect(dry.linkedOff).toEqual({ co2: [], temp: [], rh: ['symptoms'] })
+    const tired = assessPerson('anna', 20, [...history, checkIn('anna', 20, { fatigue: 9, symptoms: ['headache'] })], newMemory())
+    expect(tired.linkedOff).toEqual({ co2: ['fatigue', 'symptoms'], temp: [], rh: [] })
+    const restless = assessPerson('anna', 20, [...history, checkIn('anna', 20, { sleepQuality: 1 })], newMemory())
+    expect(restless.linkedOff).toEqual({ co2: ['sleepQuality'], temp: ['sleepQuality'], rh: [] })
+    expect(restless.co2LinkedOff).toEqual(restless.linkedOff.co2)
+  })
+  it('mood, stress and alertness are linked to no cabin factor', () => {
+    const history = steady('anna', 1, 19)
+    const low = assessPerson('anna', 20, [...history, checkIn('anna', 20, { mood: 0, stress: 10, reactionMs: 400 })], newMemory())
+    expect(low.off).toEqual(expect.arrayContaining(['mood', 'stress', 'reaction']))
+    expect(low.linkedOff).toEqual({ co2: [], temp: [], rh: [] })
+  })
   it('under 6 h on 3 of the last 7 nights is a Watch even when that is the person\'s normal', () => {
     const history: CheckIn[] = []
     for (let d = 1; d <= 20; d++) history.push(checkIn('anna', d, { sleepHours: d % 2 ? 5.5 : 6.5 }))
@@ -125,12 +142,58 @@ describe('cabin CO2', () => {
     expect(s.hasData).toBe(false)
     expect(s.elevated).toBe(false)
     expect(s.lastDataDay).toBe(18)
+    expect(s.temp.value).toBeNull()
+    expect(s.suspects).toEqual([])
+  })
+})
+
+describe('cabin temperature and humidity', () => {
+  const at = (temp: number, rh: number) => cabinStatus(cabin(1, 20, 2.4, {}, { 20: { temp, rh } }), 20, new Set())
+  it('inside NASA\'s comfort range nothing is a suspect', () => {
+    const s = at(22.5, 45)
+    expect(s.temp).toEqual({ value: 22.5, outside: null, overLimit: false })
+    expect(s.rh).toEqual({ value: 45, outside: null, overLimit: false })
+    expect(s.suspects).toEqual([])
+  })
+  it('outside the comfort range (20-25 °C, 30-60%) is a suspect, inside the health limits (18-27 °C, 25-75%)', () => {
+    const cool = at(19, 45)
+    expect(cool.temp).toEqual({ value: 19, outside: 'low', overLimit: false })
+    expect(cool.suspects).toEqual(['temp'])
+    const dry = at(22.5, 28)
+    expect(dry.rh).toEqual({ value: 28, outside: 'low', overLimit: false })
+    expect(dry.suspects).toEqual(['rh'])
+  })
+  it('outside the health limits is over the limit', () => {
+    expect(at(27.5, 45).temp).toEqual({ value: 27.5, outside: 'high', overLimit: true })
+    expect(at(22.5, 20).rh).toEqual({ value: 20, outside: 'low', overLimit: true })
+  })
+  it('the comfort range edges are inside it', () => {
+    expect(at(RULES.tempComfortC[0], RULES.rhComfortPct[1]).suspects).toEqual([])
+  })
+  it('CO2 and the air can be suspects together, in CO2, temperature, humidity order', () => {
+    const s = cabinStatus(cabin(1, 20, 2.4, { 20: 4 }, { 20: { temp: 26, rh: 25 } }), 20, new Set())
+    expect(s.suspects).toEqual(['co2', 'temp', 'rh'])
   })
 })
 
 describe('ship-or-me rule', () => {
-  const person = (crewId: string, off: PersonDay['off'], co2: PersonDay['off'] = off): PersonDay =>
-    ({ crewId, day: 1, checkedIn: true, live: false, indicators: {} as PersonDay['indicators'], off, co2LinkedOff: co2, symptoms: [], safety: false })
+  const person = (
+    crewId: string,
+    off: PersonDay['off'],
+    co2: PersonDay['off'] = off,
+    other: Partial<PersonDay['linkedOff']> = {},
+  ): PersonDay => ({
+    crewId,
+    day: 1,
+    checkedIn: true,
+    live: false,
+    indicators: {} as PersonDay['indicators'],
+    off,
+    co2LinkedOff: co2,
+    linkedOff: { co2, temp: [], rh: [], ...other },
+    symptoms: [],
+    safety: false,
+  })
   const up = cabinStatus(cabin(1, 20, 2.4, { 20: 4 }), 20, new Set())
   const normal = cabinStatus(cabin(1, 20, 2.4), 20, new Set())
 
@@ -158,9 +221,15 @@ describe('ship-or-me rule', () => {
   })
   it('an active ship alert holds while the cabin stays high, and ends when it is back to normal', () => {
     const quiet = [person('a', []), person('b', []), person('c', []), person('d', [])]
-    expect(decideShipOrMe(quiet, up, 4, true).outcome).toBe('ship')
-    expect(decideShipOrMe(quiet, up, 4, true).held).toBe(true)
-    expect(decideShipOrMe(quiet, normal, 4, true).outcome).toBe('none')
+    expect(decideShipOrMe(quiet, up, 4, ['co2']).outcome).toBe('ship')
+    expect(decideShipOrMe(quiet, up, 4, ['co2']).held).toBe(true)
+    expect(decideShipOrMe(quiet, normal, 4, ['co2']).outcome).toBe('none')
+  })
+  it('a CO2 ship alert names CO2 and the crew it covers', () => {
+    const d = decideShipOrMe([person('a', ['symptoms']), person('b', ['sleepQuality']), person('c', []), person('d', [])], up, 4)
+    expect(d.causes).toEqual(['co2'])
+    expect(d.driftingShip).toEqual(['a', 'b'])
+    expect(d.driftingShip).toEqual(d.driftingCo2)
   })
 
   const highForWeeks = cabinStatus(cabin(1, 20, 4.2), 20, new Set())
@@ -168,7 +237,40 @@ describe('ship-or-me rule', () => {
   it('a cabin held over the 3 mmHg limit is still a suspect, even when that level is its usual', () => {
     const d = decideShipOrMe([person('a', ['symptoms']), person('b', ['sleepQuality']), person('c', []), person('d', [])], highForWeeks, 4)
     expect(d.outcome).toBe('ship')
-    expect(decideShipOrMe([person('a', []), person('b', []), person('c', []), person('d', [])], highForWeeks, 4, true).held).toBe(true)
+    expect(decideShipOrMe([person('a', []), person('b', []), person('c', []), person('d', [])], highForWeeks, 4, ['co2']).held).toBe(true)
+  })
+
+  const cold = cabinStatus(cabin(1, 20, 2.4, {}, { 20: { temp: 19 } }), 20, new Set())
+  const dry = cabinStatus(cabin(1, 20, 2.4, {}, { 20: { rh: 27 } }), 20, new Set())
+  it('a cold cabin and half the crew sleeping worse: likely the ship, and the alert names the temperature', () => {
+    const sleepy = (id: string) => person(id, ['sleepQuality'], ['sleepQuality'], { temp: ['sleepQuality'] })
+    const d = decideShipOrMe([sleepy('a'), sleepy('b'), person('c', []), person('d', [])], cold, 4)
+    expect(d.outcome).toBe('ship')
+    expect(d.causes).toEqual(['temp'])
+    expect(d.driftingShip).toEqual(['a', 'b'])
+  })
+  it('dry air and half the crew with a stuffy nose or sore eyes: likely the ship, the humidity', () => {
+    const stuffy = (id: string) => person(id, ['symptoms'], [], { rh: ['symptoms'] })
+    const d = decideShipOrMe([stuffy('a'), stuffy('b'), person('c', []), person('d', [])], dry, 4)
+    expect(d.causes).toEqual(['rh'])
+  })
+  it('headaches in a cold cabin with normal CO2 do not blame the temperature', () => {
+    const d = decideShipOrMe([person('a', ['symptoms']), person('b', ['fatigue']), person('c', []), person('d', [])], cold, 4)
+    expect(d.outcome).toBe('shared')
+    expect(d.causes).toEqual([])
+  })
+  it('an alert held for one factor ends when that factor recovers, even if another is a suspect', () => {
+    const quiet = [person('a', []), person('b', []), person('c', []), person('d', [])]
+    expect(decideShipOrMe(quiet, cold, 4, ['temp']).causes).toEqual(['temp'])
+    expect(decideShipOrMe(quiet, cold, 4, ['co2']).outcome).toBe('none')
+  })
+  it('the person a ship alert covers is the one whose change the blamed factor explains', () => {
+    const sleepy = person('a', ['sleepQuality'], ['sleepQuality'], { temp: ['sleepQuality'] })
+    const headachy = person('b', ['symptoms'])
+    const d = decideShipOrMe([sleepy, person('c', ['sleepHours'], ['sleepHours'], { temp: ['sleepHours'] }), headachy, person('d', [])], cold, 4)
+    expect(d.causes).toEqual(['temp'])
+    expect(attributionFor(sleepy, d)).toBe('ship')
+    expect(attributionFor(headachy, d)).toBe('me')
   })
   it('a 1-hour peak over the limit is not enough when the 24-hour mean is under it', () => {
     expect(spiky.aboveLimit).toBe(true)
@@ -216,6 +318,22 @@ describe('escalation tiers', () => {
       ['person', 'ben'],
       ['person', 'dana'],
     ])
+  })
+
+  it('a cool spell: half the crew sleep worse, the alert names the temperature and holds while the cabin is cool', () => {
+    const air = cabin(1, 30, 2.4, {}, { 21: { temp: 19 }, 22: { temp: 19.2 }, 23: { temp: 19.1 }, 24: { temp: 22.4 } })
+    let all = crewHistory(1, 30)
+    for (const id of ['anna', 'ben']) all = replace(all, checkIn(id, 21, { sleepQuality: 2 }))
+    const res = runEngine({ crewIds: CREW, checkIns: all, cabin: air, fromDay: 1, toDay: 24 })
+    const day = (d: number) => res[d - 1]
+    expect(day(20).decision.outcome).toBe('none')
+    expect(day(21).decision.causes).toEqual(['temp'])
+    expect(day(21).people.anna.attribution).toBe('ship')
+    expect(day(22).decision.held).toBe(true)
+    const summary = day(23).summaries.find((s) => s.kind === 'ship')
+    expect(summary?.causes).toEqual(['temp'])
+    expect(summary?.cabin.temp.value).toBe(19.1)
+    expect(day(24).decision.outcome).toBe('none')
   })
 
   it('the golden path: ship alert, held while CO2 is high, then one person is still off', () => {

@@ -1,4 +1,4 @@
-import type { CabinDay, CheckIn } from '../engine/types.ts'
+import type { CabinDay, CabinFactor, CheckIn } from '../engine/types.ts'
 import type { ShieldKind } from '../game/streak.ts'
 
 export interface CabinHour {
@@ -89,6 +89,33 @@ export interface BacktestScenario {
     toSurgeonShare: number | null
     toSurgeonDelayDaysMedian: number | null
   }
+  /** The accuracy split by the kind of day: a CO2 rise, or one person's own problem. Older files lack it. */
+  accuracyByClass?: Record<'shipDays' | 'personalDays', { accuracy: number | null; alerts: number }>
+  /** Ship-alert crew-days by the cabin factor blamed, and how many had no CO2 rise behind them. Older files lack it. */
+  shipByCause?: Record<CabinFactor, { crewDays: number; falseAlarmCrewDays: number }>
+  /** The simulated crews' own readings, beside published ISS figures (meta.issCrews). Older files lack it. */
+  crewStats?: { checkIns: number; sleepHoursMean: number; sleepUnder6Share: number; headacheDayShare: number; reactionMsMean: number | null }
+}
+
+/** Real days in one ISS trace, counted from the engine's own cabin status. */
+export interface TraceCabin {
+  dates: [string, string]
+  daysWithData: number
+  /** Days at least 1 mmHg above the trace's median: the backtest's ship events. */
+  co2RiseDays: number
+  /** Days with a 24 h mean over NASA's 3 mmHg limit. */
+  co2OverLimitDays: number
+  /** Days each factor was a suspect of the ship-or-me rule. */
+  suspectDays: Record<CabinFactor, number>
+  tempRange: [number, number]
+  rhRange: [number, number]
+}
+
+/** A published figure for real ISS crews. */
+export interface IssCrewFigure {
+  value: number
+  text: string
+  source: string
 }
 
 export interface Masking {
@@ -107,7 +134,16 @@ export interface AlertLoad {
 }
 
 export interface BacktestFile {
-  meta: { crews: number; crewSize: number; seeds: string; generatedAt: string; tuning: string; traces: Record<string, { days: number }> }
+  meta: {
+    crews: number
+    crewSize: number
+    seeds: string
+    generatedAt: string
+    tuning: string
+    traces: Record<string, { days: number; cabin?: TraceCabin }>
+    /** Published figures for real ISS crews. Older files lack it. */
+    issCrews?: { sleepHours: IssCrewFigure; headacheDayShare: IssCrewFigure }
+  }
   definitions: Record<string, string>
   scenarios: BacktestScenario[]
   limits: string[]

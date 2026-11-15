@@ -1,7 +1,7 @@
 {
  "meta": {
   "simulated": true,
-  "generatedAt": "2026-11-14T23:31:16Z",
+  "generatedAt": "2026-11-15T03:22:22Z",
   "generator": "scripts/backtest.py",
   "engine": "src/engine (the app's own rules, run through scripts/engine_cli.ts)",
   "crews": 200,
@@ -11,51 +11,287 @@
   "traces": {
    "RR-1": {
     "days": 42,
-    "source": "NASA OSDR EDA, ISS telemetry (real)"
+    "source": "NASA OSDR EDA, ISS telemetry (real)",
+    "cabin": {
+     "dates": [
+      "2014-09-21",
+      "2014-11-01"
+     ],
+     "daysWithData": 36,
+     "co2RiseDays": 0,
+     "co2OverLimitDays": 3,
+     "suspectDays": {
+      "co2": 5,
+      "temp": 0,
+      "rh": 0
+     },
+     "tempRange": [
+      22.3,
+      23.18
+     ],
+     "rhRange": [
+      34.8,
+      48.9
+     ]
+    }
    },
    "RR-3": {
     "days": 44,
-    "source": "NASA OSDR EDA, ISS telemetry (real)"
+    "source": "NASA OSDR EDA, ISS telemetry (real)",
+    "cabin": {
+     "dates": [
+      "2016-04-14",
+      "2016-05-27"
+     ],
+     "daysWithData": 44,
+     "co2RiseDays": 10,
+     "co2OverLimitDays": 18,
+     "suspectDays": {
+      "co2": 18,
+      "temp": 4,
+      "rh": 0
+     },
+     "tempRange": [
+      18.97,
+      22.0
+     ],
+     "rhRange": [
+      38.0,
+      46.4
+     ]
+    }
    },
    "RR-5": {
     "days": 59,
-    "source": "NASA OSDR EDA, ISS telemetry (real)"
+    "source": "NASA OSDR EDA, ISS telemetry (real)",
+    "cabin": {
+     "dates": [
+      "2017-06-11",
+      "2017-08-08"
+     ],
+     "daysWithData": 59,
+     "co2RiseDays": 0,
+     "co2OverLimitDays": 0,
+     "suspectDays": {
+      "co2": 7,
+      "temp": 0,
+      "rh": 0
+     },
+     "tempRange": [
+      22.15,
+      23.51
+     ],
+     "rhRange": [
+      38.1,
+      44.1
+     ]
+    }
    },
    "RR-6": {
     "days": 53,
-    "source": "NASA OSDR EDA, ISS telemetry (real)"
+    "source": "NASA OSDR EDA, ISS telemetry (real)",
+    "cabin": {
+     "dates": [
+      "2017-12-16",
+      "2018-02-06"
+     ],
+     "daysWithData": 52,
+     "co2RiseDays": 0,
+     "co2OverLimitDays": 0,
+     "suspectDays": {
+      "co2": 23,
+      "temp": 0,
+      "rh": 0
+     },
+     "tempRange": [
+      22.2,
+      23.94
+     ],
+     "rhRange": [
+      38.8,
+      45.0
+     ]
+    }
    },
    "RR-7": {
     "days": 74,
-    "source": "NASA OSDR EDA, ISS telemetry (real)"
+    "source": "NASA OSDR EDA, ISS telemetry (real)",
+    "cabin": {
+     "dates": [
+      "2018-07-07",
+      "2018-09-18"
+     ],
+     "daysWithData": 72,
+     "co2RiseDays": 8,
+     "co2OverLimitDays": 8,
+     "suspectDays": {
+      "co2": 8,
+      "temp": 0,
+      "rh": 0
+     },
+     "tempRange": [
+      21.83,
+      23.44
+     ],
+     "rhRange": [
+      38.4,
+      46.8
+     ]
+    }
    },
    "RR-9": {
     "days": 31,
-    "source": "NASA OSDR EDA, ISS telemetry (real)"
+    "source": "NASA OSDR EDA, ISS telemetry (real)",
+    "cabin": {
+     "dates": [
+      "2018-08-19",
+      "2018-09-18"
+     ],
+     "daysWithData": 31,
+     "co2RiseDays": 0,
+     "co2OverLimitDays": 0,
+     "suspectDays": {
+      "co2": 2,
+      "temp": 0,
+      "rh": 0
+     },
+     "tempRange": [
+      23.43,
+      23.53
+     ],
+     "rhRange": [
+      38.9,
+      43.1
+     ]
+    }
    },
    "RR-10": {
     "days": 27,
-    "source": "NASA OSDR EDA, ISS telemetry (real)"
+    "source": "NASA OSDR EDA, ISS telemetry (real)",
+    "cabin": {
+     "dates": [
+      "2020-12-09",
+      "2021-01-03"
+     ],
+     "daysWithData": 26,
+     "co2RiseDays": 0,
+     "co2OverLimitDays": 0,
+     "suspectDays": {
+      "co2": 0,
+      "temp": 0,
+      "rh": 0
+     },
+     "tempRange": [
+      21.09,
+      23.09
+     ],
+     "rhRange": [
+      35.2,
+      41.8
+     ]
+    }
    },
    "RR-12": {
     "days": 36,
-    "source": "NASA OSDR EDA, ISS telemetry (real)"
+    "source": "NASA OSDR EDA, ISS telemetry (real)",
+    "cabin": {
+     "dates": [
+      "2019-04-23",
+      "2019-05-28"
+     ],
+     "daysWithData": 36,
+     "co2RiseDays": 0,
+     "co2OverLimitDays": 0,
+     "suspectDays": {
+      "co2": 0,
+      "temp": 0,
+      "rh": 0
+     },
+     "tempRange": [
+      20.99,
+      22.88
+     ],
+     "rhRange": [
+      37.8,
+      45.2
+     ]
+    }
    },
    "RR-19": {
     "days": 28,
-    "source": "NASA OSDR EDA, ISS telemetry (real)"
+    "source": "NASA OSDR EDA, ISS telemetry (real)",
+    "cabin": {
+     "dates": [
+      "2019-12-12",
+      "2020-01-07"
+     ],
+     "daysWithData": 27,
+     "co2RiseDays": 0,
+     "co2OverLimitDays": 0,
+     "suspectDays": {
+      "co2": 0,
+      "temp": 0,
+      "rh": 0
+     },
+     "tempRange": [
+      21.17,
+      22.46
+     ],
+     "rhRange": [
+      40.6,
+      43.6
+     ]
+    }
    },
    "RR-23": {
     "days": 34,
-    "source": "NASA OSDR EDA, ISS telemetry (real)"
+    "source": "NASA OSDR EDA, ISS telemetry (real)",
+    "cabin": {
+     "dates": [
+      "2020-12-14",
+      "2021-01-15"
+     ],
+     "daysWithData": 33,
+     "co2RiseDays": 0,
+     "co2OverLimitDays": 0,
+     "suspectDays": {
+      "co2": 0,
+      "temp": 0,
+      "rh": 0
+     },
+     "tempRange": [
+      21.09,
+      23.08
+     ],
+     "rhRange": [
+      36.5,
+      41.8
+     ]
+    }
    }
   },
-  "burnInDays": 10
+  "burnInDays": 10,
+  "issCrews": {
+   "sleepHours": {
+    "value": 6.5,
+    "text": "about 6.5 h a night",
+    "source": "Jones et al. 2022, Sleep 45(3): 24 astronauts on six-month ISS missions, 2,856 Reaction Self-Tests"
+   },
+   "headacheDayShare": {
+    "value": 0.0268,
+    "text": "46 of 1,716 days",
+    "source": "NASA OCHMO-TB-004 Rev D: case reports from ISS Expeditions 2-31, 49 astronauts"
+   }
+  }
  },
  "definitions": {
   "shipEvent": "A run of days whose mean CO₂ is at least 1.0 mmHg above that trace's own median (the rule never sees this median).",
   "individualEvent": "An injected 4-7 day event for one person: sleep loss, a run of headaches, or a stress dip.",
   "shipOrMeAccuracy": "Of the alerts raised during a true event, the share that named the right cause (ship vs. not the ship). Person-days with both kinds of event at once are excluded.",
+  "accuracyByClass": "The same accuracy, split: on days with a CO₂ rise, the share of alerts that said 'the ship'; on days with one person's own problem, the share that did not.",
+  "shipByCause": "Crew-days of ship alerts by the cabin factor they blamed (CO₂, temperature, humidity), and how many of those had no CO₂ rise behind them. No temperature or humidity effect is simulated, so every ship alert that blames them counts as false.",
+  "cabin": "Real days per trace: CO₂ rises (at least 1 mmHg above the trace median), days with a 24 h mean over 3 mmHg, days each factor was a suspect of the rule (CO₂ above its usual or over the limit, temperature or humidity outside NASA's comfort range), and the range of daily temperature and humidity.",
+  "crewStats": "The simulated crews' own readings over every check-in, set beside published figures for real ISS crews (meta.issCrews). The simulator is not tuned to them.",
   "detectionDelay": "Days from an event's first day to its first alert (0 = same day).",
   "falseAlarms": "Alerts on days with no event behind them, allowing one day of grace after an event ends.",
   "missedEvents": "Events that never raised an alert.",
@@ -88,6 +324,37 @@
    "shipOrMeAccuracy": 0.903,
    "accuracyJudgedAlerts": 1184,
    "accuracyMixedExcluded": 59,
+   "accuracyByClass": {
+    "shipDays": {
+     "accuracy": 0.742,
+     "alerts": 260
+    },
+    "personalDays": {
+     "accuracy": 0.948,
+     "alerts": 924
+    }
+   },
+   "shipByCause": {
+    "co2": {
+     "crewDays": 342,
+     "falseAlarmCrewDays": 100
+    },
+    "temp": {
+     "crewDays": 0,
+     "falseAlarmCrewDays": 0
+    },
+    "rh": {
+     "crewDays": 0,
+     "falseAlarmCrewDays": 0
+    }
+   },
+   "crewStats": {
+    "checkIns": 32674,
+    "sleepHoursMean": 7.16,
+    "sleepUnder6Share": 0.02,
+    "headacheDayShare": 0.0215,
+    "reactionMsMean": 265.0
+   },
    "ship": {
     "events": 60,
     "missedShare": 0.233,
@@ -160,6 +427,37 @@
    "shipOrMeAccuracy": 0.878,
    "accuracyJudgedAlerts": 1065,
    "accuracyMixedExcluded": 58,
+   "accuracyByClass": {
+    "shipDays": {
+     "accuracy": 0.344,
+     "alerts": 131
+    },
+    "personalDays": {
+     "accuracy": 0.953,
+     "alerts": 934
+    }
+   },
+   "shipByCause": {
+    "co2": {
+     "crewDays": 197,
+     "falseAlarmCrewDays": 83
+    },
+    "temp": {
+     "crewDays": 0,
+     "falseAlarmCrewDays": 0
+    },
+    "rh": {
+     "crewDays": 0,
+     "falseAlarmCrewDays": 0
+    }
+   },
+   "crewStats": {
+    "checkIns": 32674,
+    "sleepHoursMean": 7.14,
+    "sleepUnder6Share": 0.02,
+    "headacheDayShare": 0.0207,
+    "reactionMsMean": 265.0
+   },
    "ship": {
     "events": 60,
     "missedShare": 0.633,
@@ -232,6 +530,37 @@
    "shipOrMeAccuracy": 0.939,
    "accuracyJudgedAlerts": 1623,
    "accuracyMixedExcluded": 63,
+   "accuracyByClass": {
+    "shipDays": {
+     "accuracy": 0.969,
+     "alerts": 703
+    },
+    "personalDays": {
+     "accuracy": 0.916,
+     "alerts": 920
+    }
+   },
+   "shipByCause": {
+    "co2": {
+     "crewDays": 560,
+     "falseAlarmCrewDays": 202
+    },
+    "temp": {
+     "crewDays": 0,
+     "falseAlarmCrewDays": 0
+    },
+    "rh": {
+     "crewDays": 0,
+     "falseAlarmCrewDays": 0
+    }
+   },
+   "crewStats": {
+    "checkIns": 32674,
+    "sleepHoursMean": 7.19,
+    "sleepUnder6Share": 0.023,
+    "headacheDayShare": 0.0285,
+    "reactionMsMean": 265.0
+   },
    "ship": {
     "events": 60,
     "missedShare": 0.0,
@@ -304,6 +633,37 @@
    "shipOrMeAccuracy": 0.912,
    "accuracyJudgedAlerts": 1013,
    "accuracyMixedExcluded": 42,
+   "accuracyByClass": {
+    "shipDays": {
+     "accuracy": 0.762,
+     "alerts": 248
+    },
+    "personalDays": {
+     "accuracy": 0.961,
+     "alerts": 765
+    }
+   },
+   "shipByCause": {
+    "co2": {
+     "crewDays": 334,
+     "falseAlarmCrewDays": 80
+    },
+    "temp": {
+     "crewDays": 0,
+     "falseAlarmCrewDays": 0
+    },
+    "rh": {
+     "crewDays": 0,
+     "falseAlarmCrewDays": 0
+    }
+   },
+   "crewStats": {
+    "checkIns": 26916,
+    "sleepHoursMean": 7.16,
+    "sleepUnder6Share": 0.019,
+    "headacheDayShare": 0.022,
+    "reactionMsMean": 265.0
+   },
    "ship": {
     "events": 60,
     "missedShare": 0.233,
@@ -376,6 +736,37 @@
    "shipOrMeAccuracy": 0.868,
    "accuracyJudgedAlerts": 1364,
    "accuracyMixedExcluded": 60,
+   "accuracyByClass": {
+    "shipDays": {
+     "accuracy": 0.802,
+     "alerts": 440
+    },
+    "personalDays": {
+     "accuracy": 0.899,
+     "alerts": 924
+    }
+   },
+   "shipByCause": {
+    "co2": {
+     "crewDays": 615,
+     "falseAlarmCrewDays": 291
+    },
+    "temp": {
+     "crewDays": 0,
+     "falseAlarmCrewDays": 0
+    },
+    "rh": {
+     "crewDays": 0,
+     "falseAlarmCrewDays": 0
+    }
+   },
+   "crewStats": {
+    "checkIns": 32674,
+    "sleepHoursMean": 7.16,
+    "sleepUnder6Share": 0.056,
+    "headacheDayShare": 0.0215,
+    "reactionMsMean": 266.0
+   },
    "ship": {
     "events": 60,
     "missedShare": 0.067,
@@ -448,6 +839,37 @@
    "shipOrMeAccuracy": 0.964,
    "accuracyJudgedAlerts": 2608,
    "accuracyMixedExcluded": 261,
+   "accuracyByClass": {
+    "shipDays": {
+     "accuracy": 0.735,
+     "alerts": 185
+    },
+    "personalDays": {
+     "accuracy": 0.981,
+     "alerts": 2423
+    }
+   },
+   "shipByCause": {
+    "co2": {
+     "crewDays": 282,
+     "falseAlarmCrewDays": 76
+    },
+    "temp": {
+     "crewDays": 0,
+     "falseAlarmCrewDays": 0
+    },
+    "rh": {
+     "crewDays": 0,
+     "falseAlarmCrewDays": 0
+    }
+   },
+   "crewStats": {
+    "checkIns": 32632,
+    "sleepHoursMean": 7.17,
+    "sleepUnder6Share": 0.017,
+    "headacheDayShare": 0.0187,
+    "reactionMsMean": 265.0
+   },
    "ship": {
     "events": 60,
     "missedShare": 0.35,
@@ -528,6 +950,37 @@
    "shipOrMeAccuracy": 0.896,
    "accuracyJudgedAlerts": 1117,
    "accuracyMixedExcluded": 59,
+   "accuracyByClass": {
+    "shipDays": {
+     "accuracy": 0.703,
+     "alerts": 249
+    },
+    "personalDays": {
+     "accuracy": 0.952,
+     "alerts": 868
+    }
+   },
+   "shipByCause": {
+    "co2": {
+     "crewDays": 300,
+     "falseAlarmCrewDays": 84
+    },
+    "temp": {
+     "crewDays": 0,
+     "falseAlarmCrewDays": 0
+    },
+    "rh": {
+     "crewDays": 0,
+     "falseAlarmCrewDays": 0
+    }
+   },
+   "crewStats": {
+    "checkIns": 32674,
+    "sleepHoursMean": 7.16,
+    "sleepUnder6Share": 0.02,
+    "headacheDayShare": 0.0163,
+    "reactionMsMean": 265.0
+   },
    "ship": {
     "events": 60,
     "missedShare": 0.3,
@@ -580,8 +1033,9 @@
   }
  ],
  "limits": [
-  "The crew is simulated; only the CO₂ traces are real.",
+  "The crew is simulated; only the cabin traces (CO₂, temperature, humidity) are real.",
   "Headache risk follows the published odds (doubling per 1 mmHg); other CO₂ effect sizes are demo parameters.",
+  "No effect of temperature or humidity is simulated, for want of a published effect size for crews, so the backtest scores what those checks cost, not what they catch.",
   "The rule is not validated on real crews.",
   "Browser reaction times are estimates."
  ]

@@ -1,27 +1,35 @@
 import { RULES } from '../engine/config.ts'
-import { cabinLevel } from '../dashboard/model.ts'
+import { airLevel, cabinLevel, worst } from '../dashboard/model.ts'
 import { privateCount, shipFollowUp, type ShipFollowUp } from '../engine/privacy.ts'
 import type { DayResult } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
 import { CrewTimeline } from './CrewTimeline.tsx'
 import { QuestCard } from './QuestCard.tsx'
-import { mmHg } from './text.ts'
+import { celsius, comfortLine, FACTOR, mmHg, rhPercent } from './text.ts'
 import { XpStrip } from './XpStrip.tsx'
 
 export function ShipBanner({ r, onOpen, followUp }: { r: DayResult; onOpen?: () => void; followUp?: ShipFollowUp | null }) {
   const { cabin, decision } = r
-  // Orange or red follows the same cabin level as the personal dashboard.
-  const level = cabinLevel(cabin)
+  // Orange or red follows the same cabin levels as the personal dashboard.
+  const level = worst(cabinLevel(cabin), airLevel(cabin))
+  const offAir = (['temp', 'rh'] as const).find((f) => cabin[f].outside)
   let tone: 'ok' | 'watch' | 'alert' | 'idle' = level
   let head = 'Cabin air is at its usual level'
-  let body = `CO₂ ${mmHg(cabin.co2Mean)} over the last 24 h; usual ${mmHg(cabin.baseline)}.`
+  let body = `CO₂ ${mmHg(cabin.co2Mean)} over the last 24 h; usual ${mmHg(cabin.baseline)}. ${celsius(cabin.temp.value)} and ${rhPercent(cabin.rh.value)} humidity, inside NASA's comfort range.`
   if (decision.outcome === 'ship') {
     head = 'Likely the ship, not you'
-    const air = cabin.elevated
-      ? `Cabin CO₂ is ${mmHg(cabin.delta)} above its usual level`
-      : `Cabin CO₂ is ${mmHg(cabin.co2Mean)} over 24 h, above NASA's ${RULES.co2LimitMmHg} mmHg limit`
-    body = `${air} and ${decision.driftingCo2.length} of ${decision.crewSize} crew show CO₂-linked changes today.`
+    const parts = decision.causes.map((f) => {
+      const n = `${decision.driftingOn[f].length} of ${decision.crewSize} crew`
+      if (f === 'co2') {
+        const air = cabin.elevated
+          ? `Cabin CO₂ is ${mmHg(cabin.delta)} above its usual level`
+          : `Cabin CO₂ is ${mmHg(cabin.co2Mean)} over 24 h, above NASA's ${RULES.co2LimitMmHg} mmHg limit`
+        return `${air} and ${n} show CO₂-linked changes today`
+      }
+      return `The cabin ${f === 'temp' ? 'temperature' : 'humidity'} is ${comfortLine(f, cabin[f])}, and ${n} show ${FACTOR[f].feels} today`
+    })
+    body = `${parts.join('; ')}.`
     if (decision.held) body += ' The alert stays on until the air is back to normal.'
   } else if (!cabin.hasData) {
     tone = 'idle'
@@ -33,6 +41,9 @@ export function ShipBanner({ r, onOpen, followUp }: { r: DayResult; onOpen?: () 
   } else if (cabin.overLimit) {
     head = `Cabin CO₂ is above NASA's ${RULES.co2LimitMmHg} mmHg limit`
     body = `${mmHg(cabin.co2Mean)} over 24 h, even though that has become its usual level. Fewer than half the crew show CO₂-linked changes, so this is not a ship alert.`
+  } else if (offAir) {
+    head = `Cabin ${offAir === 'temp' ? 'temperature' : 'humidity'} is outside NASA's comfort range`
+    body = `${comfortLine(offAir, cabin[offAir])}. Fewer than half the crew show ${FACTOR[offAir].feels}, so this is not a ship alert.`
   } else if (cabin.aboveLimit) {
     head = 'Cabin air is near its usual level'
     body = `24 h mean ${mmHg(cabin.co2Mean)} (usual ${mmHg(cabin.baseline)}), but a 1-hour average reached ${mmHg(cabin.co2Max1h)}, above the 3 mmHg limit.`

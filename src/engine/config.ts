@@ -51,6 +51,21 @@ export const RULES = {
   /** 1-hour average CO2 limit, mmHg. NASA-STD-3001 Vol 2 [V2 6004]. The ship-or-me rule applies it to the 24 h mean. */
   co2LimitMmHg: 3,
 
+  /**
+   * Cabin temperature and relative humidity, from the same ISS telemetry as the CO2. NASA-STD-3001 Vol 2
+   * [V2 6013] Crew Performance Environmental Zone: its rationale cites 20-25 °C and 30-60% humidity as the
+   * conditions that support comfort and performance, and says operating outside the zone causes
+   * performance decrements. The ship-or-me rule suspects the air when the 24 h mean leaves this range.
+   */
+  tempComfortC: [20, 25],
+  rhComfortPct: [30, 60],
+  /**
+   * NASA-STD-3001 Vol 2 [V2 6012] Crew Health Environmental Limits: a figure anchored at 18 °C / 75% and
+   * 27 °C / 25% humidity, read here as the box between those corners. Outside it is shown as over the limit.
+   */
+  tempLimitC: [18, 27],
+  rhLimitPct: [25, 75],
+
   /** Ship needs at least this share of the crew drifting on CO2-linked indicators. From the plan. */
   crewShare: 0.5,
   /** "Several" people for the shared pattern. From the plan. */

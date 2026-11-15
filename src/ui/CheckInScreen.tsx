@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { hrefOf } from '../auth/paths.ts'
+import { INDICATOR_RISKS, SYMPTOM_RISKS, type HrpRiskKey } from '../data/hrp.ts'
 import { vitalLines, watchReading } from '../data/watch.ts'
 import { SPEC, SYMPTOMS } from '../engine/deviation.ts'
 import type { CheckIn, SymptomKey } from '../engine/types.ts'
 import { XP } from '../game/xp.ts'
 import { useStore, type ReactionResult } from '../state.tsx'
-import { Card, Origin } from './bits.tsx'
+import { Card, Origin, RiskLinks } from './bits.tsx'
 import { ReactionTest } from './ReactionTest.tsx'
 import { delayText } from './text.ts'
 
@@ -168,7 +169,10 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
                   <span>{sl.lo}</span>
                   <span>{sl.hi}</span>
                 </div>
-                <p className="why">Why we ask: {spec.whyWeAsk}</p>
+                <p className="why">
+                  Why we ask: {spec.whyWeAsk}
+                  <RiskLinks risks={INDICATOR_RISKS[sl.key]} />
+                </p>
               </div>
             )
           })}
@@ -188,7 +192,10 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
             </label>
           ))}
         </div>
-        <p className="why">Why we ask: {SPEC.symptoms.whyWeAsk} Symptoms are shared with the crew by default.</p>
+        <p className="why">
+          Why we ask: {SPEC.symptoms.whyWeAsk} Symptoms are shared with the crew by default.
+          <RiskLinks risks={[...new Set(SYMPTOMS.flatMap((sym) => SYMPTOM_RISKS[sym.key]))] as HrpRiskKey[]} />
+        </p>
       </Card>
 
       <Card title="Exercise yesterday">
@@ -217,12 +224,16 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
         <p className="why">
           Why we ask: in spaceflight, weight-bearing bones lose on average 1 to 1.5% of their mineral density a month (NASA), and exercise is the
           countermeasure; ISS crews exercise about two hours a day. Shown only on your dashboard, never judged. Optional.
+          <RiskLinks risks={['bone', 'muscle', 'aerobic']} />
         </p>
       </Card>
 
       <Card title="Reaction test" aside={<Origin kind="live" />}>
         <ReactionTest result={reaction} onResult={setReaction} />
-        <p className="why">Why we ask: {SPEC.reaction.whyWeAsk} Optional in the demo.</p>
+        <p className="why">
+          Why we ask: {SPEC.reaction.whyWeAsk} Optional in the demo.
+          <RiskLinks risks={INDICATOR_RISKS.reaction} />
+        </p>
       </Card>
 
       <Card title="One more question">

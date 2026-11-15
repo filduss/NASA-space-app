@@ -1,12 +1,17 @@
 import { cabinLevel } from '../dashboard/model.ts'
 import { cmoInbox, type CmoItem } from '../engine/privacy.ts'
 import { SPEC } from '../engine/deviation.ts'
-import type { SurgeonSummary } from '../engine/types.ts'
+import type { CabinFactor, SurgeonSummary } from '../engine/types.ts'
 import { clearTheAirQuest, questProgress } from '../game/quests.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
 import { checkInAt, houstonTime, shipTime } from './clock.ts'
-import { delayText, fmt, indicatorLineThird, list, mmHg, symptomLabel } from './text.ts'
+import { airLine, causeWords, delayText, fmt, indicatorLineThird, list, mmHg, symptomLabel } from './text.ts'
+
+/** "CO₂-linked changes", or the factors by name when the air behind the alert is not (only) CO₂. */
+function changesFor(causes: CabinFactor[] | undefined): string {
+  return !causes || (causes.length === 1 && causes[0] === 'co2') ? 'CO₂-linked changes' : `changes linked to ${causeWords(causes)}`
+}
 
 function CmoLine({ item }: { item: CmoItem }) {
   const s = useStore()
@@ -24,7 +29,8 @@ function CmoLine({ item }: { item: CmoItem }) {
       return (
         <li className="inbox-watch">
           <Mark tone="watch">
-            Ship alert: {item.count} of {item.of} crew show CO₂-linked changes{labels ? ` (${labels})` : ''}.
+            Ship alert: {item.count} of {item.of} crew show {changesFor(item.causes)}
+            {labels ? ` (${labels})` : ''}.
           </Mark>
         </li>
       )
@@ -125,8 +131,8 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
   const sent = checkInAt(sum.day, s.data.cabin.meta.replay)
   const received = checkInAt(sum.day, s.data.cabin.meta.replay, s.commDelaySec)
   const cabinLine = sum.cabin.hasData
-    ? `Cabin CO₂ ${mmHg(sum.cabin.co2Mean)} over 24 h${sum.cabin.overLimit ? ', above the 3 mmHg limit' : ''} (usual ${mmHg(sum.cabin.baseline)}), highest 1-hour average ${mmHg(sum.cabin.co2Max1h)}${sum.cabin.aboveLimit && !sum.cabin.overLimit ? ', above the 3 mmHg limit' : ''}.`
-    : 'No usable cabin CO₂ data for this day.'
+    ? `Cabin CO₂ ${mmHg(sum.cabin.co2Mean)} over 24 h${sum.cabin.overLimit ? ', above the 3 mmHg limit' : ''} (usual ${mmHg(sum.cabin.baseline)}), highest 1-hour average ${mmHg(sum.cabin.co2Max1h)}${sum.cabin.aboveLimit && !sum.cabin.overLimit ? ', above the 3 mmHg limit' : ''}. ${airLine(sum.cabin)}`
+    : 'No usable cabin data for this day.'
   const title =
     sum.kind === 'ship' ? `Ship alert, day ${sum.episodeDay} of the alert` : sum.kind === 'safety' ? `Safety answer: ${name}` : `${name}: off own usual for ${sum.episodeDay} days`
   let quest: string | null = null
@@ -152,9 +158,9 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
           <p>{cabinLine}</p>
           <p>
             {sum.affected?.length
-              ? `${sum.affected.length} crew with CO₂-linked changes today: ${list(sum.affected.map(s.nameOf))}.`
-              : 'No crew member shows CO₂-linked changes today; the alert is held because the cabin is still above its baseline.'}{' '}
-            Likely cause by the ship-or-me rule: cabin air.
+              ? `${sum.affected.length} crew with ${changesFor(sum.causes)} today: ${list(sum.affected.map(s.nameOf))}.`
+              : `No crew member shows ${changesFor(sum.causes)} today; the alert is held because ${causeWords(sum.causes ?? ['co2'])} is still off its usual.`}{' '}
+            Likely cause by the ship-or-me rule: {causeWords(sum.causes ?? ['co2'])}.
           </p>
           {quest && <p>{quest}</p>}
         </>

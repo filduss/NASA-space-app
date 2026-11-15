@@ -3,13 +3,14 @@ import { hrefOf } from '../auth/paths.ts'
 import { mayOpen, type User } from '../auth/session.ts'
 import { vitalLines } from '../data/watch.ts'
 import { exerciseWeek } from '../engine/gravity.ts'
+import type { CabinFactor } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
-import { delayText, symptomLabel } from '../ui/text.ts'
+import { delayText, shipBecause, symptomLabel } from '../ui/text.ts'
 import { ChartSheet, type ChartTarget } from './ChartSheet.tsx'
 import { Sparkline } from './charts.tsx'
 import type { RangeKey } from './history.ts'
 import { LEVEL_WORD, LevelIcon } from './LevelIcon.tsx'
-import { cabinLevel, notices, vitals, worst, zoneStates, ZONES, type Level, type Notice, type Vital, type ZoneKey } from './model.ts'
+import { airLevel, cabinLevel, notices, vitals, worst, zoneStates, ZONES, type Level, type Notice, type Vital, type ZoneKey } from './model.ts'
 import { SkeletonView } from './SkeletonView.tsx'
 import './dashboard.css'
 
@@ -45,7 +46,11 @@ function ExpandButton({ label, onClick }: { label: string; onClick: () => void }
   )
 }
 
-function VitalTile({ v, onOpen }: { v: Vital; onOpen: () => void }) {
+/**
+ * `reference` is a published figure for real ISS crews, shown beside the person's own usual for
+ * context. The rules compare each person only with their own normal; the reference judges nothing.
+ */
+function VitalTile({ v, onOpen, reference }: { v: Vital; onOpen: () => void; reference?: { text: string; title: string } }) {
   const [hover, setHover] = useState<string | null>(null)
   const fmt = (x: number) => (v.key === 'reaction' ? `${Math.round(x)} ms` : v.key === 'sleepHours' ? `${x.toFixed(1)} h` : `${x}/10`)
   const usualNum = v.usual === null ? null : Number(v.usual)
@@ -68,7 +73,15 @@ function VitalTile({ v, onOpen }: { v: Vital; onOpen: () => void }) {
           </span>
         )}
       </div>
-      <p className="tile-sub">{hover ?? (v.usual === null ? 'Learning your normal' : `Usual ${v.usual}${v.unit === '/10' ? '' : ` ${v.unit}`}`)}</p>
+      <p className="tile-sub">
+        {hover ?? (v.usual === null ? 'Learning your normal' : `Usual ${v.usual}${v.unit === '/10' ? '' : ` ${v.unit}`}`)}
+        {!hover && reference && (
+          <span className="tile-ref" title={reference.title}>
+            {' '}
+            · {reference.text}
+          </span>
+        )}
+      </p>
       <Sparkline series={v.series} usual={usualNum} level={v.level} format={fmt} onHover={setHover} />
     </article>
   )
@@ -139,11 +152,14 @@ export function Dashboard() {
       return { day: d, v: w ? pick(w) : null }
     })
   const zones = useMemo(() => zoneStates(me, cabin, exercise), [me, cabin, exercise])
-  const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise), [me, cabin, s.commDelaySec, exercise])
+  const causes = s.todayResult.decision.causes
+  // A published figure for real ISS crews, shown beside the person's own usual sleep (backtest.json).
+  const issSleep = s.data.backtest?.meta.issCrews?.sleepHours
+  const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise, causes), [me, cabin, s.commDelaySec, exercise, causes])
   const tiles = useMemo(() => vitals(me, history, today, TREND_DAYS), [me, history, today])
   const chartVital = chart ? tiles.find((t) => t.key === chart.key) : undefined
   const overall = worst(...ZONES.map((z) => zones[z.key].level))
-  const co2Level = cabinLevel(cabin)
+  const co2Level = worst(cabinLevel(cabin), airLevel(cabin))
 
   // An iOS-style banner drops in when a day brings something new to look at.
   const [banner, setBanner] = useState<Notice | null>(null)
@@ -175,7 +191,7 @@ export function Dashboard() {
   const credits = (
     <>
       <p>
-        <span className="tag">Simulated crew</span> No real person's data. <span className="tag tag-real">Real ISS CO₂</span> NASA OSDR, {s.data.cabin.meta.mission}, replayed on the mission calendar. Shipshape says
+        <span className="tag">Simulated crew</span> No real person's data. <span className="tag tag-real">Real ISS cabin air</span> CO₂, temperature and humidity, NASA OSDR, {s.data.cabin.meta.mission}, replayed on the mission calendar. Shipshape says
         "likely" and never diagnoses.
       </p>
       <p className="dash-credit">
@@ -185,7 +201,7 @@ export function Dashboard() {
     </>
   )
 
-  const hero = heroText(overall, me.attribution, me.tier, me.episodeDay, me.assessment.checkedIn, co2Level)
+  const hero = heroText(overall, me.attribution, me.tier, me.episodeDay, me.assessment.checkedIn, co2Level, { causes, suspects: cabin.suspects })
 
   return (
     <div className="dash">
@@ -330,7 +346,19 @@ export function Dashboard() {
             </h2>
             <div className="tiles">
               {tiles.map((v) => (
-                <VitalTile key={v.key} v={v} onOpen={() => setChart({ kind: 'vital', key: v.key })} />
+                <VitalTile
+                  key={v.key}
+                  v={v}
+                  onOpen={() => setChart({ kind: 'vital', key: v.key })}
+                  reference={
+                    v.key === 'sleepHours' && issSleep
+                      ? {
+                          text: `ISS ${issSleep.value} h`,
+                          title: `Real ISS crews: ${issSleep.text} (${issSleep.source}). For context only: the rules compare you with your own normal.`,
+                        }
+                      : undefined
+                  }
+                />
               ))}
               <article className={`tile tile-${me.assessment.symptoms.length ? (zones.head.level === 'alert' ? 'alert' : 'watch') : 'ok'}`}>
                 <header className="tile-head">
@@ -382,12 +410,29 @@ export function Dashboard() {
   )
 }
 
-function heroText(overall: Level, attribution: string, tier: number, episodeDay: number, checkedIn: boolean, co2: Level): { title: string; body: string } {
+function heroText(
+  overall: Level,
+  attribution: string,
+  tier: number,
+  episodeDay: number,
+  checkedIn: boolean,
+  co2: Level,
+  cabin: { causes: CabinFactor[]; suspects: CabinFactor[] },
+): { title: string; body: string } {
   if (!checkedIn) return { title: 'Good morning', body: 'No check-in yet today. Your trends run up to your last one.' }
   if (tier === 4) return { title: 'Help is on the way', body: 'Your crew medical officer was told privately. The game is paused for you today.' }
   if (tier === 3) return { title: `Still off your usual, day ${episodeDay}`, body: 'A short summary went to the flight surgeon. It lists what changed, never a diagnosis.' }
-  if (attribution === 'ship') return { title: 'Likely the ship, not you', body: 'Most of the crew show the same change while cabin CO₂ is above its usual level.' }
-  if (attribution === 'me' || attribution === 'shared') return { title: 'Something is off your usual', body: 'Only you see this. Take it easy today and check in again tomorrow.' }
+  if (attribution === 'ship') return { title: 'Likely the ship, not you', body: `Most of the crew show the same change while ${shipBecause(cabin.causes)}.` }
+  if (attribution === 'me') {
+    return {
+      title: 'Likely you, not the ship',
+      body:
+        cabin.suspects.length === 0
+          ? 'Cabin CO₂, temperature and humidity are all at their usual levels, so the rule does not blame the ship. Only you see this. Take it easy today and check in again tomorrow.'
+          : 'The cabin air is off its usual too, but most of the crew are fine, so the rule does not blame it yet. Only you see this.',
+    }
+  }
+  if (attribution === 'shared') return { title: 'Something is off your usual', body: 'Only you see this. Take it easy today and check in again tomorrow.' }
   if (co2 !== 'ok') return { title: 'You are within your normal', body: 'Your body is steady. The cabin air is flagged in your notifications.' }
   if (overall === 'ok') return { title: 'All within your normal', body: 'Everything you logged today sits inside your own usual range.' }
   return { title: 'Worth a look', body: 'Something is flagged below.' }

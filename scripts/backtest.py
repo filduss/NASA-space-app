@@ -4,9 +4,10 @@
     python3 scripts/backtest.py                  # writes public/data/backtest.json
     python3 scripts/backtest.py --seed-base 5000 --no-write   # a separate seed set, for tuning
 
-What is real: the CO2 traces (ISS telemetry, NASA OSDR EDA snapshots in scripts/snapshots/).
-What is simulated: every crew member and every check-in (scripts/shipshape_sim.py).
-The rules are not re-implemented here: the script calls the app's TypeScript engine.
+What is real: the cabin traces, CO2, temperature and humidity (ISS telemetry, NASA OSDR EDA snapshots in
+scripts/snapshots/). What is simulated: every crew member and every check-in (scripts/shipshape_sim.py).
+The rules are not re-implemented here: the script calls the app's TypeScript engine, and even the real
+days a cabin factor was out of range are counted from the engine's own cabin status.
 
 Deviation from the plan: the plan says 90 days per crew. The longest real trace is 73 days,
 and we do not stitch or loop real data, so each crew runs over one whole real trace instead.
@@ -27,6 +28,22 @@ SHIP_TRUTH_RISE_MMHG = 1.0  # a "ship event" day: mean CO2 at least this far abo
 GRACE_DAYS = 1  # an alert the day after an event ends still belongs to that event
 
 SLOW_MIN_DAYS = 30  # a slow decline is scored when its trace leaves it at least this many days
+CABIN_FACTORS = ["co2", "temp", "rh"]
+
+# Published figures for real ISS crews, set beside the simulated crews (scenario "crewStats"). The
+# simulator is not tuned to them; the comparison shows where it differs.
+ISS_CREWS = {
+    "sleepHours": {
+        "value": 6.5,
+        "text": "about 6.5 h a night",
+        "source": "Jones et al. 2022, Sleep 45(3): 24 astronauts on six-month ISS missions, 2,856 Reaction Self-Tests",
+    },
+    "headacheDayShare": {
+        "value": round(46 / (46 + 1670), 4),
+        "text": "46 of 1,716 days",
+        "source": "NASA OCHMO-TB-004 Rev D: case reports from ISS Expeditions 2-31, 49 astronauts",
+    },
+}
 
 SCENARIOS = [
     ("Base case", {}),
@@ -95,6 +112,13 @@ def score(traces: dict[str, list[dict]], seed_base: int, overrides: dict) -> dic
     load = {k: dict(caseDays=0, personSummaries=0, shipSummaries=0) for k in ("shipshape", "perPerson")}
 
     c = dict(crew_days=0, person_days=0, correct=0, wrong=0, mixed=0, ship_fa=0, personal_fa=0, tier3_fa=0, shared_fa=0)
+    # The same accuracy, split by the kind of day: a CO2 rise (the right answer is "ship") or one
+    # person's own problem (the right answer is anything but "ship").
+    by_class = {k: dict(ok=0, bad=0) for k in ("shipDays", "personalDays")}
+    # Ship alerts by the cabin factor they blamed, and how many of those days had no CO2 rise behind them.
+    by_cause = {f: dict(crewDays=0, falseAlarmCrewDays=0) for f in CABIN_FACTORS}
+    # Real days each cabin factor was a suspect, per trace (every crew on a trace sees the same cabin).
+    cabin_by_trace: dict[str, dict] = {}
     ship_delays, me_delays = [], []
     ship_total = ship_missed = big_total = big_missed = 0
     me_total = me_missed = 0
@@ -110,6 +134,17 @@ def score(traces: dict[str, list[dict]], seed_base: int, overrides: dict) -> dic
         truth_grace = truth | {d + g for d in truth for g in range(1, GRACE_DAYS + 1)}
         by_day = {d["day"]: d for d in days}
         last = days[-1]["day"]
+        if mission not in cabin_by_trace:
+            known = [r for r in traces[mission] if r["co2Mean"] is not None]
+            cabin_by_trace[mission] = {
+                "dates": [known[0]["date"], known[-1]["date"]],
+                "daysWithData": len(known),
+                "co2RiseDays": len(truth),
+                "co2OverLimitDays": sum(1 for d in days if d["cabinOverLimit"]),
+                "suspectDays": {f: sum(1 for d in days if f in d["suspects"]) for f in CABIN_FACTORS},
+                "tempRange": [min(r["temp"] for r in known if r["temp"] is not None), max(r["temp"] for r in known if r["temp"] is not None)],
+                "rhRange": [min(r["rh"] for r in known if r["rh"] is not None), max(r["rh"] for r in known if r["rh"] is not None)],
+            }
 
         def personal_active(crew_id: str, day: int, grace: int = 0) -> bool:
             return any(e.crewId == crew_id and e.startDay <= day <= e.endDay + grace for e in sim.events)
@@ -121,6 +156,10 @@ def score(traces: dict[str, list[dict]], seed_base: int, overrides: dict) -> dic
             c["crew_days"] += 1
             if d["outcome"] == "ship" and day not in truth_grace:
                 c["ship_fa"] += 1
+            if d["outcome"] == "ship":
+                for f in d["causes"]:
+                    by_cause[f]["crewDays"] += 1
+                    by_cause[f]["falseAlarmCrewDays"] += day not in truth_grace
             any_active = any(personal_active(cid, day, GRACE_DAYS) for cid in CREW_IDS)
             if d["outcome"] == "shared" and day not in truth_grace and not any_active:
                 c["shared_fa"] += 1
@@ -136,9 +175,13 @@ def score(traces: dict[str, list[dict]], seed_base: int, overrides: dict) -> dic
                 if mine and in_ship:
                     c["mixed"] += 1
                 elif mine:
-                    c["correct" if p["a"] != "ship" else "wrong"] += 1
+                    ok = p["a"] != "ship"
+                    c["correct" if ok else "wrong"] += 1
+                    by_class["personalDays"]["ok" if ok else "bad"] += 1
                 elif in_ship:
-                    c["correct" if p["a"] == "ship" else "wrong"] += 1
+                    ok = p["a"] == "ship"
+                    c["correct" if ok else "wrong"] += 1
+                    by_class["shipDays"]["ok" if ok else "bad"] += 1
                 # alerts with nothing behind them
                 if not personal_active(cid, day, GRACE_DAYS) and day not in truth_grace:
                     c["personal_fa"] += 1
@@ -207,6 +250,11 @@ def score(traces: dict[str, list[dict]], seed_base: int, overrides: dict) -> dic
     def r(x, nd=3):
         return None if x is None else round(x, nd)
 
+    # The simulated crews' own readings, to set beside published figures for real ISS crews.
+    check_ins = [ci for _, sim in sims.values() for ci in sim.check_ins]
+    sleep = [ci["sleepHours"] for ci in check_ins]
+    reaction = [ci["reactionMs"] for ci in check_ins if ci.get("reactionMs")]
+
     return {
         "params": params_dict(params),
         "crewDays": c["crew_days"],
@@ -214,6 +262,19 @@ def score(traces: dict[str, list[dict]], seed_base: int, overrides: dict) -> dic
         "shipOrMeAccuracy": r(c["correct"] / judged) if judged else None,
         "accuracyJudgedAlerts": judged,
         "accuracyMixedExcluded": c["mixed"],
+        "accuracyByClass": {
+            k: {"accuracy": r(v["ok"] / (v["ok"] + v["bad"])) if v["ok"] + v["bad"] else None, "alerts": v["ok"] + v["bad"]}
+            for k, v in by_class.items()
+        },
+        "shipByCause": by_cause,
+        "crewStats": {
+            "checkIns": len(check_ins),
+            "sleepHoursMean": r(st.mean(sleep), 2),
+            "sleepUnder6Share": r(sum(1 for s in sleep if s < 6) / len(sleep)),
+            "headacheDayShare": r(sum(1 for ci in check_ins if "headache" in ci["symptoms"]) / len(check_ins), 4),
+            "reactionMsMean": r(st.mean(reaction), 0) if reaction else None,
+        },
+        "cabinByTrace": cabin_by_trace,
         "ship": {
             "events": ship_total,
             "missedShare": r(ship_missed / ship_total) if ship_total else None,
@@ -271,8 +332,12 @@ def main() -> int:
 
     traces = load_traces()
     scenarios = []
+    cabin_by_trace: dict[str, dict] = {}
     for name, overrides in SCENARIOS[: 1 if args.only_base else None]:
         m = score(traces, args.seed_base, overrides)
+        # The cabin is the same real data in every scenario: keep it once, under meta.traces.
+        cabin_by_trace = cabin_by_trace or m["cabinByTrace"]
+        del m["cabinByTrace"]
         scenarios.append({"name": name, **m})
         print(
             f"{name:30s} acc={m['shipOrMeAccuracy']} (n={m['accuracyJudgedAlerts']}) "
@@ -284,8 +349,12 @@ def main() -> int:
         ld = m["alertLoad"]
         print(f"{'':30s} load over {ld['shipEvents']} ship events: shipshape {ld['shipshape']} | one case per person {ld['perPerson']}")
         print(f"{'':30s} masking: {m['masking']}")
+        print(f"{'':30s} by class: {m['accuracyByClass']} | ship by cause: {m['shipByCause']}")
+        print(f"{'':30s} crew stats: {m['crewStats']}")
         if "slowDecline" in m:
             print(f"{'':30s} slow decline: {m['slowDecline']}")
+    for mission, cab in cabin_by_trace.items():
+        print(f"  {mission:6s} {cab}")
     if args.no_write:
         return 0
 
@@ -299,13 +368,21 @@ def main() -> int:
             "crewSize": len(CREW_IDS),
             "seeds": f"{args.seed_base}..{args.seed_base + N_CREWS - 1}",
             "tuning": "Rule thresholds were set on a separate seed set (5000..5199), not on the seeds reported here.",
-            "traces": {m: {"days": len(traces[m]), "source": "NASA OSDR EDA, ISS telemetry (real)"} for m in MISSIONS},
+            "traces": {
+                m: {"days": len(traces[m]), "source": "NASA OSDR EDA, ISS telemetry (real)", "cabin": cabin_by_trace.get(m)}
+                for m in MISSIONS
+            },
             "burnInDays": BURN_IN_DAYS,
+            "issCrews": ISS_CREWS,
         },
         "definitions": {
             "shipEvent": f"A run of days whose mean CO₂ is at least {SHIP_TRUTH_RISE_MMHG} mmHg above that trace's own median (the rule never sees this median).",
             "individualEvent": "An injected 4-7 day event for one person: sleep loss, a run of headaches, or a stress dip.",
             "shipOrMeAccuracy": "Of the alerts raised during a true event, the share that named the right cause (ship vs. not the ship). Person-days with both kinds of event at once are excluded.",
+            "accuracyByClass": "The same accuracy, split: on days with a CO₂ rise, the share of alerts that said 'the ship'; on days with one person's own problem, the share that did not.",
+            "shipByCause": "Crew-days of ship alerts by the cabin factor they blamed (CO₂, temperature, humidity), and how many of those had no CO₂ rise behind them. No temperature or humidity effect is simulated, so every ship alert that blames them counts as false.",
+            "cabin": "Real days per trace: CO₂ rises (at least 1 mmHg above the trace median), days with a 24 h mean over 3 mmHg, days each factor was a suspect of the rule (CO₂ above its usual or over the limit, temperature or humidity outside NASA's comfort range), and the range of daily temperature and humidity.",
+            "crewStats": "The simulated crews' own readings over every check-in, set beside published figures for real ISS crews (meta.issCrews). The simulator is not tuned to them.",
             "detectionDelay": "Days from an event's first day to its first alert (0 = same day).",
             "falseAlarms": "Alerts on days with no event behind them, allowing one day of grace after an event ends.",
             "missedEvents": "Events that never raised an alert.",
@@ -317,8 +394,9 @@ def main() -> int:
         },
         "scenarios": scenarios,
         "limits": [
-            "The crew is simulated; only the CO₂ traces are real.",
+            "The crew is simulated; only the cabin traces (CO₂, temperature, humidity) are real.",
             "Headache risk follows the published odds (doubling per 1 mmHg); other CO₂ effect sizes are demo parameters.",
+            "No effect of temperature or humidity is simulated, for want of a published effect size for crews, so the backtest scores what those checks cost, not what they catch.",
             "The rule is not validated on real crews.",
             "Browser reaction times are estimates.",
         ],

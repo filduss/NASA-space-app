@@ -3,6 +3,7 @@ import { assessPerson, newMemory, type PersonMemory } from './deviation.ts'
 import { attributionFor, cabinStatus, decideShipOrMe } from './shipOrMe.ts'
 import type {
   Attribution,
+  CabinFactor,
   CheckIn,
   DayResult,
   EngineInput,
@@ -56,6 +57,8 @@ export function runEngine(input: EngineInput): DayResult[] {
   const results: DayResult[] = []
   let shipRun = 0
   let shipStart: number | null = null
+  // The factors behind yesterday's ship alert: it is held while one of them is still a suspect.
+  let shipCauses: CabinFactor[] = []
 
   for (let day = input.fromDay; day <= input.toDay; day++) {
     const cabin = cabinStatus(input.cabin, day, elevatedDays)
@@ -64,9 +67,11 @@ export function runEngine(input: EngineInput): DayResult[] {
     const assessments = input.crewIds.map((id) =>
       assessPerson(id, day, byCrew.get(id) as CheckIn[], memory.get(id) as PersonMemory),
     )
-    const ruled = decideShipOrMe(assessments, cabin, input.crewIds.length, shipRun > 0)
+    const ruled = decideShipOrMe(assessments, cabin, input.crewIds.length, shipCauses)
     // The backtest's comparator: one case per person, never the ship (EngineInput.perPersonOnly).
-    const decision = input.perPersonOnly ? { ...ruled, outcome: 'none' as const, held: false } : ruled
+    const decision = input.perPersonOnly
+      ? { ...ruled, outcome: 'none' as const, held: false, causes: [], driftingShip: [] }
+      : ruled
 
     if (decision.outcome === 'ship') {
       shipRun += 1
@@ -75,6 +80,7 @@ export function runEngine(input: EngineInput): DayResult[] {
       shipRun = 0
       shipStart = null
     }
+    shipCauses = decision.causes
 
     const people: Record<string, PersonStatus> = {}
     const summaries: SurgeonSummary[] = []
@@ -86,6 +92,8 @@ export function runEngine(input: EngineInput): DayResult[] {
       aboveLimit: cabin.aboveLimit,
       overLimit: cabin.overLimit,
       hasData: cabin.hasData,
+      temp: cabin.temp,
+      rh: cabin.rh,
     }
 
     for (const a of assessments) {
@@ -155,7 +163,8 @@ export function runEngine(input: EngineInput): DayResult[] {
         kind: 'ship',
         immediate: false,
         episodeDay: shipRun,
-        affected: decision.driftingCo2,
+        affected: decision.driftingShip,
+        causes: decision.causes,
         indicators: [],
         cabin: cabinBrief,
       })

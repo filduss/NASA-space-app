@@ -5,8 +5,8 @@
 import { RULES } from '../engine/config.ts'
 import { SPEC } from '../engine/deviation.ts'
 import type { ExerciseWeek } from '../engine/gravity.ts'
-import type { CabinStatus, CheckIn, IndicatorKey, PersonStatus, SymptomKey } from '../engine/types.ts'
-import { delayText, indicatorLine, symptomLabel } from '../ui/text.ts'
+import type { CabinFactor, CabinStatus, CheckIn, IndicatorKey, PersonStatus, SymptomKey } from '../engine/types.ts'
+import { comfortLine, delayText, indicatorLine, shipBecause, symptomLabel } from '../ui/text.ts'
 
 /** ok = within own normal, watch = orange, alert = red. */
 export type Level = 'ok' | 'watch' | 'alert'
@@ -67,7 +67,7 @@ export interface ZoneState {
   reasons: string[]
 }
 
-/** Cabin air: mean above the 3 mmHg limit is red; above its own usual or a 1-hour peak over the limit is orange. */
+/** Cabin CO2: mean above the 3 mmHg limit is red; above its own usual or a 1-hour peak over the limit is orange. */
 export function cabinLevel(c: Pick<CabinStatus, 'hasData' | 'co2Mean' | 'elevated' | 'aboveLimit'>): Level {
   if (!c.hasData) return 'ok'
   if (c.co2Mean !== null && c.co2Mean > RULES.co2LimitMmHg) return 'alert'
@@ -75,11 +75,21 @@ export function cabinLevel(c: Pick<CabinStatus, 'hasData' | 'co2Mean' | 'elevate
   return 'ok'
 }
 
-/** An indicator is orange the day it drifts; red once it has stayed off to day 3 or the person reached tier 3. */
+/** Cabin temperature and humidity: outside NASA's health limits is red, outside its comfort range orange. */
+export function airLevel(c: Pick<CabinStatus, 'temp' | 'rh'>): Level {
+  if (c.temp.overLimit || c.rh.overLimit) return 'alert'
+  if (c.temp.outside || c.rh.outside) return 'watch'
+  return 'ok'
+}
+
+/**
+ * An indicator is orange the day it drifts; red once the person's current likely cause has lasted to
+ * day 3 (the engine's own count, the day a summary goes to Earth) or the person reached tier 3.
+ */
 export function indicatorLevel(me: PersonStatus, key: IndicatorKey): Level {
   const r = me.assessment.indicators[key]
   if (!r.off) return 'ok'
-  if (r.daysOff >= RULES.persistDays || me.tier >= 3) return 'alert'
+  if ((r.daysOff >= RULES.persistDays && me.episodeDay >= RULES.persistDays) || me.tier >= 3) return 'alert'
   return 'watch'
 }
 
@@ -128,7 +138,8 @@ export interface Notice {
   body: string
 }
 
-export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, exercise?: ExerciseWeek): Notice[] {
+/** `causes` are the cabin factors behind today's ship alert (Decision.causes). */
+export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, exercise?: ExerciseWeek, causes: CabinFactor[] = []): Notice[] {
   const out: Notice[] = []
   const a = me.assessment
   if (a.safety) {
@@ -160,6 +171,17 @@ export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, 
         : `One hour reached ${cabin.co2Max1h?.toFixed(1)} mmHg (limit ${RULES.co2LimitMmHg}). The daily average is normal.`,
     })
   }
+  for (const f of ['temp', 'rh'] as const) {
+    const st = cabin[f]
+    if (!st.outside) continue
+    const word = f === 'temp' ? (st.outside === 'low' ? 'cooler' : 'warmer') : st.outside === 'low' ? 'drier' : 'more humid'
+    out.push({
+      id: f,
+      level: st.overLimit ? 'alert' : 'watch',
+      title: `Cabin ${word} than NASA's comfort range`,
+      body: `${f === 'temp' ? 'Temperature' : 'Humidity'} ${comfortLine(f, st)}.`,
+    })
+  }
   for (const key of a.off) {
     out.push({
       id: `ind-${key}`,
@@ -169,7 +191,7 @@ export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, 
     })
   }
   if (me.attribution === 'ship' && a.off.length > 0) {
-    out.push({ id: 'ship', level: 'watch', title: 'Likely the ship, not you', body: 'Most of the crew show the same change while cabin CO₂ is up.' })
+    out.push({ id: 'ship', level: 'watch', title: 'Likely the ship, not you', body: `Most of the crew show the same change while ${shipBecause(causes)}.` })
   }
   if (exercise?.lapse) {
     out.push({

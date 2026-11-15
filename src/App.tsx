@@ -108,7 +108,7 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
         </div>
         <span className="origins">
           <Origin kind="simulated">crew</Origin>
-          <Origin kind="real">ISS CO₂, {s.data.cabin.meta.mission}</Origin>
+          <Origin kind="real">ISS cabin air, {s.data.cabin.meta.mission}</Origin>
         </span>
       </section>
 
@@ -130,8 +130,8 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
       <footer className="foot">
         <p>
           Shipshape rewards honesty, not perfection. It says "likely" and never diagnoses; it supports the flight surgeon and never replaces
-          one. The crew is simulated; the cabin CO₂ is real ISS telemetry from NASA's Open Science Data Repository, replayed on the
-          mission calendar in every setting. Radiation figures are published averages for the chosen setting, not dosimeter readings.
+          one. The crew is simulated; the cabin CO₂, temperature and humidity are real ISS telemetry from NASA's Open Science Data
+          Repository, replayed on the mission calendar in every setting. Radiation figures are published averages for the chosen setting, not dosimeter readings.
         </p>
       </footer>
     </div>

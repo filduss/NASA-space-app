@@ -1017,6 +1017,38 @@ input {
   font-size: 13px;
   color: var(--ink-3);
 }
+.risk-links {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.cite {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.hrp-list {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.hrp-list li {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.hrp-item {
+  font-weight: 600;
+}
+.hrp-kind {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-3);
+}
 .lock {
   font-weight: 400;
   font-size: 12px;
