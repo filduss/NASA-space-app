@@ -1293,6 +1293,11 @@ input {
   padding-left: 1.1em;
   list-style: disc;
 }
+.lines.steps {
+  list-style: decimal;
+  gap: 10px;
+  padding-left: 1.4em;
+}
 .lines li::marker {
   color: var(--ink-3);
 }

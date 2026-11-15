@@ -38,7 +38,7 @@ const QUESTIONS: { q: string; a: string; jump: string; stop: TourStop }[] = [
   },
   {
     q: 'What actions can prevent a critical condition?',
-    a: 'After a ship alert the app re-checks whether the air and the crew recovered. The radiation card says when to go to the storm shelter. Anything still off on day 3 reaches the flight surgeon.',
+    a: 'During a ship alert the Ship screen lists what to do now: check the air first, before anyone is treated as a patient. After the alert the app re-checks whether the air and the crew recovered. The radiation card says when to go to the storm shelter. Anything still off on day 3 reaches the flight surgeon.',
     jump: 'See day 213 on the Ship screen',
     stop: { as: 'dana', page: 'app', search: '?day=213&screen=ship' },
   },
