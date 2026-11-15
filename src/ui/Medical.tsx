@@ -1,5 +1,6 @@
 import { cabinLevel } from '../dashboard/model.ts'
 import { boardPerson, cmoInbox, type CmoItem } from '../engine/privacy.ts'
+import { RULES } from '../engine/config.ts'
 import { SPEC } from '../engine/deviation.ts'
 import type { SurgeonSummary } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
@@ -69,10 +70,10 @@ export function CmoInbox() {
             ))}
           </ul>
         ) : (
-          <p className="muted">Nothing needs you today. Private Watch cards stay with the person unless they share them.</p>
+          <p className="muted">Nothing needs you today. A private Watch stays with the person: it reaches nobody else unless it lasts to day 3.</p>
         )}
       </Card>
-      <Card title="Sleep and symptoms today">
+      <Card title="Shared readings today">
         <div className="scroll">
           <table className="table">
             <thead>
@@ -81,6 +82,7 @@ export function CmoInbox() {
                 <th>Sleep</th>
                 <th>Sleep quality</th>
                 <th>Symptoms</th>
+                <th>Off own usual</th>
                 <th>Mood and stress</th>
               </tr>
             </thead>
@@ -90,23 +92,27 @@ export function CmoInbox() {
                 const a = p.assessment
                 const shared = s.local.shareWatch[c.id] === true
                 // What an urgent conference request hides from the board is hidden here too.
-                const symptoms = boardPerson(p).symptoms
+                const board = boardPerson(p)
+                const symptoms = board.symptoms
+                // The reasons the alert above counts, per person: shared indicators only, as on the crew board.
+                const off = board.off.map((k) => SPEC[k].label)
                 return (
-                  <tr key={c.id} className={a.checkedIn && symptoms.length ? 'row-watch' : undefined}>
+                  <tr key={c.id} className={a.checkedIn && off.length ? 'row-watch' : undefined}>
                     <th scope="row">{c.name}</th>
                     {a.checkedIn ? (
                       <>
                         <td>{fmt('sleepHours', a.indicators.sleepHours.value)}</td>
                         <td>{fmt('sleepQuality', a.indicators.sleepQuality.value)}</td>
                         <td>{p.conference === 'urgent' ? 'none shown' : symptoms.map(symptomLabel).join(', ') || 'none'}</td>
+                        <td>{off.length ? <Mark tone="watch">{list(off)}</Mark> : 'nothing'}</td>
                         <td>
                           {shared
                             ? `mood ${fmt('mood', a.indicators.mood.value)}, stress ${fmt('stress', a.indicators.stress.value)}`
-                            : 'private (not shared)'}
+                            : 'private'}
                         </td>
                       </>
                     ) : (
-                      <td colSpan={4}>no check-in today</td>
+                      <td colSpan={5}>no check-in today</td>
                     )}
                   </tr>
                 )
@@ -114,10 +120,16 @@ export function CmoInbox() {
             </tbody>
           </table>
         </div>
-        <p className="fine">You see sleep and symptoms for everyone. Mood and stress appear only when the person shares them.</p>
+        <p className="fine">You see what is shared for everyone: sleep, fatigue, irritability, alertness and symptoms. Mood and stress are private: the crew board gives only a count, with no names.</p>
       </Card>
     </div>
   )
+}
+
+/** Summaries go out on day 3 and then every 3 days while the cause lasts; the label says which this is. */
+function summaryKind(sum: SurgeonSummary): string {
+  if (sum.kind === 'ship') return `Ship summary, one every ${RULES.persistDays} days of an alert`
+  return sum.episodeDay > RULES.persistDays ? `Follow-up summary, day ${sum.episodeDay}` : `Day-${RULES.persistDays} summary`
 }
 
 function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
@@ -141,7 +153,7 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
       <header>
         <h3>{title}</h3>
         <p className="fine">
-          {sum.kind === 'urgent' || sum.kind === 'conference' ? 'Request' : sum.immediate ? 'Sent immediately' : 'Day-3 summary'}, sent mission day {sum.day} at {shipTime(sent)} ship time · received{' '}
+          {sum.kind === 'urgent' || sum.kind === 'conference' ? 'Request' : sum.immediate ? 'Sent immediately' : summaryKind(sum)}, sent mission day {sum.day} at {shipTime(sent)} ship time · received{' '}
           {delayText(s.commDelaySec)} later, <strong>{houstonTime(received)}</strong> ({shipTime(received)})
         </p>
       </header>
