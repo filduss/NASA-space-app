@@ -10,8 +10,8 @@ import type { CheckIn, ConferenceRequest, DayResult, SurgeonSummary } from './en
 import { wearableReading, type WearableReading } from './data/wearable.ts'
 
 export type Role = Viewer
-export type Screen = 'board' | 'checkin' | 'me' | 'ship' | 'inbox' | 'summary'
-const SCREENS: Screen[] = ['board', 'checkin', 'me', 'ship', 'inbox', 'summary']
+export type Screen = 'board' | 'checkin' | 'ship' | 'inbox' | 'summary'
+const SCREENS: Screen[] = ['board', 'checkin', 'ship', 'inbox', 'summary']
 
 /** ?day=, ?screen= and ?mission= open a page on a given day, screen and setting (links and the judge's tour). */
 function fromUrl(): { day: number; screen: Screen | null; mission: MissionKey | null } {

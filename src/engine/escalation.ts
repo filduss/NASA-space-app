@@ -14,7 +14,7 @@ import type {
 /**
  * Tier ladder (docs/SPEC.md):
  *   0 everything within normal
- *   1 a Watch: private self-care card, only you see it
+ *   1 a Watch: private, shown on your own dashboard only
  *   2 a crew pattern, or a Watch you chose to share: crew medical officer informed
  *   3 still off on day 3: delayed summary to the flight surgeon
  *   4 an urgent conference request: crew medical officer and flight surgeon told at once

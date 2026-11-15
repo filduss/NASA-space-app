@@ -8,14 +8,12 @@ import { Origin } from './ui/bits.tsx'
 import { CheckInScreen } from './ui/CheckInScreen.tsx'
 import { CrewBoard } from './ui/CrewBoard.tsx'
 import { CmoInbox, SurgeonView } from './ui/Medical.tsx'
-import { MeView } from './ui/MeView.tsx'
 import { RoleSwitcher } from './ui/RoleSwitcher.tsx'
 import { ShipAlert } from './ui/ShipAlert.tsx'
 
 const LABELS: Record<Screen, string> = {
   board: 'Crew board',
   checkin: 'Check-in',
-  me: 'Me',
   ship: 'Ship',
   inbox: 'Inbox',
   summary: 'Summaries',
@@ -26,7 +24,7 @@ const ROLE_WORD: Record<AccountRole, string> = { astronaut: 'astronaut', medical
 // The tabs of each view. A crew member's own view is the check-in page; the crew app is the medical
 // console, where the flight surgeon sees everything the crew medical officer sees, plus the summaries.
 const TABS: Record<Role['kind'], Screen[]> = {
-  crew: ['checkin', 'me'],
+  crew: ['checkin'],
   cmo: ['board', 'inbox', 'ship'],
   surgeon: ['board', 'inbox', 'ship', 'summary'],
 }
@@ -54,7 +52,7 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
   }, [screen])
 
   return (
-    <div className="app">
+    <div className={page === 'checkin' ? 'app app-narrow' : 'app'}>
       <header className="appbar">
         <div className="appbar-brand">
           <span className="appicon" aria-hidden="true">
@@ -66,18 +64,20 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
           </div>
         </div>
 
-        <nav className="tabs" aria-label="Screens">
-          {tabs.map((t) => (
-            <button key={t} type="button" className={t === screen ? 'tab tab-on' : 'tab'} aria-current={t === screen ? 'page' : undefined} onClick={() => s.setScreen(t)}>
-              {LABELS[t]}
-              {t === 'ship' && shipLevel && (
-                <span className={`tab-flag tab-flag-${shipLevel}`} role="img" aria-label="ship alert active">
-                  {shipLevel === 'alert' ? '◆' : '▲'}
-                </span>
-              )}
-            </button>
-          ))}
-        </nav>
+        {tabs.length > 1 && (
+          <nav className="tabs" aria-label="Screens">
+            {tabs.map((t) => (
+              <button key={t} type="button" className={t === screen ? 'tab tab-on' : 'tab'} aria-current={t === screen ? 'page' : undefined} onClick={() => s.setScreen(t)}>
+                {LABELS[t]}
+                {t === 'ship' && shipLevel && (
+                  <span className={`tab-flag tab-flag-${shipLevel}`} role="img" aria-label="ship alert active">
+                    {shipLevel === 'alert' ? '◆' : '▲'}
+                  </span>
+                )}
+              </button>
+            ))}
+          </nav>
+        )}
 
         <nav className="account" aria-label="Account">
           <span className="account-who">
@@ -121,7 +121,6 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
       <main key={`${crewId ?? s.role.kind}-${s.today}`}>
         {screen === 'board' && <CrewBoard />}
         {screen === 'checkin' && crewId && <CheckInScreen crewId={crewId} />}
-        {screen === 'me' && crewId && <MeView crewId={crewId} />}
         {screen === 'ship' && <ShipAlert />}
         {screen === 'inbox' && <CmoInbox />}
         {screen === 'summary' && <SurgeonView />}
