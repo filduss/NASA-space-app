@@ -1529,6 +1529,11 @@ details[open] > summary {
   .account-who > span:last-child {
     display: none;
   }
+  /* The medical officer has three account links; beside them the brand name does not fit on a
+     phone and the avatar used to sit on top of it. The icon stays. */
+  .appbar:has(.account > :nth-child(4)) .appbar-brand > div {
+    display: none;
+  }
   .card,
   .banner,
   .doc {
