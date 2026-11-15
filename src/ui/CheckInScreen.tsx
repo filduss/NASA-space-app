@@ -2,6 +2,7 @@ import { useId, useRef, useState, type KeyboardEvent } from 'react'
 import { SPEC, SYMPTOMS } from '../engine/deviation.ts'
 import type { SymptomKey } from '../engine/types.ts'
 import { vitalLines, type WearableReading } from '../data/wearable.ts'
+import { hrefOf } from '../auth/paths.ts'
 import { useStore, type ReactionResult } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
 import {
@@ -90,15 +91,6 @@ export function CheckInScreen({ crewId }: { crewId: string }) {
       </section>
 
       <div className="ci-bar" role="region" aria-label="Send the check-in">
-        <p className="ci-left" aria-live="polite">
-          {missing === 0 ? (
-            <Mark tone="ok">Ready to send</Mark>
-          ) : (
-            <>
-              <strong>{missing}</strong> left
-            </>
-          )}
-        </p>
         <button type="button" className="btn btn-primary ci-send" onClick={submit} disabled={missing > 0}>
           {sentLive ? 'Send changes' : 'Send check-in'}
         </button>
@@ -342,9 +334,9 @@ function Receipt({ crewId, reaction, onChange }: { crewId: string; reaction: Rea
           </div>
         </dl>
         <div className="row">
-          <button type="button" className="btn btn-primary" onClick={() => s.setScreen('me')}>
-            See my day
-          </button>
+          <a className="btn btn-primary" href={hrefOf('dashboard', import.meta.env.BASE_URL, `?day=${s.today}`)}>
+            See my dashboard
+          </a>
           <button type="button" className="btn btn-quiet" onClick={onChange}>
             Change today's answers
           </button>

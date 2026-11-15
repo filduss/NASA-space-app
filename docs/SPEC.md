@@ -119,7 +119,7 @@ The air is a suspect when it is above baseline or its 24 h mean is over 3 mmHg. 
 | Tier | Trigger | Who sees it |
 | --- | --- | --- |
 | 0 | Nothing off | You |
-| 1 | Any drift, or a slow change against your starting normal: a private Watch card | You |
+| 1 | Any drift, or a slow change against your starting normal: a private Watch on your own dashboard | You |
 | 2 | A ship alert or shared pattern, or a Watch you chose to share | Crew medical officer |
 | 3 | Still off on day 3 of the same likely cause; again every 3 days | Flight surgeon, with the comm delay |
 | 4 | An urgent conference request | Crew medical officer and flight surgeon, immediately |
@@ -180,7 +180,7 @@ Times: on board, ship time is UTC and the check-in is at 08:00. The flight surge
 | --- | --- | --- | --- |
 | Own dashboard (`/dashboard`) | Yes | Yes | None: not crew, sent to the crew app |
 | Anyone else's dashboard | No | No | No |
-| Own check-in (`/checkin`): check-in, conference request, Me | Yes | Yes | None: not crew |
+| Own check-in (`/checkin`): check-in, conference request | Yes | Yes | None: not crew |
 | Crew app (`/app`): crew board, inbox, Ship | No, sent to their dashboard | Yes, as the crew medical officer | Yes, the same as the crew medical officer, plus Summaries |
 | Challenge page (`/challenge`) | Yes | Yes | Yes, and with no login |
 
@@ -208,7 +208,7 @@ These are the places where the plan could be read two ways, or where the build g
 - **The check-in asks only what a person can tell.** Sleep duration and exercise are measured by the wearable and shown read-only; there is no way to correct them, which would bring the self-report back. The five ratings follow the domains of the ISS Reaction Self Test's 0-10 self-ratings where they overlap (sleep quality, fatigue, stress; Jones et al. 2022, not yet checked in `docs/CITATIONS.md`); irritability and mood are ours. The check-in shows no "why we ask" text: the team judged it out of scope for the MVP.
 - **A night with no wearable reading is not measured.** On a day with no reading, sleep duration is "not measured", as a skipped reaction test is, and the short-sleep rule does not count that night as short.
 - **The safety question is a conference request.** NASA crews have a weekly private medical conference with their flight surgeon and can ask for one at any time. The checkbox "I am not safe, or I need to talk to someone now" became "Ask for a conference": at the next scheduled conference (flight surgeon only, no tier) or urgent (tier 4, the old safety path). It is sent on its own, so asking for help never waits for the ratings, and it works on a day with no check-in.
-- **After sending, a receipt.** The confirmation lists what was sent, with "See my day" and "Change today's answers". Answers can be changed until the mission day changes.
+- **After sending, a receipt.** The confirmation lists what was sent, with "See my dashboard" and "Change today's answers". Answers can be changed until the mission day changes.
 - **The reaction test counts a lapse at 355 ms**, as PVT-B, the brief test behind the ISS Reaction Self-Test, does (Basner, Mollicone and Dinges 2011).
 - **The live reaction test is shown, not compared.** The presenter has no baseline, and the result is never stored, so it does not feed the rules.
 - **Did the fix work?** For 7 days after a ship alert ends, the board and the Ship screen say whether the air is back to its usual level and how many of the crew it touched are back to theirs. Counts only, judged on shared indicators as the board does (`shipFollowUp` in `src/engine/privacy.ts`). Anyone still off is already "likely you" with a new 3-day count. It does not claim the fix caused the recovery.
@@ -219,7 +219,8 @@ These are the places where the plan could be read two ways, or where the build g
 - **Radiation is shown, not judged.** It has no tier, no card per person and no part in ship or me: the whole crew gets about the same dose and nobody can feel it at everyday levels. A solar-storm warning would be a second "ship" cause; that is not built.
 - **The flight surgeon sees what the crew medical officer sees.** The plan names the flight surgeon as a reader of summaries; the build gives the role a login (Mira, on Earth) with the crew medical officer's access (crew board, inbox, Ship screen) plus the summaries, which include conference requests. This goes beyond the plan, which sends only summaries to Earth.
 - **The medical officer is one of the crew.** The plan's crew medical officer is a role, not a person; the build gives it to Dana. Her login opens her own dashboard and check-in like anyone's, plus the crew app as the crew medical officer. She cannot view as another crew member, because that would show their private mood and stress; the judge's tour opens the other people's screens with their own logins.
-- **Astronauts do not open the crew app.** The check-in, the reaction test, the share toggle and the conference request live on `/checkin`, in the person's own view. The crew board and the Ship screen are for the crew medical officer and the flight surgeon; an astronaut sees the cabin air and a likely-ship result on their own dashboard.
+- **No Me screen, no share toggle.** The check-in page used to have a Me tab (status card, self-care idea, 28-day trends, and the toggle to share private cards, mood and stress with the crew medical officer). It was removed on 15 Nov 2026: the person's status is on their dashboard. The engine still honours `shareWatch` (tier 2 for a shared Watch, mood and stress in the inbox), but no screen sets it, so in the demo nobody shares.
+- **Astronauts do not open the crew app.** The check-in, the reaction test and the conference request live on `/checkin`, in the person's own view, which has no other tabs. The crew board and the Ship screen are for the crew medical officer and the flight surgeon; an astronaut sees the cabin air and a likely-ship result on their own dashboard.
 
 ## Golden path
 
@@ -229,7 +230,7 @@ The "Golden path" control jumps between the four days of the demo, and the perso
 | --- | --- | --- |
 | 212 | 2018-08-20 | Everyone OK. CO₂ has started to climb; a 1-hour average is above 3 mmHg |
 | 213 | 2018-08-21 | CO₂ 4.3 mmHg against a usual 2.4. Anna, Ben and Dana drift. "Likely the ship, not you" |
-| 221 | 2018-08-29 | CO₂ back to 2.3 mmHg. Chen is still short on sleep: a private card, "likely you". The board and the Ship screen show the re-check: the air is back to usual, 3 of the 4 crew who felt it are back to theirs |
+| 221 | 2018-08-29 | CO₂ back to 2.3 mmHg. Chen is still short on sleep: his own dashboard says "likely you". The board and the Ship screen show the re-check: the air is back to usual, 3 of the 4 crew who felt it are back to theirs |
 | 223 | 2018-08-31 | Chen's day 3: a summary goes to the flight surgeon and Chen is told |
 
 The real rise lasts from day 213 to day 220; nothing in the app can shorten a recording. Chen's sleep loss (days 219-226) and Ben's stress dip (days 188-192) are scripted events, listed in `crew.json`.

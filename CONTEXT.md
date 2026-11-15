@@ -42,7 +42,7 @@ _Avoid_: CMO (in UI text), doctor
 ### Escalation
 
 **Watch**:
-The tier-1 private card a crew member gets on a day one of their indicators is off their own normal. Only they see it unless they choose to share it.
+The tier-1 private level a crew member gets on a day one of their indicators is off their own normal, shown on their own dashboard. Only they see it unless it is shared with the crew medical officer (the engine supports this; no screen offers the toggle since the Me screen was removed).
 _Avoid_: using "watch" for the **Wearable**
 
 ## Relationships
@@ -61,4 +61,4 @@ _Avoid_: using "watch" for the **Wearable**
 ## Flagged ambiguities
 
 - "safety question" / "I am not safe" was the old wording for asking for help. Resolved: it is a **Conference request**, urgent or not.
-- "watch" meant both the tier-1 private card and the wrist device. Resolved: **Watch** is the card only. The device is the **Wearable**.
+- "watch" meant both the tier-1 private card and the wrist device. Resolved: **Watch** is the tier-1 level only. The device is the **Wearable**.
