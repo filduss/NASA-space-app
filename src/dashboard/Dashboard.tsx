@@ -11,19 +11,37 @@ import type { RangeKey } from './history.ts'
 import { LEVEL_WORD, LevelIcon } from './LevelIcon.tsx'
 import { notices, verdict, vitals, zoneStates, ZONES, type Notice, type Vital, type VerdictSide, type ZoneKey } from './model.ts'
 import { SkeletonView } from './SkeletonView.tsx'
+import { DemoDock } from './DemoDock.tsx'
 import './dashboard.css'
 
 // Personal dashboard of the logged-in crew member, and only theirs: nobody opens another
-// person's dashboard. In the demo crew Chen is the one to follow: fine while the cabin CO2 is high
-// (day 213), still off once the air is back to normal (day 221), and day 3 (day 223). The same four
-// days as the crew app's golden path.
+// person's dashboard. The demo's day controls live apart from it, in DemoDock.
 const TREND_DAYS = 14
-const SCENES: { day: number; label: string }[] = [
-  { day: 212, label: 'CO₂ climbs' },
-  { day: 213, label: 'Cabin high' },
-  { day: 221, label: 'Likely you' },
-  { day: 223, label: 'Day 3' },
-]
+
+/** Toolbar glyphs, drawn in the spirit of SF Symbols: one stroke weight, rounded ends. */
+function NavIcon({ kind }: { kind: 'checkin' | 'app' | 'logout' }) {
+  return (
+    <svg className="tbtn-icon" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+      {kind === 'checkin' && (
+        <>
+          <rect x="3.25" y="2.75" width="11.5" height="13" rx="2.5" />
+          <path d="M6.5 2.75v-.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v.5M6.25 9.4l1.8 1.8 3.7-3.9" />
+        </>
+      )}
+      {kind === 'app' && (
+        <>
+          <rect x="1.75" y="4.75" width="14.5" height="10.5" rx="2.5" />
+          <path d="M6.5 4.75v-1a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1M9 7.6v5M6.5 10.1h5" />
+        </>
+      )}
+      {kind === 'logout' && (
+        <>
+          <path d="M7.5 2.75H4.75a2 2 0 0 0-2 2v8.5a2 2 0 0 0 2 2H7.5M12 5.5L15.25 9 12 12.5M15 9H7" />
+        </>
+      )}
+    </svg>
+  )
+}
 
 /** The "open larger" control on the vital tiles. */
 function ExpandButton({ label, onClick }: { label: string; onClick: () => void }) {
@@ -124,30 +142,12 @@ export function Dashboard() {
     return () => window.clearTimeout(t)
   }, [today]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ?day=221 opens the dashboard on that mission day: the store reads it at start-up.
-  const [lo, hi] = s.dayRange
-
   useEffect(() => {
     document.title = `${name} · Shipshape`
     document.body.classList.add('dash-body')
     return () => document.body.classList.remove('dash-body')
   }, [name])
 
-
-  // Data labels and the skeleton's licence credit. On wide screens they sit under the
-  // notifications so the page fits one screen; on narrower ones, at the foot of the page.
-  const credits = (
-    <>
-      <p>
-        <span className="tag">Simulated crew</span> No real person's data. <span className="tag tag-real">Real ISS CO₂</span> NASA OSDR, {s.data.cabin.meta.mission}, replayed on the mission calendar. Shipshape says
-        "likely" and never diagnoses.
-      </p>
-      <p className="dash-credit">
-        Anatomy: BodyParts3D © The Database Center for Life Science (CC BY 4.0). Modified by open-anatomy-3d (https://github.com/MervinR07/open-anatomy-3d), CC BY 4.0. Skeleton extracted and
-        re-exported. For visualisation only.
-      </p>
-    </>
-  )
 
   return (
     <div className="dash">
@@ -174,41 +174,33 @@ export function Dashboard() {
             {name.slice(0, 1)}
           </span>
           <div>
-            <p className="bar-name">{name}</p>
-            <p className="bar-meta">{s.mission.label} · Personal dashboard</p>
+            <p className="bar-name">
+              {name} <span className="bar-sim">Simulated</span>
+            </p>
+            <p className="bar-meta">
+              {s.mission.label} · <span className="bar-meta-long">Mission day</span>
+              <span className="bar-meta-short">Day</span> {today}
+            </p>
           </div>
         </div>
 
-        <div className="seg" role="group" aria-label="Demo days">
-          {SCENES.map((sc) => (
-            <button key={sc.day} type="button" className={today === sc.day ? 'seg-on' : ''} aria-pressed={today === sc.day} onClick={() => s.setToday(sc.day)}>
-              {sc.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="daystep" aria-label="Mission day">
-          <button type="button" onClick={() => s.setToday(Math.max(lo, today - 1))} disabled={today <= lo} aria-label="Previous day">
-            ‹
+        <nav className="toolbar" aria-label="Account">
+          <a className="tbtn tbtn-tint" href={hrefOf('checkin', import.meta.env.BASE_URL, `?day=${today}`)} title="Check in">
+            <NavIcon kind="checkin" />
+            <span className="tbtn-label">Check in</span>
+          </a>
+          {mayOpen(user, 'app') && (
+            <a className="tbtn" href={hrefOf('app', import.meta.env.BASE_URL, `?day=${today}`)} title="Crew app">
+              <NavIcon kind="app" />
+              <span className="tbtn-label">Crew app</span>
+            </a>
+          )}
+          <span className="toolbar-sep" aria-hidden="true" />
+          <button type="button" className="tbtn tbtn-quiet" onClick={s.logOut} title="Log out">
+            <NavIcon kind="logout" />
+            <span className="tbtn-label">Log out</span>
           </button>
-          <div className="daystep-day">
-            <span>Mission day</span>
-            <strong>{today}</strong>
-          </div>
-          <button type="button" onClick={() => s.setToday(Math.min(hi, today + 1))} disabled={today >= hi} aria-label="Next day">
-            ›
-          </button>
-        </div>
-
-        <div className="acct">
-          <span className="acct-links">
-            <a href={hrefOf('checkin', import.meta.env.BASE_URL, `?day=${today}`)}>Check in</a>
-            {mayOpen(user, 'app') && <a href={hrefOf('app', import.meta.env.BASE_URL, `?day=${today}`)}>Crew app</a>}
-            <button type="button" onClick={s.logOut}>
-              Log out
-            </button>
-          </span>
-        </div>
+        </nav>
       </header>
 
       <main className="grid">
@@ -240,7 +232,6 @@ export function Dashboard() {
             <p className="watch-note">Shipshape's rules don't use these yet. Next, each will be compared with your own normal once a real device feeds them.</p>
           </div>
 
-          <footer className="dash-foot dash-foot-side">{credits}</footer>
         </section>
 
         <section className="col col-stage" aria-label="Body status">
@@ -302,7 +293,7 @@ export function Dashboard() {
         />
       )}
 
-      <footer className="dash-foot dash-foot-end">{credits}</footer>
+      <DemoDock />
     </div>
   )
 }

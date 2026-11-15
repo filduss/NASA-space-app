@@ -47,7 +47,7 @@ body.dash-body {
     radial-gradient(35% 35% at 10% 80%, rgba(48, 209, 88, 0.05), transparent 70%);
 }
 
-.dash > :not(.dash-aurora):not(.toast):not(.bar):not(.sheet) {
+.dash > :not(.dash-aurora):not(.toast):not(.bar):not(.sheet):not(.demo) {
   position: relative;
 }
 
@@ -58,7 +58,7 @@ body.dash-body {
   top: 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 16px;
   margin: 0 -24px 20px;
@@ -92,80 +92,123 @@ body.dash-body {
 .bar-meta {
   color: var(--d-ink-2);
   font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
-
-/* Segmented control */
-.seg {
-  display: inline-flex;
-  padding: 3px;
-  border-radius: 11px;
+.bar-sim {
+  display: inline-block;
+  vertical-align: 2px;
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: 5px;
   background: rgba(118, 118, 128, 0.24);
-}
-.seg button {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--d-ink);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 7px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.25s ease, box-shadow 0.25s ease;
-  white-space: nowrap;
-}
-.seg button:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-.seg .seg-on,
-.seg .seg-on:hover {
-  background: #636366;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35), 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+  color: var(--d-ink-2);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
 }
 
-.daystep {
-  justify-self: end;
+/* Toolbar: capsule buttons with a glyph and a word, as in an Apple toolbar. Check in is the
+   tinted (primary) one, the crew app plain, log out quiet until hovered. */
+.toolbar {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
-.daystep button {
-  width: 34px;
+.tbtn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   height: 34px;
-  border-radius: 50%;
+  padding: 0 14px 0 11px;
   border: 0;
+  border-radius: 999px;
   background: rgba(118, 118, 128, 0.24);
   color: var(--d-ink);
-  font-size: 20px;
-  line-height: 1;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.12s ease;
 }
-.daystep button:hover:not(:disabled) {
-  background: rgba(118, 118, 128, 0.4);
+.tbtn:hover {
+  background: rgba(118, 118, 128, 0.36);
+  text-decoration: none;
 }
-.daystep button:disabled {
-  opacity: 0.35;
-  cursor: default;
+.tbtn:active {
+  transform: scale(0.96);
 }
-.daystep-day {
-  display: grid;
-  text-align: center;
-  min-width: 92px;
+.tbtn-tint {
+  background: rgba(10, 132, 255, 0.2);
+  color: #64b5ff;
 }
-.daystep-day span {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--d-ink-3);
-  font-weight: 600;
+.tbtn-tint:hover {
+  background: rgba(10, 132, 255, 0.3);
 }
-.daystep-day strong {
-  font-size: 22px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+.tbtn-quiet {
+  background: transparent;
+  color: var(--d-ink-2);
+}
+.tbtn-quiet:hover {
+  background: rgba(255, 69, 58, 0.14);
+  color: var(--d-red);
+}
+.tbtn-icon {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.toolbar-sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 2px;
+  background: var(--d-stroke-2);
+}
+.dash .tbtn:focus-visible {
+  outline: 2px solid var(--d-blue);
+  outline-offset: 2px;
+}
+.bar-meta-short {
+  display: none;
+}
+/* A phone keeps the glyphs only; the word stays as the accessible name and the tooltip. */
+@media (max-width: 560px) {
+  .tbtn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+  .tbtn-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .toolbar {
+    gap: 6px;
+  }
+  .toolbar-sep {
+    display: none;
+  }
+  .bar-meta-long {
+    display: none;
+  }
+  .bar-meta-short {
+    display: inline;
+  }
 }
 
 .dash button:focus-visible {
@@ -791,7 +834,6 @@ body.dash-body {
 }
 .dash .expand:focus-visible,
 .dash .sheet-close:focus-visible,
-.dash .seg button:focus-visible,
 .bigchart-svg:focus-visible {
   outline: 2px solid var(--d-blue);
   outline-offset: 2px;
@@ -1126,44 +1168,11 @@ body.dash-body {
   }
 }
 
-/* ---------- footer ---------- */
-
-.dash-foot {
-  display: grid;
-  gap: 6px;
-  margin-top: 28px;
-  padding-top: 16px;
-  border-top: 1px solid var(--d-stroke);
-  font-size: 12px;
-  color: var(--d-ink-3);
-}
-.tag {
-  display: inline-block;
-  padding: 1px 7px;
-  margin-right: 4px;
-  border-radius: 6px;
-  background: rgba(118, 118, 128, 0.24);
-  color: var(--d-ink-2);
-  font-weight: 600;
-}
-.tag-real {
-  background: rgba(10, 132, 255, 0.18);
-  color: #64b5ff;
-  margin-left: 6px;
-}
-.dash-credit {
-  font-size: 11px;
-}
-
 /* ---------- one screen on desktop ---------- */
 /* With three columns the page fits the window and never scrolls: the stage takes the height
-   left under the bar, and the credits sit under the notifications instead of below the page.
+   left under the bar and above the demo dock.
    The stage is about 5% shorter than the old min(100dvh - 112px, 860px), so --sk-zoom puts the
    skeleton back at its old size on screen. A column that still runs long scrolls on its own. */
-
-.dash-foot-side {
-  display: none;
-}
 
 @media (min-width: 1241px) {
   .dash {
@@ -1211,16 +1220,6 @@ body.dash-body {
     max-height: 820px;
     min-height: 0;
   }
-  .dash-foot-end {
-    display: none;
-  }
-  .dash-foot-side {
-    display: grid;
-    margin-top: auto;
-    padding-top: 14px;
-    font-size: 11px;
-    overflow-wrap: anywhere;
-  }
 }
 
 /* Short desktop windows (a 1366 x 768 laptop): a tighter hero card and slimmer vitals tiles,
@@ -1231,9 +1230,6 @@ body.dash-body {
   }
   .hero h1 {
     font-size: 24px;
-  }
-  .dash-foot-side {
-    font-size: 10px;
   }
   .tile-value {
     font-size: 26px;
@@ -1266,18 +1262,8 @@ body.dash-body {
     padding: 0 16px 16px;
   }
   .bar {
-    grid-template-columns: 1fr auto;
     margin: 0 -16px 16px;
     padding: 10px 16px;
-  }
-  .seg {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    justify-self: stretch;
-  }
-  .seg button {
-    flex: 1;
-    padding: 7px 8px;
   }
   .grid {
     grid-template-columns: minmax(0, 1fr);
@@ -1354,40 +1340,329 @@ body.dash-body {
   }
 }
 
-/* ---------- account row (check in, crew app, log out) ---------- */
+/* ---------- demo dock ---------- */
+/* The demo's controls float apart from the dashboard, marked as help with the same "?" as the
+   judge's tour beside the login: they move the simulated mission calendar and are not part of
+   Shipshape. The page keeps room under its content so the dock never covers it. */
 
-.acct {
-  grid-column: 1 / -1;
+.dash {
+  padding-bottom: 92px;
+}
+.dash:has(.demo-folded) {
+  padding-bottom: 76px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 1px 7px;
+  margin-right: 4px;
+  border-radius: 6px;
+  background: rgba(118, 118, 128, 0.24);
+  color: var(--d-ink-2);
+  font-weight: 600;
+}
+.tag-real {
+  background: rgba(10, 132, 255, 0.18);
+  color: #64b5ff;
+}
+
+.demo {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 30;
+  transform: translateX(-50%);
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 8px 16px;
+  gap: 10px;
+  max-width: calc(100vw - 32px);
+  padding: 7px 7px 7px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(100, 181, 255, 0.28);
+  background: rgba(28, 28, 30, 0.82);
+  backdrop-filter: var(--d-blur);
+  -webkit-backdrop-filter: var(--d-blur);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.55),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.08);
   font-size: 13px;
+}
+.demo-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(10, 132, 255, 0.5);
+  background: rgba(10, 132, 255, 0.14);
+  color: #64b5ff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.demo-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 10px;
+  border-right: 1px solid var(--d-stroke-2);
+}
+.demo-title {
+  font-weight: 600;
+  line-height: 1.2;
+}
+.demo-sub {
+  color: var(--d-ink-3);
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.demo-day {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.demo-day button,
+.demo-fold,
+.demo-about summary {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(118, 118, 128, 0.24);
+  color: var(--d-ink);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.demo-day button:hover:not(:disabled),
+.demo-fold:hover,
+.demo-about summary:hover {
+  background: rgba(118, 118, 128, 0.4);
+}
+.demo-day button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.demo svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.demo-day-num {
+  min-width: 70px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.demo-day-num span {
+  margin-right: 2px;
+  color: var(--d-ink-3);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* The four days of the golden path: a segmented control, numbered like the tour's steps. */
+.demo-scenes {
+  display: flex;
+  padding: 3px;
+  border-radius: 11px;
+  background: rgba(118, 118, 128, 0.24);
+}
+.demo-scene {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--d-ink-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.25s ease,
+    box-shadow 0.25s ease,
+    color 0.25s ease;
+}
+.demo-scene:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--d-ink);
+}
+.demo-scene-on,
+.demo-scene-on:hover {
+  background: #636366;
+  color: var(--d-ink);
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.35),
+    0 0 0 0.5px rgba(255, 255, 255, 0.08);
+}
+.demo-scene-n {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  border: 1px solid var(--d-stroke-2);
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.demo-scene-on .demo-scene-n {
+  border-color: transparent;
+  background: var(--d-blue);
+  color: #fff;
+}
+
+/* About the data: the data labels and the skeleton's licence credit, opened from the dock. */
+.demo-about {
+  position: relative;
+}
+.demo-about summary {
+  list-style: none;
   color: var(--d-ink-2);
 }
-.acct-links {
-  margin-left: auto;
-  display: inline-flex;
-  gap: 14px;
+.demo-about summary::-webkit-details-marker {
+  display: none;
 }
-.acct-links a,
-.acct-links button {
-  appearance: none;
-  border: 0;
-  background: none;
+.demo-about[open] summary {
+  background: rgba(10, 132, 255, 0.2);
+  color: #64b5ff;
+}
+.demo-about-card {
+  position: absolute;
+  right: -46px;
+  bottom: calc(100% + 18px);
+  width: 340px;
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-radius: var(--d-radius-sm);
+  border: 1px solid var(--d-stroke-2);
+  background: rgba(28, 28, 30, 0.94);
+  backdrop-filter: var(--d-blur);
+  -webkit-backdrop-filter: var(--d-blur);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  color: var(--d-ink-2);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.demo-about-title {
+  color: var(--d-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+.demo-credit {
+  padding-top: 8px;
+  border-top: 1px solid var(--d-stroke);
+  color: var(--d-ink-3);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.demo-fold {
+  color: var(--d-ink-2);
+}
+
+/* Folded: one small capsule in the corner. */
+.demo-folded {
+  left: auto;
+  right: 16px;
+  transform: none;
   padding: 0;
-  color: var(--d-blue);
+  border-radius: 999px;
+}
+.demo-open {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 6px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--d-ink);
   font: inherit;
-  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
 }
-.dash .acct a:focus-visible {
+.demo-open-day {
+  color: var(--d-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.dash .demo button:focus-visible,
+.dash .demo summary:focus-visible {
   outline: 2px solid var(--d-blue);
   outline-offset: 2px;
 }
 
-@media (max-width: 760px) {
-  .acct {
-    grid-row: 3;
+/* Narrower screens: the dock spans the width, the four days on a row of their own. */
+@media (max-width: 900px) {
+  .dash {
+    padding-bottom: 136px;
+  }
+  .demo:not(.demo-folded) {
+    left: 12px;
+    right: 12px;
+    transform: none;
+    max-width: none;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+  }
+  .demo-head {
+    margin-right: auto;
+  }
+  .demo-scenes {
+    order: 5;
+    flex: 1 0 100%;
+  }
+  .demo-scene {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 4px;
+  }
+  .demo-about {
+    position: static;
+  }
+  .demo-about-card {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(132px + env(safe-area-inset-bottom));
+    width: auto;
+  }
+}
+@media (max-width: 560px) {
+  .demo-sub {
+    display: none;
+  }
+  .demo-day-num {
+    min-width: 62px;
+  }
+  .demo-scene-n {
+    display: none;
+  }
+  .demo-scene {
+    font-size: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tbtn:active {
+    transform: none;
   }
 }

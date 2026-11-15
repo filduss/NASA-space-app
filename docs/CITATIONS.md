@@ -26,7 +26,7 @@ Sources behind the rules and the "why" text. The links come from [plan v0.1](pla
 | ISS CO₂, temperature and humidity | [NASA OSDR Environmental Data Application](https://visualization.osdr.nasa.gov/eda), API `https://visualization.osdr.nasa.gov/eda/api/missions/{mission}/telemetry_data/` | Yes: downloaded 14 Nov 2026; the SHA-256 of each raw response is in `scripts/snapshots/*_hourly.json` |
 | Demo cabin feed | Mission RR-7, [OSDR payload page](https://osdr.nasa.gov/bio/repo/data/payloads/RR-7) | Data yes; payload page not opened |
 | Backtest traces | Missions RR-1, RR-3, RR-5, RR-6, RR-7, RR-9, RR-10, RR-12, RR-19, RR-23 | Yes |
-| 3D skeleton (`public/models/skeleton.glb`, `/dashboard`) | Anatomy: BodyParts3D © The Database Center for Life Science (CC BY 4.0). Modified by [open-anatomy-3d](https://github.com/MervinR07/open-anatomy-3d) (CC BY 4.0, npm 0.1.0, male model). Skeleton extracted and re-exported. Credit shown in the dashboard footer. | Credit text from the model's README; source repo not opened |
+| 3D skeleton (`public/models/skeleton.glb`, `/dashboard`) | Anatomy: BodyParts3D © The Database Center for Life Science (CC BY 4.0). Modified by [open-anatomy-3d](https://github.com/MervinR07/open-anatomy-3d) (CC BY 4.0, npm 0.1.0, male model). Skeleton extracted and re-exported. Credit shown in the dashboard's demo dock, under "About the data". | Credit text from the model's README; source repo not opened |
 
 ## Statements that are ours, not a source's
 

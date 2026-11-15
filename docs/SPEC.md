@@ -184,7 +184,7 @@ Times: on board, ship time is UTC and the check-in is at 08:00. The flight surge
 | Crew app (`/app`): crew board, inbox, Ship | No, sent to their dashboard | Yes, as the crew medical officer | Yes, the same as the crew medical officer, plus Summaries |
 | Challenge page (`/challenge`) | Yes | Yes | Yes, and with no login |
 
-`viewsFor(user, page)` in `src/auth/session.ts` gives the one view a login takes on a page: on `/checkin` the person themselves, in `/app` the crew medical officer or the flight surgeon. Nobody can view as another crew member. "Reset my inputs" is not offered to the flight surgeon. The mission day, mission setting and comm delay controls stay for the demo. The personal dashboard links to the person's own check-in.
+`viewsFor(user, page)` in `src/auth/session.ts` gives the one view a login takes on a page: on `/checkin` the person themselves, in `/app` the crew medical officer or the flight surgeon. Nobody can view as another crew member. "Reset my inputs" is not offered to the flight surgeon. The mission day, mission setting and comm delay controls stay for the demo. The personal dashboard links to the person's own check-in. On `/dashboard` the demo's controls (the mission-day stepper and the four golden-path days) are not in the top bar: they sit in a separate demo dock at the bottom of the screen, marked "Not part of the app" with the same "?" as the judge's tour, and can be folded away. The dock's "About the data" holds the data labels (simulated crew, real ISS CO₂ and its source) and the skeleton's licence credit; the page has no footer. The top bar keeps the person's name with a "Simulated" tag and the mission day as plain text.
 
 **Judge's tour.** Beside the login (to its right on wide screens, below it on a phone) are four links that walk the golden path, styled as help rather than as a step to complete: day 213 as Dana (Ship screen), day 221 as Chen (dashboard), day 223 as Mira (the summaries sent to Earth), and the challenge page. Each link logs in with that person's demo PIN through the same check as typing it, then opens the page. The demo PINs are printed on each person's card; they are public on purpose (`src/auth/demo.ts`, the README and `scripts/make_accounts.py` list the same PINs). `?day=`, `?screen=` and `?mission=` open a page on a given mission day, screen and setting.
 
@@ -223,7 +223,7 @@ These are the places where the plan could be read two ways, or where the build g
 
 ## Golden path
 
-The "Golden path" control jumps between the four days of the demo, and the personal dashboard's day chips use the same four days. The crew is seed 402 of the simulator; `tests/golden.test.ts` checks these days on the committed data.
+The "Golden path" control jumps between the four days of the demo, and the personal dashboard's demo dock uses the same four days. The crew is seed 402 of the simulator; `tests/golden.test.ts` checks these days on the committed data.
 
 | Mission day | Real date | What the app shows |
 | --- | --- | --- |
