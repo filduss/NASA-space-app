@@ -24,7 +24,7 @@ Built for the NASA Space Apps Challenge 2026, "Create Health Monitoring Software
 | | |
 | --- | --- |
 | ![The judge's tour on the start page](docs/screenshots/tour.png) | ![Day 213: likely the ship, with the real ISS CO₂ trace](docs/screenshots/ship-day-213.png) |
-| ![Day 221: Chen's dashboard, likely him](docs/screenshots/dashboard-day-221.png) | ![Day 223: what reached the flight surgeon on Earth](docs/screenshots/earth-day-223.png) |
+| ![Day 221: Chen's dashboard, likely him](docs/screenshots/dashboard-day-221.png) | ![Day 223: Chen's day-3 summary reaches the flight surgeon on Earth](docs/screenshots/earth-day-223.png) |
 
 Not a medical device: it says "likely", never diagnoses, and supports the flight surgeon rather than replacing one. No AI model runs in the product, there is no leaderboard and no backend; the PIN login runs in the browser only (see below). AI use during development is in [docs/AI_USE_LOG.md](docs/AI_USE_LOG.md).
 

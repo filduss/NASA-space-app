@@ -848,13 +848,11 @@ input {
   font-size: 13px;
   color: var(--ink-2);
 }
-.tl-people,
-.today ul {
+.tl-people {
   display: flex;
   flex-direction: column;
 }
-.tl-people li,
-.today li {
+.tl-people li {
   display: grid;
   grid-template-columns: 64px 1fr;
   gap: 10px;
@@ -865,25 +863,6 @@ input {
 }
 .tl-person {
   font-weight: 600;
-}
-.today h3 {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-3);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 4px;
-}
-.today .today-watch .today-words {
-  color: var(--watch-ink);
-}
-.today-words .origin {
-  margin-left: 6px;
-}
-.you {
-  font-weight: 400;
-  color: var(--ink-3);
-  font-size: 13px;
 }
 .private-count {
   padding: 12px 14px;
