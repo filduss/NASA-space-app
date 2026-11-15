@@ -55,8 +55,15 @@ describe('Guide content', () => {
 
   it('a reading with nothing to say beyond its first line is left out until its sources are checked', () => {
     const vision = ENTRIES.find((e) => e.id === 'vision')!
-    expect(visibleParts(vision).length).toBe(1)
-    expect(listed(vision)).toBe(false)
+    expect(listed(vision)).toBe(true)
+    // Every source has been opened, so take back vision's only one (SANS) to see the entry wait.
+    SOURCES.sans.checked = false
+    try {
+      expect(visibleParts(vision).length).toBe(1)
+      expect(listed(vision)).toBe(false)
+    } finally {
+      SOURCES.sans.checked = true
+    }
     expect(listed(ENTRIES.find((e) => e.id === 'co2')!)).toBe(true)
     expect(ENTRIES.filter((e) => e.section === 'risks').every(listed)).toBe(true)
   })

@@ -48,6 +48,7 @@
 | 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Found the missing link for the PVT-B lapse citation (Basner, Mollicone and Dinges 2011): DOI, PMID and the free PMC full text added to `docs/CITATIONS.md`, with the abstract's 355 ms sentence. The source had already been opened by the team | Team review pending |
 | 15 Nov 2026 | Claude Code (Claude Opus 5.5) | Pre-release check before the repo goes public: live demo link moved to ship-or-me.vercel.app (README, link-preview image); the challenge page's "Judge's tour" button opened the login, which no longer has a tour, and now opens the tour's first stop; a leftover "real" label removed from the crew timeline; README intro, data table and login section brought in line with the build, the tour screenshot replaced by the login; SPEC open items. No rule changed | Team review pending |
 | 15 Nov 2026 | Claude Code (Claude Opus 5.5) | At the team's request: the Apache-2.0 `LICENSE` taken from branch `worktree-license-ai-log` (that branch not merged) after checking it is the unmodified apache.org text; README's License section says so and keeps the skeleton model's CC BY 4.0 credit apart | Team review pending |
+| 15 Nov 2026 | Claude Code (Claude Opus 5.5) | At the team's request, the citation marks from branch `worktree-license-ai-log` (commit 8c237c3, the team's record that it opened every source) applied to `main` without merging that branch: the 30 "No" rows in `docs/CITATIONS.md` and the Guide's 22 `checked` flags, with its test; the Antarctic sources on the challenge page added to `docs/CITATIONS.md` with the words found on each page, marked "No" until a person opens them. Leftover branches deleted, with a backup bundle kept outside the repo | Team review pending |
 
 ## What AI does not do in the product
 
@@ -57,7 +58,7 @@
 
 ## To check by hand
 
-- Each source in `docs/CITATIONS.md` still marked "No".
+- The four Antarctic sources at the end of `docs/CITATIONS.md`, still marked "No".
 - The readings of the plan listed in `docs/SPEC.md`.
 - The wording of cards and summaries in `src/ui/text.ts` and `src/ui/Medical.tsx`.
 - The Mars cruise dose rate in `src/engine/mission.ts`: only the abstract of Zeitlin et al. 2013 was read; the per-day figure comes from the press release (see `docs/CITATIONS.md`).

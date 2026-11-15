@@ -409,6 +409,6 @@ One crew member never ticks a symptom and reports every slider one point better 
 - **The crew board still shares sleep and symptoms.** `CONTEXT.md` says a check-in's answers reach the flight surgeon and never crewmates. The board and the crew medical officer's inbox still follow the privacy table above (sleep, fatigue, irritability, alertness and symptoms shared). That privacy change is not built yet. The check-in page used to say what the build does in its first line ("Sleep, fatigue, irritability and symptoms go to your crew medical officer and your flight surgeon. Mood and stress stay yours, unless you are still off on day 3"); that line was removed at the team's request, so the page no longer says who receives the answers.
 
 - The `v1.0-submission` tag.
-- README sections for the challenge map and the Antarctic case (both are in the app: the demo dock's settings → How it answers the challenge), and the Antarctic sources in `docs/CITATIONS.md`.
+- README sections for the challenge map and the Antarctic case (both are in the app: the demo dock's settings → How it answers the challenge).
 - The 30-second video.
-- Opening each source in `docs/CITATIONS.md` that is still marked "No" before quoting it on the project page.
+- Opening the four Antarctic sources in `docs/CITATIONS.md`, still marked "No" (they are already quoted on the challenge page).
