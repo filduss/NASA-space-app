@@ -21,9 +21,22 @@ function guideHref(id: string): string {
 
 /**
  * The "?" next to a check-in item, or a text button when given children. It opens the entry in a sheet over
- * the page instead of leaving it, so a half-filled check-in is not lost.
+ * the page instead of leaving it, so a half-filled check-in is not lost. `toGuide` adds a link on to the
+ * whole Guide, for pages with nothing to lose by leaving (the dashboard).
  */
-export function GuideLink({ id, label, children }: { id: string; label: string; children?: ReactNode }) {
+export function GuideLink({
+  id,
+  label,
+  children,
+  className,
+  toGuide = false,
+}: {
+  id: string
+  label: string
+  children?: ReactNode
+  className?: string
+  toGuide?: boolean
+}) {
   const [open, setOpen] = useState(false)
   const dialog = useRef<HTMLDialogElement>(null)
   const entry = entryById(id)
@@ -38,10 +51,14 @@ export function GuideLink({ id, label, children }: { id: string; label: string; 
     <>
       <button
         type="button"
-        className={children ? 'link guide-text' : 'guide-q'}
+        className={className ?? (children ? 'link guide-text' : 'guide-q')}
         aria-label={children ? undefined : `${label}: what it means`}
-        title="What it means"
-        onClick={() => setOpen(true)}>
+        title={`${entry.title}: what it means`}
+        onClick={(e) => {
+          // The button can sit inside something clickable, such as a dashboard tile that opens a chart.
+          e.stopPropagation()
+          setOpen(true)
+        }}>
         {children ?? '?'}
       </button>
       {open && (
@@ -50,8 +67,12 @@ export function GuideLink({ id, label, children }: { id: string; label: string; 
           className="guide-sheet"
           aria-labelledby={`sheet-${id}`}
           onClose={() => setOpen(false)}
-          // A click on the backdrop lands on the dialog itself; the content fills it otherwise.
-          onClick={(e) => e.target === e.currentTarget && close()}>
+          onClick={(e) => {
+            // React passes clicks in the sheet up to the button's parents; keep them here.
+            e.stopPropagation()
+            // A click on the backdrop lands on the dialog itself; the content fills it otherwise.
+            if (e.target === e.currentTarget) close()
+          }}>
           <div className="guide-sheet-in">
             <div className="guide-sheet-head">
               <h2 id={`sheet-${id}`}>{entry.title}</h2>
@@ -61,6 +82,11 @@ export function GuideLink({ id, label, children }: { id: string; label: string; 
             </div>
             <p className="guide-sum">{summary(entry)}</p>
             <EntryBody entry={entry} />
+            {toGuide && (
+              <a className="guide-sheet-more" href={guideHref(id)}>
+                Open in the Guide
+              </a>
+            )}
           </div>
         </dialog>
       )}

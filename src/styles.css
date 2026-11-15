@@ -1994,3 +1994,50 @@ details[open] > summary {
   line-height: 1;
   cursor: pointer;
 }
+/* "What this means" on the dashboard: a quiet button beside something that is off today. */
+.guide-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  min-height: 32px;
+  margin-top: 8px;
+  padding: 4px 12px 4px 6px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fill);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.guide-more:hover {
+  background: var(--fill-2);
+}
+.guide-more-q {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+.guide-more-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+}
+.guide-sheet {
+  font-size: 17px;
+  line-height: 1.45;
+  text-align: left;
+}
+.guide-sheet-more {
+  align-self: flex-start;
+  font-weight: 600;
+}
