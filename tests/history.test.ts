@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { CabinHour } from '../src/data/types.ts'
-import { co2Series, niceTicks, rangeStart, stats, vitalSeries } from '../src/dashboard/history.ts'
+import { niceTicks, rangeStart, stats, vitalSeries } from '../src/dashboard/history.ts'
 import { indicatorLevel } from '../src/dashboard/model.ts'
 import { runEngine, type CheckIn } from '../src/engine/index.ts'
 import { cabin, checkIn, CREW, steady } from './helpers.ts'
@@ -61,27 +60,5 @@ describe('vital history', () => {
     const { checkIns, results } = world((all) => all.map((c) => (c.crewId === 'chen' && c.day === TODAY ? checkIn('chen', TODAY, { reactionMs: 312 }) : c)))
     const s = vitalSeries('reaction', 'chen', checkIns, results, TODAY, TODAY)
     expect(s.points[0].v).toBe(312)
-  })
-})
-
-describe('cabin CO2 history', () => {
-  const hours = (day: number, co2: number): CabinHour[] =>
-    Array.from({ length: 24 }, (_, h) => ({ t: `2018-08-${String(day - 100).padStart(2, '0')}T${String(h).padStart(2, '0')}:00:00Z`, day, co2, temp: null, rh: null }))
-
-  it('keeps hourly values as they are and only the days in range', () => {
-    const { results } = world()
-    const hourly = [...hours(138, 2.5), ...hours(139, 2.6), ...hours(140, 2.7)]
-    const s = co2Series(hourly, results, 139, 140)
-    expect(s.points).toHaveLength(48)
-    expect(new Set(s.points.map((p) => p.v))).toEqual(new Set([2.6, 2.7]))
-    expect(s.points[0].when).toBe('Day 139 · 00:00 UTC')
-  })
-
-  it('flags a day whose mean is over the limit and leaves normal days unflagged', () => {
-    const { results } = world(undefined, { 140: 3.4 })
-    const hourly = [...hours(139, 2.4), ...hours(140, 3.4)]
-    const s = co2Series(hourly, results, 139, 140)
-    expect(s.flags).toHaveLength(1)
-    expect(s.flags[0]).toMatchObject({ day: 140, level: 'alert' })
   })
 })

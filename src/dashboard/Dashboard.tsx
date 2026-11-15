@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { hrefOf } from '../auth/paths.ts'
 import { mayOpen, type User } from '../auth/session.ts'
-import { RULES } from '../engine/config.ts'
 import { exerciseWeek } from '../engine/gravity.ts'
 import { useStore } from '../state.tsx'
 import { delayText, symptomLabel } from '../ui/text.ts'
 import { ChartSheet, type ChartTarget } from './ChartSheet.tsx'
-import { Co2Chart, Sparkline } from './charts.tsx'
+import { Sparkline } from './charts.tsx'
 import type { RangeKey } from './history.ts'
 import { LEVEL_WORD, LevelIcon } from './LevelIcon.tsx'
 import { cabinLevel, notices, vitals, worst, zoneStates, ZONES, type Level, type Notice, type Vital, type ZoneKey } from './model.ts'
@@ -25,7 +24,7 @@ const SCENES: { day: number; label: string }[] = [
   { day: 223, label: 'Day 3' },
 ]
 
-/** The "open larger" control shared by the vital tiles and the cabin panel. */
+/** The "open larger" control on the vital tiles. */
 function ExpandButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
@@ -107,22 +106,20 @@ export function Dashboard() {
   const user = s.user as User
   const crewId = user.crewId
   const [focus, setFocus] = useState<ZoneKey | null>(null)
-  // The open chart sheet, and the last range picked for each kind of chart (kept between openings).
+  // The open chart sheet, and the last range picked (kept between openings).
   const [chart, setChart] = useState<ChartTarget | null>(null)
   const [vitalRange, setVitalRange] = useState<RangeKey>('14d')
-  const [co2Range, setCo2Range] = useState<RangeKey>('1d')
   const name = s.nameOf(crewId)
   const today = s.today
   const me = s.todayResult.people[crewId]
   const cabin = s.todayResult.cabin
-  const cabinDay = s.data.cabin.daily.find((d) => d.day === today) ?? null
 
   const history = useMemo(() => s.checkIns.filter((c) => c.crewId === crewId), [s.checkIns, crewId])
   const exercise = useMemo(() => exerciseWeek(history, today), [history, today])
   const zones = useMemo(() => zoneStates(me, cabin, exercise), [me, cabin, exercise])
   const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise), [me, cabin, s.commDelaySec, exercise])
   const tiles = useMemo(() => vitals(me, history, today, TREND_DAYS), [me, history, today])
-  const hours = useMemo(() => s.data.cabin.hourly.filter((h) => h.day === today), [s.data, today])
+  const chartVital = chart ? tiles.find((t) => t.key === chart.key) : undefined
   const overall = worst(...ZONES.map((z) => zones[z.key].level))
   const co2Level = cabinLevel(cabin)
 
@@ -150,6 +147,21 @@ export function Dashboard() {
     return () => document.body.classList.remove('dash-body')
   }, [name])
 
+
+  // Data labels and the skeleton's licence credit. On wide screens they sit under the
+  // notifications so the page fits one screen; on narrower ones, at the foot of the page.
+  const credits = (
+    <>
+      <p>
+        <span className="tag">Simulated crew</span> No real person's data. <span className="tag tag-real">Real ISS CO₂</span> NASA OSDR, {s.data.cabin.meta.mission}, replayed on the mission calendar. Shipshape says
+        "likely" and never diagnoses.
+      </p>
+      <p className="dash-credit">
+        Anatomy: BodyParts3D © The Database Center for Life Science (CC BY 4.0). Modified by open-anatomy-3d (https://github.com/MervinR07/open-anatomy-3d), CC BY 4.0. Skeleton extracted and
+        re-exported. For visualisation only.
+      </p>
+    </>
+  )
 
   const hero = heroText(overall, me.attribution, me.tier, me.episodeDay, me.assessment.checkedIn, co2Level)
 
@@ -261,6 +273,8 @@ export function Dashboard() {
               </ul>
             )}
           </div>
+
+          <footer className="dash-foot dash-foot-side">{credits}</footer>
         </section>
 
         <section className="col col-stage" aria-label="Body status">
@@ -310,101 +324,22 @@ export function Dashboard() {
             </div>
           </div>
 
-          <div className={`panel cabin cabin-${co2Level}`}>
-            <h2 className="panel-title">
-              Cabin air
-              {co2Level !== 'ok' && (
-                <span className={`pill pill-${co2Level}`}>
-                  <LevelIcon level={co2Level} size={12} />
-                  {LEVEL_WORD[co2Level]}
-                </span>
-              )}
-              <ExpandButton label="Open cabin CO₂ chart" onClick={() => setChart({ kind: 'co2' })} />
-            </h2>
-            <div className="cabin-stats">
-              <div className="cabin-main">
-                <span className="cabin-label">CO₂ · 24 h average</span>
-                <p className="cabin-value">
-                  {cabin.co2Mean?.toFixed(1) ?? '–'}
-                  <span className="tile-unit"> mmHg</span>
-                </p>
-              </div>
-              <div>
-                <span className="cabin-label">Peak hour</span>
-                <p className="cabin-small">{cabin.co2Max1h?.toFixed(1) ?? '–'}</p>
-              </div>
-              <div>
-                <span className="cabin-label">Temp</span>
-                <p className="cabin-small">{cabinDay?.temp != null ? `${cabinDay.temp.toFixed(1)}°` : '–'}</p>
-              </div>
-              <div>
-                <span className="cabin-label">Humidity</span>
-                <p className="cabin-small">{cabinDay?.rh != null ? `${Math.round(cabinDay.rh)}%` : '–'}</p>
-              </div>
-            </div>
-            <div className="co2-open" onClick={() => setChart({ kind: 'co2' })}>
-              <Co2Chart hours={hours} limit={RULES.co2LimitMmHg} usual={cabin.baseline} />
-            </div>
-          </div>
-
-          <div className={`panel bone bone-${exercise.lapse ? 'watch' : 'ok'}`}>
-            <h2 className="panel-title">
-              Bone &amp; muscle
-              {exercise.lapse && (
-                <span className="pill pill-watch">
-                  <LevelIcon level="watch" size={12} />
-                  {LEVEL_WORD.watch}
-                </span>
-              )}
-            </h2>
-            <p className="bone-main">
-              {exercise.logged === 0 ? (
-                'No exercise logged this week'
-              ) : (
-                <>
-                  <strong>{exercise.onTarget}</strong> of the last {exercise.logged} logged days at {RULES.exerciseTargetMin} min or more
-                </>
-              )}
-            </p>
-            <p className="bone-note">
-              {GRAVITY_NOTE[s.mission.gravity]} Shown here only, never judged or shared.{' '}
-              <a href="https://www.nasa.gov/humans-in-space/the-human-body-in-space/" target="_blank" rel="noreferrer">
-                Source: NASA
-              </a>
-            </p>
-          </div>
         </section>
       </main>
 
-      {chart && (
+      {chartVital && chart && (
         <ChartSheet
           target={chart}
-          vital={chart.kind === 'vital' ? tiles.find((t) => t.key === chart.key) : undefined}
-          range={chart.kind === 'co2' ? co2Range : vitalRange}
-          onRange={chart.kind === 'co2' ? setCo2Range : setVitalRange}
+          vital={chartVital}
+          range={vitalRange}
+          onRange={setVitalRange}
           onClose={() => setChart(null)}
         />
       )}
 
-      <footer className="dash-foot">
-        <p>
-          <span className="tag">Simulated crew</span> No real person's data. <span className="tag tag-real">Real ISS CO₂</span> NASA OSDR, {s.data.cabin.meta.mission}, replayed on the mission calendar. Shipshape says
-          "likely" and never diagnoses.
-        </p>
-        <p className="dash-credit">
-          Anatomy: BodyParts3D © The Database Center for Life Science (CC BY 4.0). Modified by open-anatomy-3d (https://github.com/MervinR07/open-anatomy-3d), CC BY 4.0. Skeleton extracted and
-          re-exported. For visualisation only.
-        </p>
-      </footer>
+      <footer className="dash-foot dash-foot-end">{credits}</footer>
     </div>
   )
-}
-
-/** Why exercise matters where the crew is. The loss rate is NASA's, measured in spaceflight (docs/CITATIONS.md). */
-const GRAVITY_NOTE: Record<'none' | 'lunar' | 'earth', string> = {
-  none: 'In spaceflight, weight-bearing bones lose on average 1 to 1.5% of their mineral density a month; daily exercise is the countermeasure.',
-  lunar: "At a sixth of Earth's gravity, bones and muscles carry less load; daily exercise still counts.",
-  earth: "Earth's gravity loads bones and muscles; exercise is tracked for fitness.",
 }
 
 function heroText(overall: Level, attribution: string, tier: number, episodeDay: number, checkedIn: boolean, co2: Level): { title: string; body: string } {
@@ -413,7 +348,7 @@ function heroText(overall: Level, attribution: string, tier: number, episodeDay:
   if (tier === 3) return { title: `Still off your usual, day ${episodeDay}`, body: 'A short summary went to the flight surgeon. It lists what changed, never a diagnosis.' }
   if (attribution === 'ship') return { title: 'Likely the ship, not you', body: 'Most of the crew show the same change while cabin CO₂ is above its usual level.' }
   if (attribution === 'me' || attribution === 'shared') return { title: 'Something is off your usual', body: 'Only you see this. Take it easy today and check in again tomorrow.' }
-  if (co2 !== 'ok') return { title: 'You are within your normal', body: 'Your body is steady. The cabin air is flagged on the right.' }
+  if (co2 !== 'ok') return { title: 'You are within your normal', body: 'Your body is steady. The cabin air is flagged in your notifications.' }
   if (overall === 'ok') return { title: 'All within your normal', body: 'Everything you logged today sits inside your own usual range.' }
   return { title: 'Worth a look', body: 'Something is flagged below.' }
 }

@@ -46,7 +46,7 @@ Pure functions with no React and no I/O. `runEngine(input)` in `escalation.ts` r
 - `shipOrMe.ts`: cabin status and the ship / me / shared decision.
 - `escalation.ts`: episodes, day counts and tiers 0–4, flight-surgeon summaries.
 - `privacy.ts`: the only path from engine output to another viewer's screen. UI code must not read another person's `PersonStatus` directly.
-- `gravity.ts` and `mission.ts`: shown, never judged. Exercise against its daily target (Bone & muscle on the dashboard) and the radiation dose budget; neither has a tier or any part in ship or me.
+- `gravity.ts` and `mission.ts`: shown, never judged. Exercise against its daily target (the core and limbs zones on the dashboard) and the radiation dose budget; neither has a tier or any part in ship or me.
 
 Every threshold lives in `config.ts` as `RULES`, each either cited or labeled a "demo parameter". Do not put rule numbers anywhere else.
 
