@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { RULES } from '../engine/config.ts'
-import { SPEC } from '../engine/deviation.ts'
 import { crewTimeline, type TimelineCell, type TimelineMark, type Viewer } from '../engine/privacy.ts'
 import { useStore } from '../state.tsx'
 import { Mark, type Tone } from './bits.tsx'
@@ -22,7 +21,7 @@ const DRIFT_H = 46
 const ROWS_Y = DRIFT_Y + DRIFT_H + 14
 const ROW_H = 30
 
-const TONE: Record<TimelineMark, Tone> = { ok: 'ok', off: 'watch', persist: 'alert', absent: 'idle', shield: 'idle', safety: 'alert', unknown: 'idle' }
+const TONE: Record<TimelineMark, Tone> = { ok: 'ok', off: 'watch', persist: 'alert', absent: 'idle', shield: 'idle' }
 
 const LEGEND: { mark: TimelineMark; word: string }[] = [
   { mark: 'ok', word: 'Within own usual' },
@@ -30,8 +29,6 @@ const LEGEND: { mark: TimelineMark; word: string }[] = [
   { mark: 'persist', word: `Day ${RULES.persistDays} or later` },
   { mark: 'absent', word: 'No check-in' },
   { mark: 'shield', word: 'Shielded day' },
-  { mark: 'safety', word: 'Safety answer' },
-  { mark: 'unknown', word: 'Nothing received' },
 ]
 
 /** One day's symbol. The shape carries the status; colour only supports it. */
@@ -53,10 +50,6 @@ function Sym({ mark, x, y, s }: { mark: TimelineMark; x: number; y: number; s: n
           d={`M${x},${y - s * 0.85}L${x + s * 0.72},${y - s * 0.55}V${y}C${x + s * 0.72},${y + s * 0.5} ${x + s * 0.35},${y + s * 0.75} ${x},${y + s * 0.9}C${x - s * 0.35},${y + s * 0.75} ${x - s * 0.72},${y + s * 0.5} ${x - s * 0.72},${y}V${y - s * 0.55}Z`}
         />
       )
-    case 'safety':
-      return <rect className={cls} x={x - s * 0.72} y={y - s * 0.72} width={s * 1.44} height={s * 1.44} rx={1.5} />
-    default:
-      return <line className={cls} x1={x - s * 0.45} x2={x + s * 0.45} y1={y} y2={y} />
   }
 }
 
@@ -76,16 +69,11 @@ function cellWords(c: TimelineCell, shieldLabel: string | null): string {
       return 'No check-in'
     case 'shield':
       return `${shieldLabel ?? 'Shielded'} day, no check-in needed`
-    case 'safety':
-      return 'Safety answer: medical officer and flight surgeon told at once'
-    case 'unknown':
-      return 'Nothing about this day reached Earth'
   }
-  const words: string[] = []
-  if (c.co2Linked) words.push('CO₂-linked changes, named in a ship summary')
-  words.push(...boardWords(c.keys, c.symptoms).map((w) => w.word))
-  for (const k of c.keys) if (SPEC[k].privacy === 'private') words.push(`${SPEC[k].label} (in the summary)`)
-  const text = words.join(', ') || 'Off own usual'
+  const text =
+    boardWords(c.keys, c.symptoms)
+      .map((w) => w.word)
+      .join(', ') || 'Off own usual'
   return c.mark === 'persist' ? `${text} · day ${RULES.persistDays} or later` : text
 }
 
@@ -112,10 +100,9 @@ export function CrewTimeline({ viewer }: { viewer: Viewer }) {
         window: s.results.slice(-DAYS),
         crewIds: s.data.crew.crew.map((c) => c.id),
         shielded: (id, day) => shieldDays.some((x) => x.day === day && x.crewIds.includes(id)),
-        summaries: s.summaries,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [viewerKey, s.results, s.summaries, s.data, shieldDays],
+    [viewerKey, s.results, s.data, shieldDays],
   )
 
   const cols = t.days.length
@@ -146,7 +133,6 @@ export function CrewTimeline({ viewer }: { viewer: Viewer }) {
   // Crew drifting: bars out of the crew size, with the rule's threshold.
   const sd = (n: number) => DRIFT_Y + DRIFT_H - (n / t.crewSize) * DRIFT_H
   const barW = Math.min(cw * 0.55, 16)
-  const noCounts = t.days.every((d) => d.drifting === null)
 
   // Ship-alert runs, drawn as one band behind every panel.
   const runs: [number, number][] = []
@@ -176,7 +162,7 @@ export function CrewTimeline({ viewer }: { viewer: Viewer }) {
       <p className="tl-clock">
         {earth ? (
           <>
-            Only what reached Mission Control: the cabin telemetry, and a crew row once a summary names someone. Today's check-in, sent{' '}
+            Each column is one morning check-in, the same view as the crew medical officer's. Today's check-in, sent{' '}
             {shipTime(onboard)} ship time, arrived {delayText(s.commDelaySec)} later at <strong>{houstonTime(arrival)}</strong> ({shipTime(arrival)}).
           </>
         ) : (
@@ -241,34 +227,22 @@ export function CrewTimeline({ viewer }: { viewer: Viewer }) {
           </text>
           <line className="tl-ref-need" x1={LABEL_W} x2={width - PAD_R} y1={sd(t.needed)} y2={sd(t.needed)} />
           <line className="tl-base" x1={LABEL_W} x2={width - PAD_R} y1={DRIFT_Y + DRIFT_H} y2={DRIFT_Y + DRIFT_H} />
-          {t.days.map((d, i) =>
-            d.drifting === null ? null : (
-              <g key={d.day}>
-                {d.drifting > 0 && (
-                  <rect className={d.drifting >= t.needed ? 'tl-bar tl-bar-over' : 'tl-bar'} x={cx(i) - barW / 2} y={sd(d.drifting)} width={barW} height={DRIFT_Y + DRIFT_H - sd(d.drifting)} rx={2} />
-                )}
-                <text className="tl-count" x={cx(i)} y={sd(d.drifting) - 3}>
-                  {d.drifting}
-                </text>
-              </g>
-            ),
-          )}
+          {t.days.map((d, i) => (
+            <g key={d.day}>
+              {d.drifting > 0 && (
+                <rect className={d.drifting >= t.needed ? 'tl-bar tl-bar-over' : 'tl-bar'} x={cx(i) - barW / 2} y={sd(d.drifting)} width={barW} height={DRIFT_Y + DRIFT_H - sd(d.drifting)} rx={2} />
+              )}
+              <text className="tl-count" x={cx(i)} y={sd(d.drifting) - 3}>
+                {d.drifting}
+              </text>
+            </g>
+          ))}
           <text className="tl-ref-label" x={width - PAD_R - 2} y={sd(t.needed) - 4} textAnchor="end">
             rule needs {t.needed}
           </text>
-          {noCounts && (
-            <text className="tl-empty" x={LABEL_W + 4} y={DRIFT_Y + DRIFT_H - 8}>
-              Counts arrive only in ship summaries
-            </text>
-          )}
 
           {/* One row per person this viewer may see */}
           <line className="tl-sep" x1={0} x2={width - PAD_R} y1={ROWS_Y - 6} y2={ROWS_Y - 6} />
-          {t.rows.length === 0 && (
-            <text className="tl-empty" x={LABEL_W + 4} y={ROWS_Y + ROW_H / 2 + 4}>
-              No crew member named in a summary yet
-            </text>
-          )}
           {t.rows.map((row, r) => {
             const y = ROWS_Y + r * ROW_H + ROW_H / 2
             return (
@@ -300,7 +274,7 @@ export function CrewTimeline({ viewer }: { viewer: Viewer }) {
       </div>
 
       <ul className="tl-legend" aria-label="Symbols">
-        {LEGEND.filter((l) => earth || (l.mark !== 'safety' && l.mark !== 'unknown')).map((l) => (
+        {LEGEND.map((l) => (
           <li key={l.mark}>
             <LegendSym mark={l.mark} />
             {l.word}
@@ -321,9 +295,7 @@ export function CrewTimeline({ viewer }: { viewer: Viewer }) {
           </p>
           <p className="tl-detail-air">
             Cabin CO₂ {mmHg(day.co2Mean)} (usual {mmHg(day.baseline)}).{' '}
-            {day.drifting === null
-              ? 'No crew count reached Earth for this day.'
-              : `${day.drifting} of ${t.crewSize} crew drifting on CO₂-linked indicators; a ship alert needs ${t.needed}.`}
+            {`${day.drifting} of ${t.crewSize} crew drifting on CO₂-linked indicators; a ship alert needs ${t.needed}.`}
           </p>
           {t.rows.length > 0 && (
             <ul className="tl-people">

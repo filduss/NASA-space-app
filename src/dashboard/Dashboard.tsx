@@ -217,13 +217,9 @@ export function Dashboard() {
         </div>
 
         <div className="acct">
-          <span className="acct-who">
-            Logged in as {name}
-            {user.role === 'medical' ? ' · medical officer' : ''}
-          </span>
           <span className="acct-links">
-            <a href={hrefOf('app', import.meta.env.BASE_URL, `?screen=checkin&day=${today}`)}>Check in</a>
-            {mayOpen(user, 'app') && <a href={hrefOf('app', import.meta.env.BASE_URL)}>Crew app</a>}
+            <a href={hrefOf('checkin', import.meta.env.BASE_URL, `?day=${today}`)}>Check in</a>
+            {mayOpen(user, 'app') && <a href={hrefOf('app', import.meta.env.BASE_URL, `?day=${today}`)}>Crew app</a>}
             <button type="button" onClick={s.logOut}>
               Log out
             </button>

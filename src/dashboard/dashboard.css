@@ -1418,7 +1418,7 @@ body.dash-body {
   }
 }
 
-/* ---------- account row (who is logged in, crew app link for the medical officer) ---------- */
+/* ---------- account row (check in, crew app, log out) ---------- */
 
 .acct {
   grid-column: 1 / -1;

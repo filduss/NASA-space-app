@@ -66,12 +66,13 @@ XP, weekly streak with shield days, quests. Game functions cannot read check-in 
 
 `src/state.tsx` (`StoreProvider` / `useStore`) loads the four JSON files (including `accounts.json`), holds the logged-in `user`, merges live check-ins, runs the engine, and holds the demo controls (role, mission day, comm delay). Live check-ins persist only in `localStorage` under `shipshape.v1`; live reaction-test results stay in memory and are never stored.
 
-`src/main.tsx` picks one of four pages by pathname (`src/auth/paths.ts`), without a router:
+`src/main.tsx` picks one of five pages by pathname (`src/auth/paths.ts`), without a router:
 
 - `/` → `src/auth/Login.tsx`: the judge's tour (`TOUR` in `src/auth/demo.ts`: one-click links that log in with a public demo PIN, via `auth/TourLink.tsx`), then pick a crew member and type a 4-digit PIN.
 - `/challenge` → `src/ui/Challenge.tsx`: the public challenge page (five questions, backtest evidence, Antarctic case). No login; its buttons are tour links.
 - `/dashboard` → `src/dashboard/`: the logged-in person's own dashboard with a three.js skeleton point cloud (`public/models/skeleton.glb`), lazy-loaded. `dashboard/model.ts` maps engine output to body-zone levels and notices; it must not introduce rules of its own. The crew app reuses its `cabinLevel` / `indicatorLevel`, so orange (watch) and red (alert) mean the same on both pages.
-- `/app` → `App.tsx` + `src/ui/`: the crew app, for everyone. Six screens, with tabs depending on the view: `viewsFor` in `auth/session.ts` gives astronauts their own crew view, the medical officer the crew medical officer or herself, the flight surgeon only the flight surgeon. Nobody views as another crew member. `?day=`, `?screen=` and `?mission=` are read once in `state.tsx`. The crew board and the surgeon's screen share `ui/CrewTimeline.tsx`, filled per viewer by `crewTimeline` in `privacy.ts`; times on the Earth side use `ui/clock.ts` (ship time UTC, Houston).
+- `/checkin` → `App.tsx` + `src/ui/`: a crew member's own check-in and Me (XP, streak, quest), for astronauts and the medical officer, always as themselves.
+- `/app` → `App.tsx` + `src/ui/`: the crew app, which is the medical console, for the medical officer and the flight surgeon only. Astronauts cannot open it. Tabs depend on the view: `viewsFor(user, page)` in `auth/session.ts` gives the medical officer the crew medical officer, and the flight surgeon the flight surgeon, who sees everything the crew medical officer sees plus Summaries. Nobody views as another crew member. `?day=`, `?screen=` and `?mission=` are read once in `state.tsx`. The crew board uses `ui/CrewTimeline.tsx`, filled per viewer by `crewTimeline` in `privacy.ts`; times on the Earth side use `ui/clock.ts` (ship time UTC, Houston).
 
 The golden path the demo depends on is mission days 212 → 213 → 221 → 223, the same on both pages (table in `docs/SPEC.md`; `tests/golden.test.ts` pins it on the committed data). The crew is seed 402 with scripted events recorded in `crew.json`.
 
@@ -81,8 +82,8 @@ A privacy gate with no server behind it, not security. `docs/SPEC.md` "Login" ha
 
 - `pin.ts` checks a PIN with Web Crypto PBKDF2 against the salted hash in `public/data/accounts.json`. `session.ts` holds the session (sessionStorage: crew id and expiry only), the wrong-PIN lockout (localStorage) and `mayOpen(user, page)`.
 - The role always comes from `accounts.json`, re-read on every load; the session carries only who is logged in.
-- `RequireUser page=…` wraps `/dashboard` and `/app`; a person who may not open a page goes to `homePage(user)`. A new page needs a `Page` in `paths.ts` (type, `PAGE_PATHS`, `pageOf`; that list is also the `?next=` allowlist) and a rule in `mayOpen`.
-- Roles: `astronaut` and `medical` are crew; `surgeon` is Earth staff with no dashboard. Earth accounts have an id outside `crew.json` and a `name` in `accounts.json`; `nameOf` covers both.
+- `RequireUser page=…` wraps `/dashboard`, `/checkin` and `/app`; a person who may not open a page goes to `homePage(user)`. A new page needs a `Page` in `paths.ts` (type, `PAGE_PATHS`, `pageOf`; that list is also the `?next=` allowlist) and a rule in `mayOpen`.
+- Roles: `astronaut` and `medical` are crew; `surgeon` is Earth staff with no dashboard and no check-in. Earth accounts have an id outside `crew.json` and a `name` in `accounts.json`; `nameOf` covers both.
 - Log out through the store's `logOut`, which ends the session and loads a clean login. Clearing `user` in state instead lets `RequireUser` redirect first, with a `?next=` back to the page.
 - sessionStorage is per tab: every new tab or browser context logs in again, including in browser automation.
 - The demo PINs live in three places that change together: `DEMO_ACCOUNTS` and `EARTH_ACCOUNTS` in `scripts/make_accounts.py`, `DEMO_PINS` in `src/auth/demo.ts` (person cards and the tour; the tests import it), and the README table. `make_accounts.py` refuses to run unless `DEMO_ACCOUNTS` matches the crew ids in `crew.json` and no Earth id reuses one. Each run draws new salts, so `accounts.json` and its checksum change even when nothing else did.
@@ -94,7 +95,7 @@ These come from the plan and are easy to break by accident:
 - **Never rescale or repair real data.** Cabin CO₂ is ISS telemetry (mission RR-7) converted from ppm to mmHg and averaged, nothing else. Invalid samples are dropped, not fixed. Real dates are only relabeled as mission days.
 - **Label simulated data everywhere.** Every screen showing the crew carries the "simulated" marker; real data carries its source.
 - **The app says "likely" and never diagnoses.** No AI-generated text in decisions or summaries; summaries come from fixed templates.
-- **Each dashboard shows only the logged-in person.** In the crew app (`/app`) crew see only their own view; the crew medical officer's view is the medical officer's only extra access, and everyone else's data reaches it through `privacy.ts`.
+- **Each dashboard and check-in shows only the logged-in person.** The crew app (`/app`) is for the medical officer (as the crew medical officer) and the flight surgeon (the same access, plus summaries); everyone else's data reaches it through `privacy.ts`.
 - **Mood and stress are private.** They appear on the crew board only as a count with no names, and never count toward a ship alert. Only headache among symptoms counts toward one.
 - **No leaderboards, no reward tied to a reading, no celebration on an alert.**
 - **Sources:** `docs/CITATIONS.md` tracks whether a human has opened each source. Do not mark one as checked or add a sourced claim to UI text unless it has been verified. Log AI contributions in `docs/AI_USE_LOG.md`.

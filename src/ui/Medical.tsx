@@ -6,7 +6,6 @@ import { clearTheAirQuest, questProgress } from '../game/quests.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
 import { checkInAt, houstonTime, shipTime } from './clock.ts'
-import { CrewTimeline } from './CrewTimeline.tsx'
 import { delayText, fmt, indicatorLineThird, list, mmHg, symptomLabel } from './text.ts'
 
 function CmoLine({ item }: { item: CmoItem }) {
@@ -193,9 +192,6 @@ export function SurgeonView() {
   const s = useStore()
   return (
     <div className="stack">
-      <Card title="What Earth has received, last 14 days" aside={<Origin kind="simulated">crew</Origin>}>
-        <CrewTimeline viewer={{ kind: 'surgeon' }} />
-      </Card>
       <Card title="Flight-surgeon summaries" aside={<Origin kind="simulated">crew</Origin>}>
         <p className="muted">
           One page per event, written from fixed templates by the rules engine; no AI wording. It supports your judgement and does not

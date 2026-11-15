@@ -16,7 +16,7 @@ const QUESTIONS: { q: string; a: string; jump: string; stop: TourStop }[] = [
     q: 'Which measurements can be performed in space?',
     a: "A morning check-in: sliders for sleep, fatigue, irritability, stress and mood, symptom ticks, and a 30-second reaction test (a short version of the ISS Reaction Self-Test). The ship's sensors add cabin CO₂.",
     jump: 'Open the check-in, as Anna',
-    stop: { as: 'anna', page: 'app', search: '?screen=checkin' },
+    stop: { as: 'anna', page: 'checkin' },
   },
   {
     q: 'Why is an exam needed?',
@@ -34,7 +34,7 @@ const QUESTIONS: { q: string; a: string; jump: string; stop: TourStop }[] = [
     q: 'When does a result need the crew or the flight surgeon?',
     a: 'One day off your own normal: a private card (tier 1). A ship alert or a crew-wide pattern: the crew medical officer (tier 2). Still off on day 3: a summary to the flight surgeon, sent with the comm delay (tier 3). A safety answer: both, at once (tier 4).',
     jump: 'See what reached Earth by day 223, as the flight surgeon',
-    stop: { as: 'mira', page: 'app', search: '?day=223' },
+    stop: { as: 'mira', page: 'app', search: '?day=223&screen=summary' },
   },
   {
     q: 'What actions can prevent a critical condition?',
@@ -225,7 +225,7 @@ function Antarctica() {
           </tbody>
         </table>
       </div>
-      <TourLink stop={{ as: 'anna', page: 'app', search: '?mission=antarctica&screen=board' }} className="btn">
+      <TourLink stop={{ as: 'dana', page: 'app', search: '?mission=antarctica&screen=board' }} className="btn">
         Run the demo as an Antarctic station
       </TourLink>
       <p className="fine">

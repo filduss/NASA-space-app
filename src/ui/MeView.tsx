@@ -4,6 +4,7 @@ import { INDICATORS } from '../engine/deviation.ts'
 import type { IndicatorKey, PersonStatus } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
+import { QuestCard } from './QuestCard.tsx'
 import { LineChart } from './charts.tsx'
 import { delayText, fmt, indicatorLine } from './text.ts'
 import { XpStrip } from './XpStrip.tsx'
@@ -124,6 +125,7 @@ export function MeView({ crewId }: { crewId: string }) {
     <div className="stack">
       <StatusCard me={me} />
       <XpStrip crewId={crewId} />
+      <QuestCard />
       <Card
         title="My trends against my own normal"
         aside={

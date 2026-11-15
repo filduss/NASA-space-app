@@ -377,7 +377,6 @@ describe('crew timeline', () => {
       window: results.slice(-14),
       crewIds: CREW,
       shielded: () => false,
-      summaries: results.flatMap((r) => r.summaries),
     })
   // Anna sleeps badly on days 18-20: day 20 is day 3, so a summary goes to the flight surgeon.
   const sleepLoss = () => {
@@ -417,24 +416,10 @@ describe('crew timeline', () => {
     const t = timeline({ kind: 'cmo' }, runDays(replace(crewHistory(1, 20), checkIn('anna', 20, { safetyFlag: true, symptoms: ['headache'] }))))
     expect(t.rows[0].cells.at(-1)?.mark).toBe('ok')
   })
-  it('the flight surgeon sees no rows and no counts before a summary is sent', () => {
-    const results = sleepLoss().slice(0, -1) // up to day 19: day 2 of the sleep loss
-    const t = timeline({ kind: 'surgeon' }, results)
-    expect(t.rows).toEqual([])
-    expect(t.days.every((d) => d.drifting === null && !d.ship)).toBe(true)
-    expect(t.days.at(-1)?.co2Mean).not.toBeNull()
-  })
-  it('the flight surgeon gets a row only from what the day-3 summary says', () => {
-    const results = sleepLoss()
-    expect(results.at(-1)?.summaries).toMatchObject([{ kind: 'person', crewId: 'anna', episodeDay: 3 }])
-    const t = timeline({ kind: 'surgeon' }, results)
-    expect(t.rows.map((r) => r.crewId)).toEqual(['anna'])
-    expect(t.rows[0].cells.slice(-4).map((c) => c.mark)).toEqual(['unknown', 'off', 'off', 'persist'])
-    expect(t.rows[0].cells.at(-1)?.keys).toEqual(['sleepQuality'])
-  })
-  it('a safety answer reaches the flight surgeon immediately', () => {
-    const t = timeline({ kind: 'surgeon' }, runDays(replace(crewHistory(1, 20), checkIn('anna', 20, { safetyFlag: true }))))
-    expect(t.rows).toMatchObject([{ crewId: 'anna' }])
-    expect(t.rows[0].cells.at(-1)?.mark).toBe('safety')
+  it('the flight surgeon sees the same timeline as the crew medical officer', () => {
+    const safety = runDays(replace(crewHistory(1, 20), checkIn('anna', 20, { safetyFlag: true })))
+    for (const r of [sleepLoss(), sleepLoss().slice(0, -1), safety]) {
+      expect(timeline({ kind: 'surgeon' }, r)).toEqual(timeline({ kind: 'cmo' }, r))
+    }
   })
 })

@@ -786,19 +786,13 @@ input {
 .tl-bar-over {
   fill: var(--watch);
 }
-.tl-empty {
-  fill: var(--ink-3);
-  font-size: 12px;
-  font-style: italic;
-}
 .tl-sym-ok {
   fill: var(--ink-3);
 }
 .tl-sym-off {
   fill: var(--watch);
 }
-.tl-sym-persist,
-.tl-sym-safety {
+.tl-sym-persist {
   fill: var(--alert);
 }
 .tl-sym-absent,
@@ -806,11 +800,6 @@ input {
   fill: none;
   stroke: var(--ink-3);
   stroke-width: 1.4;
-}
-.tl-sym-unknown {
-  stroke: var(--line-2);
-  stroke-width: 1.4;
-  stroke-linecap: round;
 }
 .tl-legend {
   display: flex;
