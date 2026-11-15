@@ -74,7 +74,6 @@ export function ShipAlert() {
     <div className="stack">
       <ShipBanner r={r} />
       {followUp && <FollowUpCard f={followUp} />}
-      {decision.outcome === 'ship' && <WhatNow alertDay={r.shipEpisodeDay} />}
 
       <Card title="Cabin CO₂" aside={<Origin kind="real">{meta.mission}, NASA OSDR</Origin>}>
         <div className="stats">
@@ -129,6 +128,9 @@ export function ShipAlert() {
           </table>
         </details>
       </Card>
+
+      {/* After the chart: the real CO₂ trace stays right under the banner, and the steps follow the evidence. */}
+      {decision.outcome === 'ship' && <WhatNow alertDay={r.shipEpisodeDay} />}
 
       <Card title="Why the app says this">
         <ol className="rule">
