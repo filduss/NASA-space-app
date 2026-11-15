@@ -833,7 +833,7 @@ body.dash-body {
   vector-effect: non-scaling-stroke;
 }
 
-/* From your watch: the simulated wearable's vitals, for information only; no rule reads them. */
+/* From your wearable: the simulated wearable's vitals, for information only; no rule reads them. */
 .watch-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

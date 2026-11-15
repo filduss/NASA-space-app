@@ -70,6 +70,13 @@ export function boardWords(off: IndicatorKey[], symptoms: string[]): { zone: 'he
 }
 
 /** One-way signal delay in words: "less than a second", "1.3 seconds", "12 minutes". */
+/** A wearable sleep reading: 6.2 h → "6 h 12 min". */
+export function hoursText(h: number): string {
+  const whole = Math.floor(h)
+  const min = Math.round((h - whole) * 60)
+  return min === 0 ? `${whole} h` : min === 60 ? `${whole + 1} h` : `${whole} h ${min} min`
+}
+
 export function delayText(sec: number): string {
   if (sec < 1) return 'less than a second'
   if (sec < 60) return `${sec.toFixed(1)} seconds`

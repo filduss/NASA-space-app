@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { hrefOf } from '../auth/paths.ts'
 import { mayOpen, type User } from '../auth/session.ts'
-import { vitalLines } from '../data/watch.ts'
+import { vitalLines } from '../data/wearable.ts'
 import { exerciseWeek } from '../engine/gravity.ts'
 import { useStore } from '../state.tsx'
 import { delayText, symptomLabel } from '../ui/text.ts'
@@ -74,7 +74,7 @@ function VitalTile({ v, onOpen }: { v: Vital; onOpen: () => void }) {
   )
 }
 
-/** A 14-day line of one watch reading, with its value under the pointer. No usual line: these are not judged. */
+/** A 14-day line of one wearable reading, with its value under the pointer. No usual line: these are not judged. */
 function WatchTrend({ label, unit, series }: { label: string; unit: string; series: { day: number; v: number | null }[] }) {
   const [hover, setHover] = useState<string | null>(null)
   return (
@@ -128,7 +128,7 @@ function HeroRow({ label, side }: { label: string; side: VerdictSide }) {
 const NOTICE_ZONE = (id: string): ZoneKey | null => {
   if (id === 'ind-fatigue') return 'limbs'
   if (id === 'exercise') return 'core'
-  if (id.startsWith('ind-') || id === 'safety') return 'head'
+  if (id.startsWith('ind-') || id === 'urgent') return 'head'
   return null
 }
 
@@ -148,7 +148,7 @@ export function Dashboard() {
 
   const history = useMemo(() => s.checkIns.filter((c) => c.crewId === crewId), [s.checkIns, crewId])
   const exercise = useMemo(() => exerciseWeek(history, today), [history, today])
-  // The (simulated) wrist wearable's vitals: shown for information, never judged.
+  // The (simulated) wearable's vitals: shown for information, never judged.
   const vitalsToday = history.find((c) => c.day === today)?.watch ?? null
   const vitalTrend = (pick: (c: { restingHr: number; hrvMs: number }) => number) =>
     Array.from({ length: TREND_DAYS }, (_, i) => {
@@ -268,7 +268,7 @@ export function Dashboard() {
       <main className="grid">
         <section className="col col-left">
           <div className={`hero hero-${v.tint}`}>
-            {!me.assessment.safety && <p className="hero-eyebrow">Likely you or likely the ship?</p>}
+            {me.tier !== 4 && <p className="hero-eyebrow">Likely you or likely the ship?</p>}
             <h1>{v.title}</h1>
             <p>{v.body}</p>
             <ul className="hero-rows">
@@ -346,7 +346,7 @@ export function Dashboard() {
         <section className="col col-right">
           <div className="panel">
             <h2 className="panel-title">
-              Vitals <span className="panel-note">vs. your own normal · {TREND_DAYS} days · sleep from your watch</span>
+              Vitals <span className="panel-note">vs. your own normal · {TREND_DAYS} days · sleep from your wearable</span>
             </h2>
             <div className="tiles">
               {tiles.map((v) => (
@@ -364,7 +364,7 @@ export function Dashboard() {
 
           <div className="panel watchp">
             <h2 className="panel-title">
-              From your watch <span className="panel-note">simulated · for information</span>
+              From your wearable <span className="panel-note">simulated · for information</span>
             </h2>
             {vitalsToday ? (
               <div className="watch-grid">
@@ -376,7 +376,7 @@ export function Dashboard() {
                 ))}
               </div>
             ) : (
-              <p className="watch-note">No watch data today</p>
+              <p className="watch-note">No wearable reading today</p>
             )}
             <div className="watch-trends">
               <WatchTrend label="Resting heart rate" unit="bpm" series={vitalTrend((w) => w.restingHr)} />

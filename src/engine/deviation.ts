@@ -188,7 +188,7 @@ export function assessPerson(crewId: string, day: number, history: CheckIn[], me
   const indicators = {} as PersonDay['indicators']
   if (!today) {
     for (const k of INDICATOR_KEYS) indicators[k] = blank(k, 'not_measured')
-    return { crewId, day, checkedIn: false, live: false, indicators, off: [], co2LinkedOff: [], symptoms: [], safety: false }
+    return { crewId, day, checkedIn: false, live: false, indicators, off: [], co2LinkedOff: [], symptoms: [] }
   }
 
   for (const spec of INDICATORS) {
@@ -234,8 +234,10 @@ export function assessPerson(crewId: string, day: number, history: CheckIn[], me
       if (key === 'sleepHours' && !result.off) {
         // Cited rule: under 6 h on 3 or more of the last 7 nights, including last night.
         const recent = history.filter((c) => c.day <= day && c.day > day - RULES.shortSleepWindow)
-        const short = recent.filter((c) => c.sleepHours < RULES.shortSleepHours).length
-        if (today.sleepHours < RULES.shortSleepHours && short >= RULES.shortSleepNights) {
+        // A night with no wearable reading is not a short night.
+        const isShort = (h: number | null) => h !== null && h < RULES.shortSleepHours
+        const short = recent.filter((c) => isShort(c.sleepHours)).length
+        if (isShort(today.sleepHours) && short >= RULES.shortSleepNights) {
           result = { ...result, off: true, reason: 'short_sleep' }
         }
       }
@@ -267,6 +269,5 @@ export function assessPerson(crewId: string, day: number, history: CheckIn[], me
     off,
     co2LinkedOff,
     symptoms: today.symptoms,
-    safety: today.safetyFlag === true,
   }
 }

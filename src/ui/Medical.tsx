@@ -1,8 +1,7 @@
 import { cabinLevel } from '../dashboard/model.ts'
-import { cmoInbox, type CmoItem } from '../engine/privacy.ts'
+import { boardPerson, cmoInbox, type CmoItem } from '../engine/privacy.ts'
 import { SPEC } from '../engine/deviation.ts'
 import type { SurgeonSummary } from '../engine/types.ts'
-import { clearTheAirQuest, questProgress } from '../game/quests.ts'
 import { useStore } from '../state.tsx'
 import { Card, Mark, Origin } from './bits.tsx'
 import { checkInAt, houstonTime, shipTime } from './clock.ts'
@@ -12,11 +11,11 @@ function CmoLine({ item }: { item: CmoItem }) {
   const s = useStore()
   const labels = list(item.indicators.map((k) => SPEC[k].label.toLowerCase()))
   switch (item.kind) {
-    case 'safety':
+    case 'urgent':
       return (
         <li className="inbox-alert">
           <Mark tone="alert">
-            {s.nameOf(item.crewId as string)} asked to talk to someone now. Reach them privately. The flight surgeon has been sent a message.
+            {s.nameOf(item.crewId as string)} asked for an urgent conference. Reach them privately now. The flight surgeon has been sent the request.
           </Mark>
         </li>
       )
@@ -90,14 +89,16 @@ export function CmoInbox() {
                 const p = r.people[c.id]
                 const a = p.assessment
                 const shared = s.local.shareWatch[c.id] === true
+                // What an urgent conference request hides from the board is hidden here too.
+                const symptoms = boardPerson(p).symptoms
                 return (
-                  <tr key={c.id} className={a.checkedIn && !a.safety && a.symptoms.length ? 'row-watch' : undefined}>
+                  <tr key={c.id} className={a.checkedIn && symptoms.length ? 'row-watch' : undefined}>
                     <th scope="row">{c.name}</th>
                     {a.checkedIn ? (
                       <>
                         <td>{fmt('sleepHours', a.indicators.sleepHours.value)}</td>
                         <td>{fmt('sleepQuality', a.indicators.sleepQuality.value)}</td>
-                        <td>{a.safety ? 'none shown' : a.symptoms.map(symptomLabel).join(', ') || 'none'}</td>
+                        <td>{p.conference === 'urgent' ? 'none shown' : symptoms.map(symptomLabel).join(', ') || 'none'}</td>
                         <td>
                           {shared
                             ? `mood ${fmt('mood', a.indicators.mood.value)}, stress ${fmt('stress', a.indicators.stress.value)}`
@@ -127,23 +128,20 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
   const cabinLine = sum.cabin.hasData
     ? `Cabin CO₂ ${mmHg(sum.cabin.co2Mean)} over 24 h${sum.cabin.overLimit ? ', above the 3 mmHg limit' : ''} (usual ${mmHg(sum.cabin.baseline)}), highest 1-hour average ${mmHg(sum.cabin.co2Max1h)}${sum.cabin.aboveLimit && !sum.cabin.overLimit ? ', above the 3 mmHg limit' : ''}.`
     : 'No usable cabin CO₂ data for this day.'
-  const title =
-    sum.kind === 'ship' ? `Ship alert, day ${sum.episodeDay} of the alert` : sum.kind === 'safety' ? `Safety answer: ${name}` : `${name}: off own usual for ${sum.episodeDay} days`
-  let quest: string | null = null
-  if (sum.kind === 'ship') {
-    const start = sum.day - sum.episodeDay + 1
-    // Only steps that were done by the time this summary was sent.
-    const q = clearTheAirQuest(start)
-    const asSent = Object.fromEntries(Object.entries(s.local.questLog[q.id] ?? {}).filter(([, v]) => v.day <= sum.day))
-    const p = questProgress(q, { [q.id]: asSent })
-    quest = `Crew quest "Clear the air": ${p.done} of ${p.total} steps done.`
-  }
+  const title = {
+    ship: `Ship alert, day ${sum.episodeDay} of the alert`,
+    urgent: `Urgent conference request: ${name}`,
+    conference: `Conference request: ${name}`,
+    person: `${name}: off own usual for ${sum.episodeDay} days`,
+  }[sum.kind]
+  // A routine request is not a health alert: no orange or red.
+  const tone = sum.kind === 'conference' ? '' : sum.kind === 'ship' && cabinLevel(sum.cabin) !== 'alert' ? ' doc-watch' : ' doc-alert'
   return (
-    <article className={`doc doc-${sum.kind === 'ship' && cabinLevel(sum.cabin) !== 'alert' ? 'watch' : 'alert'}`}>
+    <article className={`doc${tone}`}>
       <header>
         <h3>{title}</h3>
         <p className="fine">
-          {sum.immediate ? 'Sent immediately' : 'Day-3 summary'}, sent mission day {sum.day} at {shipTime(sent)} ship time · received{' '}
+          {sum.kind === 'urgent' || sum.kind === 'conference' ? 'Request' : sum.immediate ? 'Sent immediately' : 'Day-3 summary'}, sent mission day {sum.day} at {shipTime(sent)} ship time · received{' '}
           {delayText(s.commDelaySec)} later, <strong>{houstonTime(received)}</strong> ({shipTime(received)})
         </p>
       </header>
@@ -156,7 +154,6 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
               : 'No crew member shows CO₂-linked changes today; the alert is held because the cabin is still above its baseline.'}{' '}
             Likely cause by the ship-or-me rule: cabin air.
           </p>
-          {quest && <p>{quest}</p>}
         </>
       )}
       {sum.kind === 'person' && (
@@ -178,10 +175,16 @@ function SummaryDoc({ sum }: { sum: SurgeonSummary }) {
           <p className="fine">{name} has been told this summary was sent. Private readings appear here because this is a day-3 summary.</p>
         </>
       )}
-      {sum.kind === 'safety' && (
+      {sum.kind === 'urgent' && (
         <>
-          <p>{name} ticked "I am not safe, or I need to talk to someone now" at check-in. The crew medical officer was told at the same time.</p>
-          <p className="fine">The game is paused for {name}. Nothing is shown on the crew board.</p>
+          <p>{name} asked for an urgent private medical conference. The crew medical officer on board was told at the same time.</p>
+          <p className="fine">Nothing is shown on the crew board.</p>
+        </>
+      )}
+      {sum.kind === 'conference' && (
+        <>
+          <p>{name} asked for a private medical conference at the next scheduled one.</p>
+          <p className="fine">The request carries no readings. Nobody on board was told.</p>
         </>
       )}
     </article>

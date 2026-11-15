@@ -109,7 +109,7 @@ export function zoneStates(me: PersonStatus, exercise?: ExerciseWeek): Record<Zo
       raise(INDICATOR_ZONE[key], l, SPEC[key].label)
     }
   }
-  if (a.safety) raise('head', 'alert', 'Asked to talk to someone')
+  if (me.conference === 'urgent') raise('head', 'alert', 'Asked for an urgent conference')
   if (exercise?.lapse) {
     raise('core', 'watch', exerciseWhy(exercise))
     raise('limbs', 'watch', exerciseWhy(exercise))
@@ -141,14 +141,15 @@ export interface Verdict {
 /** Your own readings against your normal. Exercise and the cabin are left out. */
 export function youLevel(me: PersonStatus): Level {
   const a = me.assessment
-  if (a.safety || me.tier === 4) return 'alert'
+  if (me.tier === 4) return 'alert'
   return worst(...a.off.map((k) => indicatorLevel(me, k)))
 }
 
 function youDetail(me: PersonStatus, level: Level): string {
   const a = me.assessment
+  // An urgent conference request can come before the check-in, so it is checked first.
+  if (me.conference === 'urgent') return 'You asked for an urgent conference'
   if (!a.checkedIn) return 'No check-in yet today'
-  if (a.safety) return 'You asked to talk to someone'
   if (a.off.length === 0) return 'Within your normal'
   const names = a.off.flatMap((k) => (k === 'symptoms' ? a.symptoms.map(symptomLabel) : [SPEC[k].label]))
   const what = `${names.join(', ')} off your usual`
@@ -172,7 +173,7 @@ export function verdict(me: PersonStatus, cabin: CabinStatus, decision: Pick<Dec
   const airSuspect = cabin.elevated || cabin.overLimit
   const pick = (tint: Level, title: string, body: string): Verdict => ({ tint, title, body, you, ship })
 
-  if (a.safety || me.tier === 4) return pick('alert', 'Help is on the way', 'Your crew medical officer was told privately. The game is paused for you today.')
+  if (me.tier === 4) return pick('alert', 'Help is on the way', 'Your crew medical officer was told privately.')
   if (!a.checkedIn) return pick(you.level, 'Good morning', 'Check in to see whether today is likely you or likely the ship.')
   if (me.tier === 3) return pick(you.level, `Still off your usual, day ${me.episodeDay}`, 'A short summary went to the flight surgeon. It lists what changed, never a diagnosis.')
   if (me.attribution === 'ship') {
@@ -208,8 +209,10 @@ export interface Notice {
 export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, exercise?: ExerciseWeek): Notice[] {
   const out: Notice[] = []
   const a = me.assessment
-  if (a.safety) {
-    out.push({ id: 'safety', source: 'you', level: 'alert', title: 'Help is on the way', body: `Your crew medical officer was told privately. Message to the flight surgeon: ${delayText(delaySec)} to Earth.` })
+  if (me.conference === 'urgent') {
+    out.push({ id: 'urgent', source: 'you', level: 'alert', title: 'Help is on the way', body: `Your crew medical officer was told privately. Your request to the flight surgeon: ${delayText(delaySec)} to Earth.` })
+  } else if (me.conference === 'routine') {
+    out.push({ id: 'conference', source: 'you', level: 'ok', title: 'Conference requested', body: `Your flight surgeon gets the request in ${delayText(delaySec)} and will take it at the next scheduled conference.` })
   }
   if (me.tier === 3) {
     out.push({

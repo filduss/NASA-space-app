@@ -112,7 +112,7 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
         </span>
       </section>
 
-      <details className="controls" open>
+      <details className="controls">
         <summary>Demo controls</summary>
         <RoleSwitcher />
       </details>
@@ -129,7 +129,7 @@ export function App({ page }: { page: 'checkin' | 'app' }) {
 
       <footer className="foot">
         <p>
-          Shipshape rewards honesty, not perfection. It says "likely" and never diagnoses; it supports the flight surgeon and never replaces
+          Shipshape says "likely" and never diagnoses; it supports the flight surgeon and never replaces
           one. The crew is simulated; the cabin CO₂ is real ISS telemetry from NASA's Open Science Data Repository, replayed on the
           mission calendar in every setting. Radiation figures are published averages for the chosen setting, not dosimeter readings.
         </p>

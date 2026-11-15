@@ -3,12 +3,10 @@ import { RULES } from '../engine/config.ts'
 import { INDICATORS } from '../engine/deviation.ts'
 import type { IndicatorKey, PersonStatus } from '../engine/types.ts'
 import { useStore } from '../state.tsx'
-import { Card, Mark, Origin } from './bits.tsx'
-import { QuestCard } from './QuestCard.tsx'
 import { hrefOf } from '../auth/paths.ts'
+import { Card, Mark, Origin } from './bits.tsx'
 import { LineChart } from './charts.tsx'
 import { delayText, fmt, indicatorLine } from './text.ts'
-import { XpStrip } from './XpStrip.tsx'
 
 const TREND_DAYS = 28
 
@@ -21,8 +19,16 @@ function StatusCard({ me }: { me: PersonStatus }) {
   const s = useStore()
   const a = me.assessment
   const shared = s.local.shareWatch[me.crewId] === true
-  const sentToday = s.todayResult.summaries.find((x) => x.crewId === me.crewId)
+  const sentToday = s.todayResult.summaries.find((x) => x.crewId === me.crewId && x.kind === 'person')
 
+  if (me.conference === 'urgent') {
+    return (
+      <Card title="You asked for an urgent conference" tone="alert">
+        <p>Your crew medical officer was told privately, and your request is on its way to the flight surgeon ({delayText(s.commDelaySec)} to Earth).</p>
+        <p className="muted">Nothing about this is on the crew board.</p>
+      </Card>
+    )
+  }
   if (!a.checkedIn) {
     return (
       <Card title="No check-in yet today">
@@ -30,14 +36,6 @@ function StatusCard({ me }: { me: PersonStatus }) {
         <button type="button" className="btn btn-primary" onClick={() => s.setScreen('checkin')}>
           Check in
         </button>
-      </Card>
-    )
-  }
-  if (a.safety) {
-    return (
-      <Card title="You asked to talk to someone" tone="alert">
-        <p>Your crew medical officer was told privately as soon as you checked in, and a message is on its way to the flight surgeon ({delayText(s.commDelaySec)} to Earth).</p>
-        <p className="muted">Nothing about this is on the crew board. The game is paused for you today.</p>
       </Card>
     )
   }
@@ -125,8 +123,6 @@ export function MeView({ crewId }: { crewId: string }) {
   return (
     <div className="stack">
       <StatusCard me={me} />
-      <XpStrip crewId={crewId} />
-      <QuestCard />
       <Card
         title="My trends against my own normal"
         aside={

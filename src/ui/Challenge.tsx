@@ -32,13 +32,13 @@ const QUESTIONS: { q: string; a: string; jump: string; stop: TourStop }[] = [
   },
   {
     q: 'When does a result need the crew or the flight surgeon?',
-    a: 'One day off your own normal: a private card (tier 1). A ship alert or a crew-wide pattern: the crew medical officer (tier 2). Still off on day 3: a summary to the flight surgeon, sent with the comm delay (tier 3). A safety answer: both, at once (tier 4).',
+    a: 'One day off your own normal: a private card (tier 1). A ship alert or a crew-wide pattern: the crew medical officer (tier 2). Still off on day 3: a summary to the flight surgeon, sent with the comm delay (tier 3). An urgent conference request: both, at once (tier 4).',
     jump: 'See what reached Earth by day 223, as the flight surgeon',
     stop: { as: 'mira', page: 'app', search: '?day=223&screen=summary' },
   },
   {
     q: 'What actions can prevent a critical condition?',
-    a: 'A ship alert opens the crew quest "Clear the air", and afterwards the app re-checks whether the air and the crew recovered. A private card carries a self-care idea. The radiation card says when to go to the storm shelter. Anything still off on day 3 reaches the flight surgeon.',
+    a: 'After a ship alert the app re-checks whether the air and the crew recovered. A private card carries a self-care idea. The radiation card says when to go to the storm shelter. Anything still off on day 3 reaches the flight surgeon.',
     jump: 'See day 213 on the Ship screen',
     stop: { as: 'dana', page: 'app', search: '?day=213&screen=ship' },
   },

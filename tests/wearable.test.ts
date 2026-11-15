@@ -1,22 +1,24 @@
 import { describe, expect, it } from 'vitest'
-import { vitalLines, watchReading } from '../src/data/watch.ts'
+import { vitalLines, wearableReading } from '../src/data/wearable.ts'
 import { runEngine, type CheckIn, type WatchVitals } from '../src/engine/index.ts'
 import { cabin, checkIn, CREW, steady } from './helpers.ts'
 
 const vitals: WatchVitals = { restingHr: 61, hrvMs: 36, spo2: 98, respRate: 15.9, skinTempDelta: -0.2 }
 
-describe('the simulated wrist wearable', () => {
-  const simulated = [
-    checkIn('chen', 221, { sleepHours: 5, sleepQuality: 4, exerciseMin: 135, watch: vitals }),
-    checkIn('chen', 222, { sleepHours: 6.5, simulated: false }),
-  ]
-  it("reads last night's sleep and its quality, yesterday's exercise and the vitals from the simulated record", () => {
-    expect(watchReading(simulated, 'chen', 221)).toEqual({ sleepHours: 5, sleepQuality: 4, exerciseMin: 135, vitals })
+describe('the simulated wearable', () => {
+  const crew = {
+    checkIns: [
+      checkIn('chen', 221, { sleepHours: 5, sleepQuality: 4, exerciseMin: 135, watch: vitals }),
+      checkIn('chen', 222, { sleepHours: 6.5, simulated: false }),
+    ],
+  }
+  it("reads last night's sleep, yesterday's exercise and the vitals from the simulated record, never the sleep quality", () => {
+    expect(wearableReading(crew, 'chen', 221)).toEqual({ sleepHours: 5, exerciseMin: 135, vitals })
   })
   it('has nothing for a day without a simulated record, and never reads a live check-in', () => {
-    expect(watchReading(simulated, 'chen', 220)).toBeNull()
-    expect(watchReading(simulated, 'chen', 222)).toBeNull()
-    expect(watchReading(simulated, 'anna', 221)).toBeNull()
+    expect(wearableReading(crew, 'chen', 220)).toBeNull()
+    expect(wearableReading(crew, 'chen', 222)).toBeNull()
+    expect(wearableReading(crew, 'anna', 221)).toBeNull()
   })
   it('lists the vitals in one order with their units', () => {
     expect(vitalLines(vitals).map((l) => `${l.label}: ${l.value}`)).toEqual([

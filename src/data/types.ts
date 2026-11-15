@@ -1,6 +1,4 @@
 import type { CabinDay, CheckIn } from '../engine/types.ts'
-import type { ShieldKind } from '../game/streak.ts'
-
 export interface CabinHour {
   t: string
   day: number
@@ -32,13 +30,6 @@ export interface CabinFile {
   hourly: CabinHour[]
 }
 
-export interface ShieldDay {
-  day: number
-  kind: ShieldKind
-  crewIds: string[]
-  label: string
-}
-
 export interface CrewFile {
   meta: {
     simulated: true
@@ -49,7 +40,6 @@ export interface CrewFile {
     demoDay: number
   }
   crew: { id: string; name: string }[]
-  shieldDays: ShieldDay[]
   checkIns: CheckIn[]
 }
 

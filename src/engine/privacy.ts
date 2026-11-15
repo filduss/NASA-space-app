@@ -25,16 +25,17 @@ export interface BoardPerson {
 
 export function boardPerson(status: PersonStatus): BoardPerson {
   const a = status.assessment
-  // Safety answers never reach the board: the person is shown as not reporting shared drift.
-  const off = a.safety ? [] : a.off.filter((k) => SPEC[k].privacy === 'shared')
+  // An urgent conference request never reaches the board: the person is shown as not reporting shared drift.
+  const urgent = status.conference === 'urgent'
+  const off = urgent ? [] : a.off.filter((k) => SPEC[k].privacy === 'shared')
   return {
     crewId: status.crewId,
     checkedIn: a.checkedIn,
     live: a.live,
     off,
-    symptoms: a.safety ? [] : a.symptoms,
+    symptoms: urgent ? [] : a.symptoms,
     ok: a.checkedIn && off.length === 0,
-    shipAffected: !a.safety && status.attribution === 'ship',
+    shipAffected: !urgent && status.attribution === 'ship',
   }
 }
 
@@ -100,7 +101,7 @@ export function canSeePrivate(viewer: Viewer, status: PersonStatus, sharedWithCm
 
 /** The crew medical officer's inbox for a day: tier 2 and above, shaped by the privacy table. */
 export interface CmoItem {
-  kind: 'ship' | 'shared_pattern' | 'shared_watch' | 'persistent' | 'safety'
+  kind: 'ship' | 'shared_pattern' | 'shared_watch' | 'persistent' | 'urgent'
   /** Named only where the privacy table allows it. */
   crewId?: string
   count?: number
@@ -112,7 +113,8 @@ export function cmoInbox(day: DayResult, shareWatch: Record<string, boolean>): C
   const items: CmoItem[] = []
   const people = Object.values(day.people)
   for (const p of people) {
-    if (p.assessment.safety) items.push({ kind: 'safety', crewId: p.crewId, indicators: [] })
+    // A routine conference request goes to the flight surgeon only.
+    if (p.conference === 'urgent') items.push({ kind: 'urgent', crewId: p.crewId, indicators: [] })
   }
   if (day.decision.outcome === 'ship') {
     items.push({
@@ -128,11 +130,11 @@ export function cmoInbox(day: DayResult, shareWatch: Record<string, boolean>): C
       kind: 'shared_pattern',
       count: day.decision.driftingAny.length,
       of: day.decision.crewSize,
-      indicators: unique(people.flatMap((p) => (p.assessment.safety ? [] : p.assessment.off))),
+      indicators: unique(people.flatMap((p) => (p.conference === 'urgent' ? [] : p.assessment.off))),
     })
   }
   for (const p of people) {
-    if (p.assessment.safety || p.attribution === 'none' || p.attribution === 'ship') continue
+    if (p.conference === 'urgent' || p.attribution === 'none' || p.attribution === 'ship') continue
     const shared = shareWatch[p.crewId] === true
     const visible = p.assessment.off.filter((k) => shared || SPEC[k].privacy === 'shared')
     if (p.tier === 3 && visible.length > 0) items.push({ kind: 'persistent', crewId: p.crewId, indicators: visible })
@@ -153,7 +155,7 @@ function unique<T>(xs: T[]): T[] {
 //   flight surgeon         the same as the crew medical officer
 
 /** One day of one person, as a viewer may see it. */
-export type TimelineMark = 'ok' | 'off' | 'persist' | 'absent' | 'shield'
+export type TimelineMark = 'ok' | 'off' | 'persist' | 'absent'
 
 export interface TimelineCell {
   day: number
@@ -191,17 +193,16 @@ export interface TimelineInput {
   /** The days to show, oldest first. */
   window: DayResult[]
   crewIds: string[]
-  shielded: (crewId: string, day: number) => boolean
 }
 
 function cell(day: number, mark: TimelineMark, more: Partial<TimelineCell> = {}): TimelineCell {
   return { day, mark, keys: [], symptoms: [], ...more }
 }
 
-/** A board cell: shared indicators only, safety answers hidden, exactly as boardPerson. */
-function boardCell(status: PersonStatus, shielded: boolean): TimelineCell {
+/** A board cell: shared indicators only, urgent conference requests hidden, exactly as boardPerson. */
+function boardCell(status: PersonStatus): TimelineCell {
   const p = boardPerson(status)
-  if (!p.checkedIn) return cell(status.day, shielded ? 'shield' : 'absent')
+  if (!p.checkedIn) return cell(status.day, 'absent')
   if (p.off.length === 0) return cell(status.day, 'ok')
   // Day 3 of the same likely cause, the day a summary goes to Earth; a run that only straddles a
   // change of cause (ship, then "me") starts counting again.
@@ -210,7 +211,7 @@ function boardCell(status: PersonStatus, shielded: boolean): TimelineCell {
 }
 
 export function crewTimeline(viewer: Viewer, input: TimelineInput): Timeline {
-  const { window, crewIds, shielded } = input
+  const { window, crewIds } = input
   const crewSize = window.at(-1)?.decision.crewSize ?? crewIds.length
   const needed = Math.ceil(crewSize * RULES.crewShare)
 
@@ -222,6 +223,6 @@ export function crewTimeline(viewer: Viewer, input: TimelineInput): Timeline {
     ship: r.decision.outcome === 'ship',
   }))
   const visible = viewer.kind === 'crew' ? crewIds.filter((id) => id === viewer.crewId) : crewIds
-  const rows = visible.map((id) => ({ crewId: id, cells: window.map((r) => boardCell(r.people[id], shielded(id, r.day))) }))
+  const rows = visible.map((id) => ({ crewId: id, cells: window.map((r) => boardCell(r.people[id])) }))
   return { days, rows, crewSize, needed }
 }
