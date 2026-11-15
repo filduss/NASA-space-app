@@ -43,7 +43,7 @@ scripts/*.py ──> public/data/{cabin,crew,backtest}.json ──> src/state.ts
 Pure functions with no React and no I/O. `runEngine(input)` in `escalation.ts` returns one `DayResult` per day by composing:
 
 - `baseline.ts` and `deviation.ts`: each person's own normal (robust median/MAD), their starting normal (first 14 check-ins, for slow changes in mood and stress), and which indicators drift.
-- `shipOrMe.ts`: cabin status and the ship / me / shared decision.
+- `shipOrMe.ts`: cabin status (CO₂, temperature, humidity: three factors from the same ISS telemetry) and the ship / me / shared decision. Each indicator lists the factors that can explain it (`linkedTo` in `deviation.ts`, `SYMPTOM_LINKS` for symptoms); a ship alert names its `causes` and is held only while one of them stays a suspect.
 - `escalation.ts`: episodes, day counts and tiers 0–4, flight-surgeon summaries.
 - `privacy.ts`: the only path from engine output to another viewer's screen. UI code must not read another person's `PersonStatus` directly.
 - `gravity.ts` and `mission.ts`: shown, never judged. Exercise against its daily target (the core and limbs zones on the dashboard) and the radiation dose budget; neither has a tier or any part in ship or me.
@@ -64,7 +64,7 @@ XP, weekly streak with shield days, quests. Game functions cannot read check-in 
 
 ### State and UI
 
-`src/state.tsx` (`StoreProvider` / `useStore`) loads the four JSON files (including `accounts.json`), holds the logged-in `user`, merges live check-ins, runs the engine, and holds the demo controls (role, mission day, comm delay). Live check-ins persist only in `localStorage` under `shipshape.v1`; live reaction-test results stay in memory and are never stored. The check-in's simulated wrist wearable (`src/data/watch.ts`) reads the simulated crew record for that person and day: it fills in sleep and exercise, and its vitals (`CheckIn.watch`: heart rate, HRV, blood oxygen, breathing, skin temperature) are shown for information. No rule may read `watch`; a test checks it.
+`src/state.tsx` (`StoreProvider` / `useStore`) loads the four JSON files (including `accounts.json`), holds the logged-in `user`, merges live check-ins, runs the engine, and holds the demo controls (role, mission day, comm delay). Live check-ins persist only in `localStorage` under `shipshape.v1`; live reaction-test results stay in memory and are never stored. The check-in's simulated wrist wearable (`src/data/watch.ts`) reads the simulated crew record for that person and day: it fills in sleep and exercise, and its vitals (`CheckIn.watch`: heart rate, HRV, blood oxygen, breathing, skin temperature) are shown for information. No rule may read `watch`; a test checks it. `src/data/hrp.ts` links every reading to the NASA Human System Risk it informs (titles and pages as on nasa.gov); it is shown on the check-in and the challenge page, and no rule reads it either.
 
 `src/main.tsx` picks one of five pages by pathname (`src/auth/paths.ts`), without a router:
 
@@ -96,7 +96,7 @@ These come from the plan and are easy to break by accident:
 - **Label simulated data everywhere.** Every screen showing the crew carries the "simulated" marker; real data carries its source.
 - **The app says "likely" and never diagnoses.** No AI-generated text in decisions or summaries; summaries come from fixed templates.
 - **Each dashboard and check-in shows only the logged-in person.** The crew app (`/app`) is for the medical officer (as the crew medical officer) and the flight surgeon (the same access, plus summaries); everyone else's data reaches it through `privacy.ts`.
-- **Mood and stress are private.** They appear on the crew board only as a count with no names, and never count toward a ship alert. Only headache among symptoms counts toward one.
+- **Mood and stress are private.** They appear on the crew board only as a count with no names, and never count toward a ship alert. Among symptoms, only headache counts toward a CO₂ alert, and only congestion and dry or sore eyes toward a humidity alert.
 - **No leaderboards, no reward tied to a reading, no celebration on an alert.**
 - **Sources:** `docs/CITATIONS.md` tracks whether a human has opened each source. Do not mark one as checked or add a sourced claim to UI text unless it has been verified. Log AI contributions in `docs/AI_USE_LOG.md`.
 - Charts follow one-series, one-axis conventions with status shown by shape and word as well as color, and need to work at 390 px width. Every page is dark only, with `/dashboard` as the colour reference: `src/styles.css` (crew app) uses the same values as the `--d-*` tokens in `dashboard.css`.

@@ -1,6 +1,6 @@
 # Shipshape
 
-**Is it me, or the ship?** A daily check-in for a crew on a long mission. When several people feel off at once, Shipshape checks real ISS cabin CO₂ before blaming anyone, and tells each astronaut whether a bad day is likely them or the ship. It rewards honest reporting, never the reading.
+**Is it me, or the ship?** A daily check-in for a crew on a long mission. When several people feel off at once, Shipshape checks the real ISS cabin air (CO₂, temperature and humidity) before blaming anyone, and tells each astronaut whether a bad day is likely them or the ship. It rewards honest reporting, never the reading.
 
 Built for the NASA Space Apps Challenge 2026, "Create Health Monitoring Software for Astronauts on Space Missions". It grew from the team's [plan v0.1](docs/plan-v0.1.md), now superseded by [docs/SPEC.md](docs/SPEC.md).
 
@@ -12,14 +12,17 @@ Built for the NASA Space Apps Challenge 2026, "Create Health Monitoring Software
 
 | Real | Simulated | Estimated |
 | --- | --- | --- |
-| ISS cabin CO₂, temperature and humidity from NASA's Open Science Data Repository (mission RR-7; source, API URL and SHA-256 on screen), and the NASA-STD-3001 3 mmHg limit | The four-person crew and their wrist-wearable readings (sleep, exercise, heart rate, HRV, blood oxygen, breathing, skin temperature), seeded and labelled as simulated on every screen | Radiation dose for the mission setting, from published measurements, against NASA's 600 mSv career limit |
+| ISS cabin CO₂, temperature and humidity from NASA's Open Science Data Repository (mission RR-7 in the demo, 10 missions in the backtest; source, API URL and SHA-256 on screen), NASA-STD-3001's 3 mmHg CO₂ limit and its temperature and humidity ranges, and published results for real ISS crews (sleep, headaches) set beside the simulated crew | The four-person crew and their wrist-wearable readings (sleep, exercise, heart rate, HRV, blood oxygen, breathing, skin temperature), seeded and labelled as simulated on every screen | Radiation dose for the mission setting, from published measurements, against NASA's 600 mSv career limit |
 
-**Evidence**: 200 simulated crews over 10 real ISS CO₂ traces, run through the app's own rules ([SPEC, "Evidence"](docs/SPEC.md#evidence)):
+**Evidence**: 200 simulated crews over 10 real ISS cabin traces, run through the app's own rules ([SPEC, "Evidence"](docs/SPEC.md#evidence)):
 
-- The rule names the right cause, ship or not, in 90% of the alerts raised during an event.
+- On days with a CO₂ rise the rule says "the ship" in 74% of alerts; on days with one person's own problem it says "not the ship" in 95% (90% pooled).
+- Across 416 real ISS days, CO₂ was a suspect on 63 and over NASA's limit on 29; temperature left NASA's comfort range on 4 and humidity on none. On the ISS, CO₂ is the cabin factor that moves; the other two are ruled out by name.
 - During CO₂ rises it opens 72% fewer personal cases than an app with one alert per person, and sends 87% fewer individual summaries to the flight surgeon.
 - A slow mood decline that never jumps on any one day: 94% are flagged against the person's starting normal, and 93% reach the flight surgeon (9% without that check).
 - The known blind spot, stated on the challenge page: a personal problem that starts during a ship alert is put down to the ship until the air recovers (8 of 32 such events never got a personal label).
+- The simulated crews beside real ISS crews: headache days 2.1% against NASA's 2.7%; sleep 7.2 h against about 6.5 h, which we state rather than hide.
+- Every reading links to the NASA Human System Risk it informs, on the check-in and on the challenge page.
 
 | | |
 | --- | --- |
