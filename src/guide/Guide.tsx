@@ -95,112 +95,111 @@ export function GuideLink({
 }
 
 const hashId = () => decodeURIComponent(window.location.hash.slice(1))
+const entryOfHash = () => (entryById(hashId()) ? hashId() : null)
+
+/** Shown in the reading pane on a wide screen before a topic is picked. */
+const FIRST = 'you-or-ship'
 
 /**
- * The Guide: a search box over plain explanations of every reading. Passive: it never shows the reader's
- * own numbers. An entry opens in place; `/guide#sleep` opens one directly.
+ * The Guide: a list of topics with a search box, and a reading pane for the open one. Passive: it never
+ * shows the reader's own numbers. The open topic is the URL's hash (`/guide#sleep`), so links, the back
+ * button and a reload all land on it. On a phone the list and the topic take turns; side by side otherwise.
  */
 export function Guide() {
   const [query, setQuery] = useState('')
-  const [open, setOpen] = useState<Set<string>>(() => new Set(hashId() ? [hashId()] : []))
+  const [current, setCurrent] = useState<string | null>(entryOfHash)
+  const pane = useRef<HTMLElement>(null)
 
   useEffect(() => {
-    const scrollTo = (id: string) => requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: 'start' }))
     const onHash = () => {
-      const id = hashId()
-      if (!id) return
-      setQuery('')
-      // Section jumps scroll by themselves; only an entry needs opening.
-      if (entryById(id)) setOpen((o) => new Set(o).add(id))
-      scrollTo(id)
+      setCurrent(entryOfHash())
+      // Bring the start of the topic into view when the page has scrolled past it.
+      requestAnimationFrame(() => {
+        const top = pane.current?.getBoundingClientRect().top ?? 0
+        if (top < 0) pane.current?.scrollIntoView({ block: 'start' })
+      })
     }
-    if (hashId()) scrollTo(hashId())
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
-  const toggle = (id: string, isOpen: boolean) =>
-    setOpen((o) => {
-      if (o.has(id) === isOpen) return o
-      const next = new Set(o)
-      if (isOpen) next.add(id)
-      else next.delete(id)
-      return next
-    })
+  const backToList = () => {
+    history.pushState(null, '', window.location.pathname + window.location.search)
+    setCurrent(null)
+  }
 
   const q = query.trim()
   const results = q ? searchGuide(q) : null
-  const list = (entries: GuideEntry[]) => (
-    <div className="guide-list">
-      {entries.map((e) => (
-        <Entry key={e.id} entry={e} open={open.has(e.id)} onToggle={(o) => toggle(e.id, o)} mixed={!!results} />
-      ))}
-    </div>
-  )
+  const shown = entryById(current ?? FIRST)!
 
   return (
-    <div className="stack guide">
+    <div className="guide">
       <div className="guide-note" role="note">
         <p>{EMERGENCY_LINE}</p>
         <p>{CONCERN_LINE}</p>
       </div>
-      <div className="guide-find">
-        <input
-          type="search"
-          className="guide-search"
-          placeholder="Search: headache, can’t sleep, oxygen…"
-          aria-label="Search the Guide"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </div>
-      {!results && (
-        <nav className="guide-jump" aria-label="Guide sections">
-          {SECTIONS.map((s) => (
-            <a key={s.key} href={`#guide-${s.key}`}>
-              {s.title}
-            </a>
-          ))}
+      <div className={current ? 'guide-layout guide-reading' : 'guide-layout'}>
+        <nav className="guide-side" aria-label="Guide topics">
+          <input
+            type="search"
+            className="guide-search"
+            placeholder="Search: headache, can’t sleep…"
+            aria-label="Search the Guide"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          {results ? (
+            <>
+              <p className="guide-count" aria-live="polite">
+                {results.length === 0
+                  ? `Nothing matches “${q}”. Try another word, or ask your crew medical officer.`
+                  : `${results.length} ${results.length === 1 ? 'topic' : 'topics'}, best match first`}
+              </p>
+              <Rows entries={results} current={shown.id} mixed />
+            </>
+          ) : (
+            SECTIONS.map((s) => (
+              <section key={s.key} aria-labelledby={`guide-${s.key}`}>
+                <h2 id={`guide-${s.key}`} className="guide-h">
+                  {s.title}
+                </h2>
+                <Rows entries={ENTRIES.filter((e) => e.section === s.key && listed(e))} current={shown.id} />
+              </section>
+            ))
+          )}
         </nav>
-      )}
-      {results ? (
-        <section aria-label="Search results">
-          <p className="guide-count" aria-live="polite">
-            {results.length === 0
-              ? `Nothing in the Guide matches “${q}”. Try another word, or ask your crew medical officer.`
-              : `${results.length} ${results.length === 1 ? 'entry' : 'entries'} for “${q}”, best match first`}
-          </p>
-          {list(results)}
-        </section>
-      ) : (
-        SECTIONS.map((s) => (
-          <section key={s.key} id={`guide-${s.key}`} className="guide-section" aria-labelledby={`guide-${s.key}-h`}>
-            <h2 id={`guide-${s.key}-h`} className="guide-h">
-              {s.title}
-            </h2>
-            {list(ENTRIES.filter((e) => e.section === s.key && listed(e)))}
-          </section>
-        ))
-      )}
+        <article ref={pane} className="guide-pane" aria-labelledby="guide-pane-title">
+          <button type="button" className="guide-back" onClick={backToList}>
+            ‹ All topics
+          </button>
+          {shown.section === 'risks' && <p className="guide-kind">NASA risk</p>}
+          <h2 id="guide-pane-title" className="guide-pane-title">
+            {shown.title}
+          </h2>
+          <p className="guide-lead">{summary(shown)}</p>
+          <EntryBody entry={shown} />
+        </article>
+      </div>
     </div>
   )
 }
 
-/** `mixed`: shown among entries of every section, as search results are, so a risk says it is one. */
-function Entry({ entry, open, onToggle, mixed }: { entry: GuideEntry; open: boolean; onToggle: (open: boolean) => void; mixed: boolean }) {
+/** Topics as rows of a grouped list. `mixed`: rows from every section, as search results are, so a risk says it is one. */
+function Rows({ entries, current, mixed = false }: { entries: GuideEntry[]; current: string; mixed?: boolean }) {
   return (
-    <details id={entry.id} className="guide-entry" open={open} onToggle={(e) => onToggle(e.currentTarget.open)}>
-      <summary>
-        <span className="guide-title">
-          {mixed && entry.section === 'risks' && <span className="guide-kind">NASA risk</span>}
-          {entry.title}
-        </span>
-        <span className="guide-sum">{summary(entry)}</span>
-      </summary>
-      <div className="guide-body">
-        <EntryBody entry={entry} />
-      </div>
-    </details>
+    <ul className="guide-rows">
+      {entries.map((e) => (
+        <li key={e.id}>
+          <a href={`#${e.id}`} className="guide-row" aria-current={e.id === current ? 'true' : undefined}>
+            <span className="guide-row-title">
+              {mixed && e.section === 'risks' && <span className="guide-tag">NASA risk</span>}
+              {e.title}
+            </span>
+            <span className="guide-row-sum">{summary(e)}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
   )
 }
 

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { cabinLevel, notices, verdict, zoneStates } from '../src/dashboard/model.ts'
 import { runEngine, type CheckIn } from '../src/engine/index.ts'
-import { entryById } from '../src/guide/entries.ts'
 import { cabin, checkIn, CREW, steady } from './helpers.ts'
 
 // The personal dashboard's status box: the colour follows the side the answer points at, so a box
@@ -64,13 +63,5 @@ describe('dashboard status box: likely you or likely the ship', () => {
     expect(list.find((n) => n.id === 'co2')?.source).toBe('air')
     expect(list.filter((n) => n.id.startsWith('ind-')).every((n) => n.source === 'you')).toBe(true)
     expect(list.some((n) => /likely the ship/i.test(n.body))).toBe(false)
-  })
-
-  it('every notification about a reading or the air opens the Guide entry that explains it', () => {
-    const r = today(3.6, shortSleep(CREW))
-    const list = notices(r.people.anna, r.cabin, 600)
-    expect(list.find((n) => n.id === 'co2')?.guide).toBe('co2')
-    expect(list.find((n) => n.id === 'ind-sleepHours')?.guide).toBe('sleep')
-    for (const n of list.filter((x) => x.source !== 'you' || x.id.startsWith('ind-'))) expect(entryById(n.guide ?? ''), n.id).toBeDefined()
   })
 })

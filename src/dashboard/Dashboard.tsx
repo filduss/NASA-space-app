@@ -157,8 +157,6 @@ export function Dashboard() {
   const list = useMemo(() => notices(me, cabin, s.commDelaySec, exercise), [me, cabin, s.commDelaySec, exercise])
   const tiles = useMemo(() => vitals(me, history, today, TREND_DAYS), [me, history, today])
   const chartVital = chart ? tiles.find((t) => t.key === chart.key) : undefined
-  // The cabin factors that are off today, each with its Guide entry.
-  const airGuides = [...new Set(list.flatMap((n) => (n.source === 'air' && n.guide ? [n.guide] : [])))]
   const symptomGuides = [...new Set(me.assessment.symptoms.map((k) => ENTRY_FOR[k]))]
   const v = verdict(me, cabin)
   // A published figure for real ISS crews, shown beside the person's own usual sleep (backtest.json).
@@ -253,13 +251,6 @@ export function Dashboard() {
               <HeroChip label="You" side={v.you} />
               <HeroChip label="Cabin air" side={v.ship} />
             </ul>
-            {airGuides.length > 0 && (
-              <div className="guide-more-row">
-                {airGuides.map((id) => (
-                  <WhatItMeans key={id} id={id} label={id} text={`${entryById(id)?.title}: what it means`} />
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="panel watchp">
@@ -277,11 +268,6 @@ export function Dashboard() {
             ) : (
               <p className="watch-note">No wearable reading today</p>
             )}
-            <p className="watch-note">Shipshape's rules don't use these yet. Next, each will be compared with your own normal once a real device feeds them.</p>
-            <div className="guide-more-row">
-              <WhatItMeans id="vitals" label="Wearable readings" text="What these mean" />
-              <WhatItMeans id="spo2" label="Blood oxygen" text="Blood oxygen" />
-            </div>
           </div>
 
         </section>

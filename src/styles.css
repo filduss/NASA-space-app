@@ -1723,148 +1723,8 @@ details[open] > summary {
 .guide-text {
   text-align: left;
 }
-.guide-note {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px 16px;
-  border-left: 3px solid var(--alert);
-  border-radius: 4px var(--radius-sm) var(--radius-sm) 4px;
-  background: var(--surface);
-  font-size: 15px;
-}
-.guide-note p + p {
-  color: var(--ink-2);
-  font-size: 14px;
-}
-/* The search stays in reach under the app bar while the list scrolls. */
-.guide-find {
-  position: sticky;
-  top: 55px;
-  z-index: 5;
-  margin: 0 -4px;
-  padding: 8px 4px;
-  background: var(--bg);
-  box-shadow: 0 10px 12px -6px var(--bg);
-}
-.guide-search {
-  width: 100%;
-  height: 48px;
-  padding: 0 16px;
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-sm);
-  background: var(--surface-solid);
-  font-size: 17px;
-}
-.guide-search::placeholder {
-  color: var(--ink-3);
-}
-.guide-jump {
-  margin-top: -12px;
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.guide-jump a {
-  flex: none;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: var(--fill);
-  color: var(--ink);
-  font-size: 15px;
-  text-decoration: none;
-}
-.guide-jump a:hover {
-  background: var(--fill-2);
-}
-.guide-count {
-  margin-bottom: 10px;
-  color: var(--ink-2);
-}
-.guide-section {
-  /* Clear of the app bar and the sticky search when jumped to. */
-  scroll-margin-top: 130px;
-}
-.guide-h {
-  margin: 8px 0 10px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.guide-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.guide-entry {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  scroll-margin-top: 130px;
-}
-.guide-entry[open] {
-  border-color: var(--line-2);
-}
-.guide-entry summary {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 14px 44px 14px 16px;
-  position: relative;
-  cursor: pointer;
-  list-style: none;
-}
-.guide-entry summary::-webkit-details-marker {
-  display: none;
-}
-.guide-entry summary::after {
-  content: '';
-  position: absolute;
-  top: 21px;
-  right: 18px;
-  width: 8px;
-  height: 8px;
-  border-right: 2px solid var(--ink-3);
-  border-bottom: 2px solid var(--ink-3);
-  transform: rotate(45deg);
-  transition: transform 0.15s;
-}
-.guide-entry[open] summary::after {
-  top: 25px;
-  transform: rotate(-135deg);
-}
-.guide-title {
-  font-size: 17px;
-  font-weight: 600;
-}
-.guide-kind {
-  margin-right: 8px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--fill);
-  color: var(--ink-2);
-  font-size: 12px;
-  font-weight: 600;
-  vertical-align: 0.15em;
-}
 .guide-sum {
   color: var(--ink-2);
-}
-/* Closed, an entry is a title and two lines: enough to tell entries apart while scanning. */
-.guide-entry:not([open]) .guide-sum {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.guide-body {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 0 16px 16px;
 }
 .guide-part h3 {
   margin-bottom: 4px;
@@ -2027,12 +1887,9 @@ details[open] > summary {
   font-size: 12px;
   font-weight: 700;
 }
-.guide-more-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 8px;
-}
 .guide-sheet {
+  --ink-2: rgba(235, 235, 245, 0.82);
+  --ink-3: rgba(235, 235, 245, 0.66);
   font-size: 17px;
   line-height: 1.45;
   text-align: left;
@@ -2041,3 +1898,193 @@ details[open] > summary {
   align-self: flex-start;
   font-weight: 600;
 }
+
+/* The Guide page: topics as a grouped list beside a reading pane; on a phone they take turns. Text here
+   is a step brighter than elsewhere, because this page is read rather than glanced at. */
+.guide {
+  --ink-2: rgba(235, 235, 245, 0.82);
+  --ink-3: rgba(235, 235, 245, 0.66);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.guide-note {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 16px;
+  border-left: 3px solid var(--alert);
+  border-radius: 4px var(--radius-sm) var(--radius-sm) 4px;
+  background: var(--surface);
+  font-size: 15px;
+}
+.guide-note p + p {
+  color: var(--ink-2);
+}
+.guide-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.guide-search {
+  flex: none;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: var(--surface-solid);
+  font-size: 17px;
+}
+.guide-search::placeholder {
+  color: var(--ink-3);
+}
+.guide-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.guide-h {
+  margin: 14px 0 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.guide-count {
+  margin: 8px 4px 4px;
+  color: var(--ink-2);
+  font-size: 15px;
+}
+/* A grouped list: one rounded block per section, rows split by hairlines. */
+.guide-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  overflow: hidden;
+}
+.guide-rows li + li .guide-row {
+  border-top: 1px solid var(--line);
+}
+.guide-row {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 36px 12px 16px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.guide-row::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  width: 7px;
+  height: 7px;
+  margin-top: -4px;
+  border-top: 2px solid var(--ink-3);
+  border-right: 2px solid var(--ink-3);
+  transform: rotate(45deg);
+}
+.guide-row:hover {
+  background: var(--fill);
+  text-decoration: none;
+}
+.guide-row-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+.guide-row-sum {
+  overflow: hidden;
+  color: var(--ink-2);
+  font-size: 15px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.guide-tag,
+.guide-kind {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--fill);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: 0.15em;
+}
+.guide-kind {
+  align-self: flex-start;
+  margin: 0 0 -8px;
+}
+.guide-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  scroll-margin-top: 72px;
+  font-size: 17px;
+  line-height: 1.5;
+}
+.guide-pane-title {
+  font-size: 28px;
+  line-height: 1.2;
+}
+.guide-lead {
+  margin-top: -8px;
+  color: var(--ink);
+  font-size: 19px;
+}
+.guide-back {
+  align-self: flex-start;
+  margin: -6px 0 -4px -6px;
+  padding: 6px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+/* Phone: the list, or the open topic. */
+@media (max-width: 899px) {
+  .guide-layout:not(.guide-reading) .guide-pane,
+  .guide-reading .guide-side,
+  .guide:has(.guide-reading) .guide-note {
+    display: none;
+  }
+  .guide-pane {
+    padding: 18px 16px;
+  }
+}
+/* Wide: the list stays beside the topic and scrolls on its own. */
+@media (min-width: 900px) {
+  .guide-layout {
+    grid-template-columns: 320px minmax(0, 1fr);
+  }
+  .guide-side {
+    position: sticky;
+    top: 72px;
+    max-height: calc(100vh - 88px);
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+  }
+  .guide-back {
+    display: none;
+  }
+  .guide-row[aria-current] {
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .guide-pane {
+    padding: 28px 32px;
+  }
+}
+

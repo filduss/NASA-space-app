@@ -57,7 +57,7 @@ export function App({ page }: { page: 'checkin' | 'guide' | 'app' }) {
   }, [heading])
 
   return (
-    <div className={page === 'app' ? 'app' : 'app app-narrow'}>
+    <div className={page === 'checkin' ? 'app app-narrow' : 'app'}>
       <header className="appbar">
         <div className="appbar-brand">
           <span className="appicon" aria-hidden="true">

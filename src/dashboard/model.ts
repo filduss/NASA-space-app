@@ -6,7 +6,6 @@
 import { RULES } from '../engine/config.ts'
 import { SPEC } from '../engine/deviation.ts'
 import type { ExerciseWeek } from '../engine/gravity.ts'
-import { ENTRY_FOR } from '../guide/entries.ts'
 import type { CabinStatus, CheckIn, IndicatorKey, PersonStatus, SymptomKey } from '../engine/types.ts'
 import { celsius, comfortLine, delayText, indicatorLine, rhPercent, symptomLabel } from '../ui/text.ts'
 
@@ -203,17 +202,15 @@ export interface Notice {
   level: Level
   title: string
   body: string
-  /** The Guide entry that explains it, or null when there is nothing to explain (a conference request). */
-  guide: string | null
 }
 
 export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, exercise?: ExerciseWeek): Notice[] {
   const out: Notice[] = []
   const a = me.assessment
   if (me.conference === 'urgent') {
-    out.push({ id: 'urgent', source: 'you', level: 'alert', title: 'Help is on the way', body: `Your crew medical officer was told privately. Your request to the flight surgeon: ${delayText(delaySec)} to Earth.`, guide: null })
+    out.push({ id: 'urgent', source: 'you', level: 'alert', title: 'Help is on the way', body: `Your crew medical officer was told privately. Your request to the flight surgeon: ${delayText(delaySec)} to Earth.` })
   } else if (me.conference === 'routine') {
-    out.push({ id: 'conference', source: 'you', level: 'ok', title: 'Conference requested', body: `Your flight surgeon gets the request in ${delayText(delaySec)} and will take it at the next scheduled conference.`, guide: null })
+    out.push({ id: 'conference', source: 'you', level: 'ok', title: 'Conference requested', body: `Your flight surgeon gets the request in ${delayText(delaySec)} and will take it at the next scheduled conference.` })
   }
   if (me.tier === 3) {
     out.push({
@@ -222,7 +219,6 @@ export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, 
       level: 'alert',
       title: `Day ${me.episodeDay} — flight surgeon informed`,
       body: 'This has stayed off your usual for 3 days, so a short summary went to the flight surgeon. No diagnosis, only what changed.',
-      guide: 'you-or-ship',
     })
   }
   const cl = cabinLevel(cabin)
@@ -233,7 +229,6 @@ export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, 
       level: 'alert',
       title: 'Cabin CO₂ above the limit',
       body: `Average ${cabin.co2Mean.toFixed(1)} mmHg over the last 24 h, limit ${RULES.co2LimitMmHg} mmHg.`,
-      guide: 'co2',
     })
   } else if (cl === 'watch') {
     out.push({
@@ -244,7 +239,6 @@ export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, 
       body: cabin.elevated
         ? `Average ${cabin.co2Mean?.toFixed(1)} mmHg, usual ${cabin.baseline?.toFixed(1)} mmHg.`
         : `One hour reached ${cabin.co2Max1h?.toFixed(1)} mmHg (limit ${RULES.co2LimitMmHg}). The daily average is normal.`,
-      guide: 'co2',
     })
   }
   for (const f of ['temp', 'rh'] as const) {
@@ -257,7 +251,6 @@ export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, 
       level: st.overLimit ? 'alert' : 'watch',
       title: `Cabin ${word} than NASA's comfort range`,
       body: `${f === 'temp' ? 'Temperature' : 'Humidity'} ${comfortLine(f, st)}.`,
-      guide: f === 'temp' ? 'temperature' : 'humidity',
     })
   }
   for (const key of a.off) {
@@ -267,7 +260,6 @@ export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, 
       level: indicatorLevel(me, key),
       title: key === 'symptoms' ? 'Symptoms reported' : SPEC[key].label,
       body: indicatorLine(a.indicators[key], a.symptoms),
-      guide: key === 'symptoms' && a.symptoms.length ? ENTRY_FOR[a.symptoms[0]] : ENTRY_FOR[key],
     })
   }
   if (exercise?.lapse) {
@@ -277,7 +269,6 @@ export function notices(me: PersonStatus, cabin: CabinStatus, delaySec: number, 
       level: 'watch',
       title: 'Exercise below target',
       body: `Under ${RULES.exerciseTargetMin} min on ${exercise.below} of your last ${exercise.logged} logged days. Exercise is what protects bone and muscle here.`,
-      guide: 'exercise',
     })
   }
   return out.sort((x, y) => RANK[y.level] - RANK[x.level])
